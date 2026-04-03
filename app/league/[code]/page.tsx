@@ -19,6 +19,21 @@ function kickoffUTC(date: string, time: string): Date {
   return new Date(Date.UTC(2026, months[mon], Number(day), h + 4, m));
 }
 
+// Returns the phase + day the user should land on: the day of the first match
+// that hasn't finished yet (with a 3-hour buffer for ongoing games), or the
+// last match day if the tournament is over.
+function getDefaultNav(): { phase: PhaseId; day: string } {
+  const now = Date.now();
+  for (const match of MATCHES) {
+    const kickoff = kickoffUTC(match.date, match.time);
+    if (kickoff.getTime() > now - 3 * 60 * 60 * 1000) {
+      return { phase: match.phase as PhaseId, day: match.date };
+    }
+  }
+  const last = MATCHES[MATCHES.length - 1];
+  return { phase: last.phase as PhaseId, day: last.date };
+}
+
 function parseDateStr(date: string): Date {
   const months: Record<string, number> = {
     Jan:0,Feb:1,Mar:2,Apr:3,May:4,Jun:5,Jul:6,Aug:7,Sep:8,Oct:9,Nov:10,Dec:11
@@ -36,8 +51,9 @@ export default function LeaguePage({
   const isPreview = code === MOCK_LEAGUE.code;
   const league = isPreview ? MOCK_LEAGUE : { ...MOCK_LEAGUE, name: "My League", code };
 
-  const [activePhase, setActivePhase] = useState<PhaseId>("group-md1");
-  const [activeDay, setActiveDay] = useState<string>("Jun 11");
+  const defaultNav = getDefaultNav();
+  const [activePhase, setActivePhase] = useState<PhaseId>(defaultNav.phase);
+  const [activeDay, setActiveDay] = useState<string>(defaultNav.day);
   // Temporary seed for Mexico game to test post-game UI
   const [predictions, setPredictions] = useState<Record<string, Outcome>>({ "a1-1": "home", "a1-2": "draw", "j1-1": "home", "i1-1": "home" });
   const [mobileView, setMobileView] = useState<"matches" | "standings">("matches");
