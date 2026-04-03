@@ -8,6 +8,7 @@ import MatchCard from "@/components/MatchCard";
 import Leaderboard from "@/components/Leaderboard";
 import OnboardingModal from "@/components/OnboardingModal";
 import { MATCHES, PHASES, MOCK_LEAGUE, type Outcome, type PhaseId } from "@/lib/mock-data";
+import { computeStandings } from "@/lib/scoring";
 
 function kickoffUTC(date: string, time: string): Date {
   const months: Record<string, number> = {
@@ -38,7 +39,7 @@ export default function LeaguePage({
   const [activePhase, setActivePhase] = useState<PhaseId>("group-md1");
   const [activeDay, setActiveDay] = useState<string>("Jun 11");
   // Temporary seed for Mexico game to test post-game UI
-  const [predictions, setPredictions] = useState<Record<string, Outcome>>({ "a1-1": "home" });
+  const [predictions, setPredictions] = useState<Record<string, Outcome>>({ "a1-1": "home", "a1-2": "draw", "j1-1": "home", "i1-1": "home" });
   const [mobileView, setMobileView] = useState<"matches" | "standings">("matches");
   const [mono, setMono] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
@@ -115,6 +116,7 @@ export default function LeaguePage({
   // Score predictions — temporary seed for Mexico game to test post-game UI
   const [scorePredictions, setScorePredictions] = useState<Record<string, { home: number; away: number }>>({
     "a1-1": { home: 2, away: 0 },
+    "j1-1": { home: 2, away: 0 },
   });
 
   function handlePredict(matchId: string, outcome: Outcome) {
@@ -309,7 +311,7 @@ export default function LeaguePage({
 
           {/* Sidebar */}
           <div className={`w-64 flex-shrink-0 sticky top-36 space-y-3 ${mobileView === "matches" ? "hidden sm:block" : "block"}`}>
-            <Leaderboard members={league.members} currentUserId="u1" mono={mono} />
+            <Leaderboard members={computeStandings(MATCHES, league.members, "u1", predictions, scorePredictions)} currentUserId="u1" mono={mono} />
 
             <div className="rounded-2xl border p-4 space-y-3" style={{ backgroundColor: t.cardBg, borderColor: t.border }}>
               <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: t.textSec }}>Invite friends</p>

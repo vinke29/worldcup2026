@@ -40,6 +40,7 @@ export interface Member {
   id: string; name: string; avatar: string;
   points: number; correct: number; total: number;
   predictions: Record<string, Outcome>;
+  scorePicks?: Record<string, { home: number; away: number }>;
 }
 
 export interface League {
@@ -80,7 +81,7 @@ export const MATCHES: Match[] = [
   // GROUP A
   // ══════════════════════════════════════════════════════════════════════════
   { id:"a1-1", phase:"group-md1", group:"Group A", homeTeam:"Mexico",       homeFlag:"🇲🇽", awayTeam:"South Africa", awayFlag:"🇿🇦", date:"Jun 11", time:"19:00", venue:"Estadio Azteca · Mexico City",          communityHome:55, communityDraw:24, communityAway:21, oddsHome:58, oddsDraw:23, oddsAway:19, illustration:"/match-a-mex-rsa.png", homeScore: 2, awayScore: 0 },
-  m({ id:"a1-2", phase:"group-md1", group:"Group A", homeTeam:"South Korea",  homeFlag:"🇰🇷", awayTeam:"Czech Republic",awayFlag:"🇨🇿", date:"Jun 11", time:"22:00", venue:"Estadio Akron · Guadalupe",             communityHome:40, communityDraw:30, communityAway:30, oddsHome:38, oddsDraw:31, oddsAway:31, illustration:"/match-a-kor-cze.png" }),
+  { id:"a1-2", phase:"group-md1", group:"Group A", homeTeam:"South Korea",  homeFlag:"🇰🇷", awayTeam:"Czech Republic",awayFlag:"🇨🇿", date:"Jun 11", time:"22:00", venue:"Estadio Akron · Guadalupe",             communityHome:40, communityDraw:30, communityAway:30, oddsHome:38, oddsDraw:31, oddsAway:31, illustration:"/match-a-kor-cze.png", homeScore: 1, awayScore: 1 },
   m({ id:"a2-1", phase:"group-md2", group:"Group A", homeTeam:"Czech Republic",homeFlag:"🇨🇿", awayTeam:"South Africa", awayFlag:"🇿🇦", date:"Jun 18", time:"16:00", venue:"Mercedes-Benz Stadium · Atlanta",       communityHome:42, communityDraw:30, communityAway:28, oddsHome:44, oddsDraw:29, oddsAway:27 }),
   m({ id:"a2-2", phase:"group-md2", group:"Group A", homeTeam:"Mexico",       homeFlag:"🇲🇽", awayTeam:"South Korea",   awayFlag:"🇰🇷", date:"Jun 18", time:"22:00", venue:"Estadio Akron · Guadalupe",             communityHome:48, communityDraw:27, communityAway:25, oddsHome:46, oddsDraw:28, oddsAway:26 }),
   m({ id:"a3-1", phase:"group-md3", group:"Group A", homeTeam:"Czech Republic",homeFlag:"🇨🇿", awayTeam:"Mexico",        awayFlag:"🇲🇽", date:"Jun 24", time:"22:00", venue:"Estadio Azteca · Mexico City",          communityHome:28, communityDraw:26, communityAway:46, oddsHome:26, oddsDraw:25, oddsAway:49 }),
@@ -159,7 +160,7 @@ export const MATCHES: Match[] = [
   // ══════════════════════════════════════════════════════════════════════════
   // GROUP I
   // ══════════════════════════════════════════════════════════════════════════
-  m({ id:"i1-1", phase:"group-md1", group:"Group I", homeTeam:"France",       homeFlag:"🇫🇷", awayTeam:"Senegal",        awayFlag:"🇸🇳", date:"Jun 16", time:"18:00", venue:"MetLife Stadium · New York",             communityHome:64, communityDraw:20, communityAway:16, oddsHome:66, oddsDraw:19, oddsAway:15, illustration:"/match-i-fra-sen.png" }),
+  { id:"i1-1", phase:"group-md1", group:"Group I", homeTeam:"France",       homeFlag:"🇫🇷", awayTeam:"Senegal",        awayFlag:"🇸🇳", date:"Jun 16", time:"18:00", venue:"MetLife Stadium · New York",             communityHome:64, communityDraw:20, communityAway:16, oddsHome:66, oddsDraw:19, oddsAway:15, illustration:"/match-i-fra-sen.png", homeScore: 2, awayScore: 1 },
   m({ id:"i1-2", phase:"group-md1", group:"Group I", homeTeam:"Iraq",         homeFlag:"🇮🇶", awayTeam:"Norway",         awayFlag:"🇳🇴", date:"Jun 16", time:"21:00", venue:"Gillette Stadium · Boston",              communityHome:25, communityDraw:30, communityAway:45, oddsHome:22, oddsDraw:29, oddsAway:49, illustration:"/match-i-irq-nor.png" }),
   m({ id:"i2-1", phase:"group-md2", group:"Group I", homeTeam:"France",       homeFlag:"🇫🇷", awayTeam:"Iraq",           awayFlag:"🇮🇶", date:"Jun 22", time:"18:00", venue:"Lincoln Financial Field · Philadelphia",  communityHome:85, communityDraw:10, communityAway:5,  oddsHome:87, oddsDraw:9,  oddsAway:4  }),
   m({ id:"i2-2", phase:"group-md2", group:"Group I", homeTeam:"Norway",       homeFlag:"🇳🇴", awayTeam:"Senegal",        awayFlag:"🇸🇳", date:"Jun 22", time:"22:00", venue:"MetLife Stadium · New York",             communityHome:45, communityDraw:28, communityAway:27, oddsHome:44, oddsDraw:28, oddsAway:28 }),
@@ -169,7 +170,7 @@ export const MATCHES: Match[] = [
   // ══════════════════════════════════════════════════════════════════════════
   // GROUP J
   // ══════════════════════════════════════════════════════════════════════════
-  m({ id:"j1-1", phase:"group-md1", group:"Group J", homeTeam:"Argentina",    homeFlag:"🇦🇷", awayTeam:"Algeria",        awayFlag:"🇩🇿", date:"Jun 16", time:"21:00", venue:"Arrowhead Stadium · Kansas City",        communityHome:70, communityDraw:18, communityAway:12, oddsHome:72, oddsDraw:17, oddsAway:11, illustration:"/match-j-arg-alg.png" }),
+  { id:"j1-1", phase:"group-md1", group:"Group J", homeTeam:"Argentina",    homeFlag:"🇦🇷", awayTeam:"Algeria",        awayFlag:"🇩🇿", date:"Jun 16", time:"21:00", venue:"Arrowhead Stadium · Kansas City",        communityHome:70, communityDraw:18, communityAway:12, oddsHome:72, oddsDraw:17, oddsAway:11, illustration:"/match-j-arg-alg.png", homeScore: 3, awayScore: 0 },
   m({ id:"j1-2", phase:"group-md1", group:"Group J", homeTeam:"Austria",      homeFlag:"🇦🇹", awayTeam:"Jordan",         awayFlag:"🇯🇴", date:"Jun 16", time:"21:00", venue:"Levi's Stadium · San Francisco",         communityHome:55, communityDraw:25, communityAway:20, oddsHome:58, oddsDraw:23, oddsAway:19, illustration:"/match-j-aut-jor.png" }),
   m({ id:"j2-1", phase:"group-md2", group:"Group J", homeTeam:"Argentina",    homeFlag:"🇦🇷", awayTeam:"Austria",        awayFlag:"🇦🇹", date:"Jun 22", time:"21:00", venue:"AT&T Stadium · Dallas",                  communityHome:65, communityDraw:20, communityAway:15, oddsHome:67, oddsDraw:19, oddsAway:14 }),
   m({ id:"j2-2", phase:"group-md2", group:"Group J", homeTeam:"Jordan",       homeFlag:"🇯🇴", awayTeam:"Algeria",        awayFlag:"🇩🇿", date:"Jun 22", time:"21:00", venue:"Levi's Stadium · San Francisco",         communityHome:38, communityDraw:30, communityAway:32, oddsHome:36, oddsDraw:31, oddsAway:33 }),
@@ -197,15 +198,27 @@ export const MATCHES: Match[] = [
   m({ id:"l3-2", phase:"group-md3", group:"Group L", homeTeam:"Croatia",      homeFlag:"🇭🇷", awayTeam:"Ghana",          awayFlag:"🇬🇭", date:"Jun 27", time:"22:00", venue:"Lincoln Financial Field · Philadelphia",  communityHome:48, communityDraw:28, communityAway:24, oddsHome:50, oddsDraw:27, oddsAway:23 }),
 ];
 
+// Finished matches for testing: a1-1 (MEX 2-0 RSA), a1-2 (KOR 1-1 CZE), j1-1 (ARG 3-0 ALG), i1-1 (FRA 2-1 SEN)
 export const MOCK_LEAGUE: League = {
   id: "abc123",
   name: "La Banda del Martes",
   code: "BANDA26",
   members: [
+    // Ignacio (u1): predictions come from live state in the page — seeded there
     { id:"u1", name:"Ignacio",   avatar:"IG", points:0, correct:0, total:0, predictions:{} },
-    { id:"u2", name:"Rodrigo",   avatar:"RO", points:0, correct:0, total:0, predictions:{} },
-    { id:"u3", name:"Camila",    avatar:"CA", points:0, correct:0, total:0, predictions:{} },
-    { id:"u4", name:"Matías",    avatar:"MA", points:0, correct:0, total:0, predictions:{} },
-    { id:"u5", name:"Valentina", avatar:"VA", points:0, correct:0, total:0, predictions:{} },
+    // Rodrigo: a1-1 home ✓, a1-2 home ✗, j1-1 home ✓ exact, i1-1 home ✓
+    { id:"u2", name:"Rodrigo",   avatar:"RO", points:0, correct:0, total:0,
+      predictions:{ "a1-1":"home", "a1-2":"home", "j1-1":"home", "i1-1":"home" },
+      scorePicks:{ "j1-1":{ home:3, away:0 } } },
+    // Camila: a1-1 draw ✗, a1-2 draw ✓, j1-1 home ✓, i1-1 away ✗
+    { id:"u3", name:"Camila",    avatar:"CA", points:0, correct:0, total:0,
+      predictions:{ "a1-1":"draw", "a1-2":"draw", "j1-1":"home", "i1-1":"away" } },
+    // Matías: a1-1 away ✗, a1-2 draw ✓ exact, j1-1 home ✓, i1-1 home ✓ exact
+    { id:"u4", name:"Matías",    avatar:"MA", points:0, correct:0, total:0,
+      predictions:{ "a1-1":"away", "a1-2":"draw", "j1-1":"home", "i1-1":"home" },
+      scorePicks:{ "a1-2":{ home:1, away:1 }, "i1-1":{ home:2, away:1 } } },
+    // Valentina: a1-1 home ✓, a1-2 away ✗, j1-1 draw ✗, i1-1 home ✓
+    { id:"u5", name:"Valentina", avatar:"VA", points:0, correct:0, total:0,
+      predictions:{ "a1-1":"home", "a1-2":"away", "j1-1":"draw", "i1-1":"home" } },
   ],
 };
