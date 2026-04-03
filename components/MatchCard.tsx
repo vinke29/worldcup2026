@@ -237,7 +237,7 @@ export default function MatchCard({
             alt={`${match.homeTeam} vs ${match.awayTeam}`}
             className="w-full h-full object-cover"
             style={{
-              objectPosition: "center 25%",
+              objectPosition: match.imagePosition ?? "center 25%",
               filter: isMono ? "grayscale(1) contrast(1.3) brightness(1.05)" : "none",
             }}
           />
