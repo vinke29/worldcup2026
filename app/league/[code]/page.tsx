@@ -9,6 +9,15 @@ import Leaderboard from "@/components/Leaderboard";
 import OnboardingModal from "@/components/OnboardingModal";
 import { MATCHES, PHASES, MOCK_LEAGUE, type Outcome, type PhaseId } from "@/lib/mock-data";
 
+function kickoffUTC(date: string, time: string): Date {
+  const months: Record<string, number> = {
+    Jan:0,Feb:1,Mar:2,Apr:3,May:4,Jun:5,Jul:6,Aug:7,Sep:8,Oct:9,Nov:10,Dec:11
+  };
+  const [mon, day] = date.split(" ");
+  const [h, m] = time.split(":").map(Number);
+  return new Date(Date.UTC(2026, months[mon], Number(day), h + 4, m));
+}
+
 function parseDateStr(date: string): Date {
   const months: Record<string, number> = {
     Jan:0,Feb:1,Mar:2,Apr:3,May:4,Jun:5,Jul:6,Aug:7,Sep:8,Oct:9,Nov:10,Dec:11
@@ -28,7 +37,8 @@ export default function LeaguePage({
 
   const [activePhase, setActivePhase] = useState<PhaseId>("group-md1");
   const [activeDay, setActiveDay] = useState<string>("Jun 11");
-  const [predictions, setPredictions] = useState<Record<string, Outcome>>({});
+  // Temporary seed for Mexico game to test post-game UI
+  const [predictions, setPredictions] = useState<Record<string, Outcome>>({ "a1-1": "home" });
   const [mobileView, setMobileView] = useState<"matches" | "standings">("matches");
   const [mono, setMono] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
@@ -93,6 +103,19 @@ export default function LeaguePage({
 
   const dayPredicted = visibleMatches.filter((m) => predictions[m.id]).length;
   const phasePredicted = phaseMatches.filter((m) => predictions[m.id]).length;
+
+  const dayFirstKickoff = useMemo(() => {
+    if (visibleMatches.length === 0) return null;
+    return visibleMatches.reduce<Date | null>((earliest, m) => {
+      const t = kickoffUTC(m.date, m.time);
+      return !earliest || t < earliest ? t : earliest;
+    }, null);
+  }, [visibleMatches]);
+
+  // Score predictions — temporary seed for Mexico game to test post-game UI
+  const [scorePredictions, setScorePredictions] = useState<Record<string, { home: number; away: number }>>({
+    "a1-1": { home: 2, away: 0 },
+  });
 
   function handlePredict(matchId: string, outcome: Outcome) {
     setPredictions((prev) => ({ ...prev, [matchId]: outcome }));
@@ -240,7 +263,11 @@ export default function LeaguePage({
                         : `${visibleMatches.length - dayPredicted} picks left today`}
                   </span>
                   <span className="text-xs font-medium" style={{ color: t.textSec }}>
-                    {" "}· Before {currentPhase.deadline}
+                    {" "}· Locks{" "}
+                    {dayFirstKickoff
+                      ? dayFirstKickoff.toLocaleDateString(undefined, { month: "short", day: "numeric" }) + " at " +
+                        dayFirstKickoff.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit", hour12: true })
+                      : currentPhase.deadline}
                   </span>
                 </div>
               </div>
@@ -267,6 +294,7 @@ export default function LeaguePage({
                           key={match.id}
                           match={match}
                           savedPrediction={predictions[match.id]}
+                          savedScorePick={scorePredictions[match.id]}
                           onPredict={handlePredict}
                           lockedByPhase={isLocked}
                           illustrationStyle={mono ? "mono" : "color"}

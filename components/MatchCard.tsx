@@ -6,6 +6,7 @@ import type { Match, Outcome } from "@/lib/mock-data";
 interface MatchCardProps {
   match: Match;
   savedPrediction?: Outcome;
+  savedScorePick?: { home: number; away: number };
   onPredict?: (matchId: string, outcome: Outcome) => void;
   lockedByPhase?: boolean;
   illustrationStyle?: "color" | "mono";
@@ -110,6 +111,7 @@ function IllustrationPlaceholder({ match }: { match: Match }) {
 export default function MatchCard({
   match,
   savedPrediction,
+  savedScorePick,
   onPredict,
   lockedByPhase = false,
   illustrationStyle = "color",
@@ -117,6 +119,16 @@ export default function MatchCard({
   const [selected, setSelected] = useState<Outcome | null>(savedPrediction ?? null);
   const [showOdds, setShowOdds] = useState(false);
   const [justPicked, setJustPicked] = useState(false);
+  const [scoreHome, setScoreHome] = useState(savedScorePick ? String(savedScorePick.home) : "");
+  const [scoreAway, setScoreAway] = useState(savedScorePick ? String(savedScorePick.away) : "");
+  const [scoreSaved, setScoreSaved] = useState(!!savedScorePick);
+
+  useEffect(() => {
+    if (scoreHome === "" && scoreAway === "") { setScoreSaved(false); return; }
+    setScoreSaved(false);
+    const t = setTimeout(() => setScoreSaved(true), 900);
+    return () => clearTimeout(t);
+  }, [scoreHome, scoreAway]);
 
   // Sync when parent updates prediction externally (e.g. from onboarding)
   useEffect(() => {
@@ -132,13 +144,34 @@ export default function MatchCard({
   const isFinished = match.homeScore !== null && match.awayScore !== null;
   const disabled = lockedByPhase || isGameLocked;
 
-  function handleSelect(outcome: Outcome) {
+  function handleSelect(outcome: Outcome, clearScore = false) {
     if (disabled) return;
     setSelected(outcome);
     onPredict?.(match.id, outcome);
     setJustPicked(true);
     setTimeout(() => setJustPicked(false), 350);
+    if (clearScore) {
+      setScoreHome("");
+      setScoreAway("");
+    }
   }
+
+  // Infer outcome from scores — runs after both state values are committed,
+  // avoiding stale-closure bugs when both inputs update before a re-render.
+  useEffect(() => {
+    if (disabled || scoreHome === "" || scoreAway === "") return;
+    const h = parseInt(scoreHome);
+    const a = parseInt(scoreAway);
+    if (isNaN(h) || isNaN(a)) return;
+    const implied: Outcome = h > a ? "home" : a > h ? "away" : "draw";
+    if (implied !== selected) {
+      setSelected(implied);
+      onPredict?.(match.id, implied);
+      setJustPicked(true);
+      const t = setTimeout(() => setJustPicked(false), 350);
+      return () => clearTimeout(t);
+    }
+  }, [scoreHome, scoreAway]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const comm = { home: match.communityHome, draw: match.communityDraw, away: match.communityAway };
   const odds = { home: match.oddsHome, draw: match.oddsDraw, away: match.oddsAway };
@@ -267,77 +300,148 @@ export default function MatchCard({
         </div>
       </div>
 
-      {/* Post-game result row */}
-      {isFinished && selected && (
-        <div className="flex items-center gap-2 px-4 pb-3">
-          {isCorrect ? (
-            <>
-              <span className="text-[10px] font-black uppercase tracking-wide" style={{ color: "#4ADE80" }}>✓ Correct</span>
-              <span className="text-[10px]" style={{ color: isMono ? "#A89E8E" : "#4A6B50" }}>·</span>
-              <span className="text-[10px] font-black" style={{ color: "#4ADE80" }}>+1 pt</span>
-            </>
-          ) : (
-            <>
-              <span className="text-[10px] font-black uppercase tracking-wide" style={{ color: isMono ? "#A89E8E" : "#4A6B50" }}>✗ Wrong pick</span>
-              <span className="text-[10px]" style={{ color: isMono ? "#C8C0B0" : "#2C4832" }}>·</span>
-              <span className="text-[10px]" style={{ color: isMono ? "#C8C0B0" : "#2C4832" }}>
-                {actualOutcome === "home" ? match.homeTeam : actualOutcome === "away" ? match.awayTeam : "Draw"} won
+      {isFinished ? (
+        /* ── Post-game result banner ─────────────────────────────────────── */
+        <div className="px-4 pb-4">
+          <div
+            className="flex flex-col gap-1.5 px-4 py-3 rounded-2xl"
+            style={{
+              backgroundColor: isCorrect
+                ? isMono ? "rgba(26,18,8,0.05)" : "rgba(74,222,128,0.1)"
+                : isWrong
+                ? isMono ? "rgba(26,18,8,0.04)" : "rgba(248,113,113,0.07)"
+                : isMono ? "rgba(26,18,8,0.05)" : "rgba(255,255,255,0.03)",
+              border: `1px solid ${
+                isCorrect ? isMono ? "#C8C0B0" : "rgba(74,222,128,0.25)"
+                : isWrong  ? isMono ? "#DDD9D0" : "rgba(248,113,113,0.18)"
+                : isMono   ? "#DDD9D0" : "#1F3A24"
+              }`,
+            }}
+          >
+            <span className="text-[9px] font-black uppercase tracking-widest" style={{ color: isMono ? "#A89E8E" : "#4A6B50" }}>
+              Final result
+            </span>
+
+            {selected ? (
+              isCorrect ? (() => {
+                const isExact = scoreHome !== "" && scoreAway !== ""
+                  && scoreHome === String(match.homeScore)
+                  && scoreAway === String(match.awayScore);
+                return (
+                  <span className="text-sm font-black" style={{ color: "#4ADE80" }}>
+                    {isExact ? "✓ Exact score · +3 pts" : "✓ Correct result · +1 pt"}
+                  </span>
+                );
+              })() : (
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                  <span className="text-sm font-black" style={{ color: "#F87171" }}>✗ Wrong pick</span>
+                  <span className="text-xs" style={{ color: isMono ? "#A89E8E" : "#7A9B84" }}>
+                    · {actualOutcome === "home" ? match.homeTeam : actualOutcome === "away" ? match.awayTeam : "Draw"} won
+                  </span>
+                </div>
+              )
+            ) : (
+              <span className="text-sm" style={{ color: isMono ? "#A89E8E" : "#4A6B50" }}>
+                No pick · {actualOutcome === "home" ? match.homeTeam : actualOutcome === "away" ? match.awayTeam : "Draw"} won
               </span>
-            </>
-          )}
+            )}
+          </div>
         </div>
-      )}
+      ) : (
+        /* ── Pre-game: time, pick buttons, score ─────────────────────────── */
+        <>
+          {/* Time + venue */}
+          <div className="flex items-center gap-1.5 px-4 pb-3 text-[10px]" style={{ color: isMono ? "#A89E8E" : "#4A6B50" }}>
+            <span className="font-bold">
+              {kickoff.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit", hour12: true })}
+            </span>
+            <span>·</span>
+            <span className="truncate">{match.venue.split("·")[0].trim()}</span>
+          </div>
 
-      {/* Time + venue */}
-      {!isFinished && (
-        <div className="flex items-center gap-1.5 px-4 pb-3 text-[10px]" style={{ color: isMono ? "#A89E8E" : "#4A6B50" }}>
-          <span className="font-bold">
-            {kickoff.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit", hour12: true })}
-          </span>
-          <span>·</span>
-          <span className="truncate">{match.venue.split("·")[0].trim()}</span>
-        </div>
-      )}
+          {/* Prediction buttons */}
+          <div className="flex gap-1.5 px-4 pb-3">
+            {buttons.map(({ outcome, label }) => {
+              const isActive = selected === outcome;
+              const col = OUTCOME_COLORS[outcome];
+              return (
+                <button
+                  key={outcome}
+                  onClick={() => handleSelect(outcome, true)}
+                  disabled={disabled}
+                  className={`flex-1 py-3 rounded-xl text-[8px] sm:text-[10px] font-black uppercase tracking-tight sm:tracking-wide transition-all duration-200${!selected && !disabled ? " btn-unpicked" : ""}`}
+                  style={{
+                    backgroundColor: isActive ? col : "transparent",
+                    color: isActive ? "#0B1E0D" : disabled ? "#3A5A40" : "#7A9B84",
+                    border: `1.5px solid ${isActive ? col : disabled ? "#1F3A24" : "#2C4832"}`,
+                    cursor: disabled ? "default" : "pointer",
+                    boxShadow: isActive ? `0 0 14px ${col}44` : undefined,
+                    transform: isActive ? "translateY(-1px)" : "none",
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!disabled && !isActive) {
+                      const el = e.currentTarget as HTMLButtonElement;
+                      el.style.borderColor = col + "80";
+                      el.style.color = col;
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!disabled && !isActive) {
+                      const el = e.currentTarget as HTMLButtonElement;
+                      el.style.borderColor = "#2C4832";
+                      el.style.color = "#7A9B84";
+                    }
+                  }}
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </div>
 
-      {/* Prediction buttons */}
-      <div className="flex gap-1.5 px-4 pb-4">
-        {buttons.map(({ outcome, label }) => {
-          const isActive = selected === outcome;
-          const col = OUTCOME_COLORS[outcome];
-          return (
-            <button
-              key={outcome}
-              onClick={() => handleSelect(outcome)}
-              disabled={disabled}
-              className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-wide transition-all duration-200${!selected && !disabled ? " btn-unpicked" : ""}`}
+          {/* Score prediction — shown after picking a result */}
+          {selected && !disabled && (
+            <div
+              className="mx-4 mb-4 px-3 py-2.5 rounded-xl flex items-center gap-3"
               style={{
-                backgroundColor: isActive ? col : "transparent",
-                color: isActive ? "#0B1E0D" : disabled ? "#3A5A40" : "#7A9B84",
-                border: `1.5px solid ${isActive ? col : disabled ? "#1F3A24" : "#2C4832"}`,
-                cursor: disabled ? "default" : "pointer",
-                boxShadow: isActive ? `0 0 14px ${col}44` : undefined,
-                transform: isActive ? "translateY(-1px)" : "none",
-              }}
-              onMouseEnter={(e) => {
-                if (!disabled && !isActive) {
-                  const el = e.currentTarget as HTMLButtonElement;
-                  el.style.borderColor = col + "80";
-                  el.style.color = col;
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (!disabled && !isActive) {
-                  const el = e.currentTarget as HTMLButtonElement;
-                  el.style.borderColor = "#2C4832";
-                  el.style.color = "#7A9B84";
-                }
+                backgroundColor: isMono ? "rgba(26,18,8,0.05)" : "rgba(255,255,255,0.03)",
+                border: `1px solid ${isMono ? "#E5E1D8" : "#1F3A24"}`,
               }}
             >
-              {label}
-            </button>
-          );
-        })}
-      </div>
+              <div className="flex-1 flex items-center gap-2">
+                <span className="text-[9px] font-black uppercase tracking-widest" style={{ color: isMono ? "#6B5E4E" : "#7A9B84" }}>
+                  Score prediction
+                </span>
+                <span
+                  className="text-[9px] font-bold transition-opacity duration-300"
+                  style={{ color: "#4ADE80", opacity: scoreSaved ? 1 : 0 }}
+                >
+                  ✓ Saved
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  type="number" min="0" max="20"
+                  value={scoreHome}
+                  onChange={(e) => setScoreHome(e.target.value)}
+                  placeholder="0"
+                  className="w-11 h-10 text-center font-black text-base rounded-lg border bg-transparent appearance-none outline-none"
+                  style={{ color: isMono ? "#1A1208" : "#F0EDE6", borderColor: isMono ? "#DDD9D0" : "#2C4832" }}
+                />
+                <span className="font-black text-sm" style={{ color: isMono ? "#C8C0B0" : "#2C4832" }}>—</span>
+                <input
+                  type="number" min="0" max="20"
+                  value={scoreAway}
+                  onChange={(e) => setScoreAway(e.target.value)}
+                  placeholder="0"
+                  className="w-11 h-10 text-center font-black text-base rounded-lg border bg-transparent appearance-none outline-none"
+                  style={{ color: isMono ? "#1A1208" : "#F0EDE6", borderColor: isMono ? "#DDD9D0" : "#2C4832" }}
+                />
+              </div>
+            </div>
+          )}
+        </>
+      )}
 
       {/* Data section */}
       <div className="px-4 pb-5 pt-3" style={{ borderTop: `1px solid ${isMono ? "#E5E1D8" : "#1F3A24"}` }}>
@@ -359,23 +463,23 @@ export default function MatchCard({
             <span className="font-black tabular-nums leading-none" style={{ fontSize: `${16 + (pct.home / 100) * 14}px`, color: "#4ADE80", opacity: pct.home < 20 ? 0.5 : 1 }}>
               {pct.home}%
             </span>
-            <span className="text-[10px] mt-0.5" style={{ color: "#7A9B84" }}>{match.homeTeam.split(" ")[0]}</span>
+            <span className="text-[10px] mt-0.5" style={{ color: isMono ? "#A89E8E" : "#7A9B84" }}>{match.homeTeam.split(" ")[0]}</span>
           </div>
           <div className="flex flex-col items-center">
             <span className="font-black tabular-nums leading-none" style={{ fontSize: `${14 + (pct.draw / 100) * 10}px`, color: "#FCD34D", opacity: pct.draw < 15 ? 0.4 : 0.9 }}>
               {pct.draw}%
             </span>
-            <span className="text-[10px] mt-0.5" style={{ color: "#7A9B84" }}>Draw</span>
+            <span className="text-[10px] mt-0.5" style={{ color: isMono ? "#A89E8E" : "#7A9B84" }}>Draw</span>
           </div>
           <div className="flex flex-col items-end">
             <span className="font-black tabular-nums leading-none" style={{ fontSize: `${16 + (pct.away / 100) * 14}px`, color: "#F87171", opacity: pct.away < 20 ? 0.5 : 1 }}>
               {pct.away}%
             </span>
-            <span className="text-[10px] mt-0.5 text-right" style={{ color: "#7A9B84" }}>{match.awayTeam.split(" ")[0]}</span>
+            <span className="text-[10px] mt-0.5 text-right" style={{ color: isMono ? "#A89E8E" : "#7A9B84" }}>{match.awayTeam.split(" ")[0]}</span>
           </div>
         </div>
 
-        <div className="flex rounded-full overflow-hidden gap-px" style={{ height: "8px", backgroundColor: "#0F2411" }}>
+        <div className="flex rounded-full overflow-hidden gap-px" style={{ height: "8px", backgroundColor: isMono ? "#DDD9D0" : "#0F2411" }}>
           <div className="rounded-l-full transition-all duration-700" style={{ width: `${pct.home}%`, backgroundColor: "#4ADE80", boxShadow: pct.home > 50 ? "2px 0 10px rgba(74,222,128,0.4)" : "none" }} />
           <div className="transition-all duration-700" style={{ width: `${pct.draw}%`, backgroundColor: "#FCD34D" }} />
           <div className="rounded-r-full transition-all duration-700" style={{ width: `${pct.away}%`, backgroundColor: "#F87171", boxShadow: pct.away > 50 ? "-2px 0 10px rgba(248,113,113,0.4)" : "none" }} />

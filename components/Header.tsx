@@ -56,7 +56,7 @@ export default function Header({ leagueName, leagueCode, mono = false, onToggleM
           {onToggleMono && (
             <button
               onClick={onToggleMono}
-              className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 border cursor-pointer transition-all duration-200"
+              className="flex items-center justify-center rounded-lg w-8 h-8 border cursor-pointer transition-all duration-200"
               style={{
                 borderColor: mono ? "#C8C0B0" : "#2C4832",
                 backgroundColor: mono ? "rgba(26,18,8,0.08)" : "transparent",
@@ -64,9 +64,6 @@ export default function Header({ leagueName, leagueCode, mono = false, onToggleM
             >
               <span className="text-sm" style={{ lineHeight: 1 }}>
                 {mono ? "🎨" : "◑"}
-              </span>
-              <span className="text-[10px] font-bold tracking-widest uppercase" style={{ color: mono ? "#1A1208" : "#7A9B84" }}>
-                {mono ? "Color" : "Ink"}
               </span>
             </button>
           )}
