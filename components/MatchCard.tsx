@@ -8,6 +8,7 @@ interface MatchCardProps {
   savedPrediction?: Outcome;
   savedScorePick?: { home: number; away: number };
   onPredict?: (matchId: string, outcome: Outcome) => void;
+  onScorePick?: (matchId: string, home: number, away: number) => void;
   lockedByPhase?: boolean;
   illustrationStyle?: "color" | "mono";
 }
@@ -113,6 +114,7 @@ export default function MatchCard({
   savedPrediction,
   savedScorePick,
   onPredict,
+  onScorePick,
   lockedByPhase = false,
   illustrationStyle = "color",
 }: MatchCardProps) {
@@ -163,6 +165,7 @@ export default function MatchCard({
     const h = parseInt(scoreHome);
     const a = parseInt(scoreAway);
     if (isNaN(h) || isNaN(a)) return;
+    onScorePick?.(match.id, h, a);
     const implied: Outcome = h > a ? "home" : a > h ? "away" : "draw";
     if (implied !== selected) {
       setSelected(implied);

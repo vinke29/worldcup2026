@@ -54,8 +54,14 @@ export default function LeaguePage({
   const defaultNav = getDefaultNav();
   const [activePhase, setActivePhase] = useState<PhaseId>(defaultNav.phase);
   const [activeDay, setActiveDay] = useState<string>(defaultNav.day);
-  // Temporary seed for Mexico game to test post-game UI
-  const [predictions, setPredictions] = useState<Record<string, Outcome>>({ "a1-1": "home", "a1-2": "draw", "j1-1": "home", "i1-1": "home" });
+  const [predictions, setPredictions] = useState<Record<string, Outcome>>(() => {
+    try {
+      const saved = localStorage.getItem("quiniela_predictions");
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    // Seed for testing finished-game UI — remove once real data flows in
+    return { "a1-1": "home", "a1-2": "draw", "j1-1": "home", "i1-1": "home" };
+  });
   const [mobileView, setMobileView] = useState<"matches" | "standings">("matches");
   const [mono, setMono] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
@@ -65,6 +71,14 @@ export default function LeaguePage({
       setShowOnboarding(true);
     }
   }, []);
+
+  useEffect(() => {
+    localStorage.setItem("quiniela_predictions", JSON.stringify(predictions));
+  }, [predictions]);
+
+  useEffect(() => {
+    localStorage.setItem("quiniela_score_picks", JSON.stringify(scorePredictions));
+  }, [scorePredictions]);
 
   const currentPhase = PHASES.find((p) => p.id === activePhase)!;
   const isGroupPhase = activePhase.startsWith("group");
@@ -129,14 +143,21 @@ export default function LeaguePage({
     }, null);
   }, [visibleMatches]);
 
-  // Score predictions — temporary seed for Mexico game to test post-game UI
-  const [scorePredictions, setScorePredictions] = useState<Record<string, { home: number; away: number }>>({
-    "a1-1": { home: 2, away: 0 },
-    "j1-1": { home: 2, away: 0 },
+  const [scorePredictions, setScorePredictions] = useState<Record<string, { home: number; away: number }>>(() => {
+    try {
+      const saved = localStorage.getItem("quiniela_score_picks");
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    // Seed for testing exact-score UI — remove once real data flows in
+    return { "a1-1": { home: 2, away: 0 }, "j1-1": { home: 2, away: 0 } };
   });
 
   function handlePredict(matchId: string, outcome: Outcome) {
     setPredictions((prev) => ({ ...prev, [matchId]: outcome }));
+  }
+
+  function handleScorePick(matchId: string, home: number, away: number) {
+    setScorePredictions((prev) => ({ ...prev, [matchId]: { home, away } }));
   }
 
   function handleOnboardingComplete(matchId?: string, outcome?: Outcome) {
@@ -314,6 +335,7 @@ export default function LeaguePage({
                           savedPrediction={predictions[match.id]}
                           savedScorePick={scorePredictions[match.id]}
                           onPredict={handlePredict}
+                          onScorePick={handleScorePick}
                           lockedByPhase={isLocked}
                           illustrationStyle={mono ? "mono" : "color"}
                         />
