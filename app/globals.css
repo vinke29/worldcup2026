@@ -1,26 +1,68 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-pitch:        #0B1E0D;
+  --color-pitch-mid:    #0F2411;
+  --color-card:         #1A2E1F;
+  --color-card-raised:  #1F3A24;
+  --color-border:       #2C4832;
+  --color-border-glow:  rgba(215,255,90,0.25);
+  --color-lime:         #D7FF5A;
+  --color-lime-dim:     rgba(215,255,90,0.12);
+  --color-cream:        #F0EDE6;
+  --color-secondary:    #B3C9B7;
+  --color-muted:        #7A9B84;
+  --color-home:         #4ADE80;
+  --color-draw:         #FCD34D;
+  --color-away:         #F87171;
+  --font-sans:          var(--font-geist-sans);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* { box-sizing: border-box; }
+
+html, body {
+  background-color: #0B1E0D;
+  color: #F0EDE6;
+  min-height: 100vh;
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
 
+/* Grass stripe texture */
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-image:
+    repeating-linear-gradient(
+      180deg,
+      transparent,
+      transparent 72px,
+      rgba(255,255,255,0.013) 72px,
+      rgba(255,255,255,0.013) 73px
+    );
+}
+
+::selection {
+  background: #D7FF5A;
+  color: #0B1E0D;
+}
+
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: #0B1E0D; }
+::-webkit-scrollbar-thumb { background: #2C4832; border-radius: 2px; }
+
+@keyframes pick-pulse {
+  0%, 100% { box-shadow: none; }
+  50%       { box-shadow: 0 0 0 2px rgba(215, 255, 90, 0.18); }
+}
+
+.btn-unpicked {
+  animation: pick-pulse 3s ease-in-out infinite;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; transform: scale(0.96); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+.onboarding-card {
+  animation: fade-in 0.2s ease-out forwards;
 }
