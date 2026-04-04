@@ -7,6 +7,7 @@ import DayNav, { type Day } from "@/components/DayNav";
 import MatchCard from "@/components/MatchCard";
 import Leaderboard from "@/components/Leaderboard";
 import OnboardingModal from "@/components/OnboardingModal";
+import GroupsView from "@/components/GroupsView";
 import { MATCHES, PHASES, type Outcome, type PhaseId, type Member } from "@/lib/mock-data";
 import { computeStandings } from "@/lib/scoring";
 import { savePrediction, saveScorePick } from "@/app/actions/predictions";
@@ -67,7 +68,7 @@ export default function LeagueClient({
   const [activeDay, setActiveDay] = useState<string>(defaultNav.day);
   const [predictions, setPredictions] = useState<Record<string, Outcome>>(initialPredictions);
   const [scorePredictions, setScorePredictions] = useState<Record<string, { home: number; away: number }>>(initialScorePicks);
-  const [mobileView, setMobileView] = useState<"matches" | "standings">("matches");
+  const [mobileView, setMobileView] = useState<"matches" | "standings" | "groups">("matches");
   const [mono, setMono] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
 
@@ -224,7 +225,7 @@ export default function LeagueClient({
           className="flex sm:hidden rounded-xl p-1 mb-5 border"
           style={{ backgroundColor: t.cardBg, borderColor: t.border }}
         >
-          {(["matches", "standings"] as const).map((tab) => (
+          {(["matches", "groups", "standings"] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => setMobileView(tab)}
@@ -241,7 +242,7 @@ export default function LeagueClient({
 
         <div className="flex gap-6 items-start">
           {/* Matches */}
-          <div className={`flex-1 min-w-0 ${mobileView === "standings" ? "max-sm:hidden" : ""}`}>
+          <div className={`flex-1 min-w-0 ${mobileView !== "matches" ? "max-sm:hidden" : ""}`}>
 
             {/* Phase / day header */}
             {isLocked ? (
@@ -362,7 +363,7 @@ export default function LeagueClient({
           </div>
 
           {/* Sidebar */}
-          <div className={`sm:w-64 flex-shrink-0 sm:sticky sm:top-36 space-y-3 ${mobileView === "matches" ? "max-sm:hidden" : "w-full"}`}>
+          <div className={`sm:w-64 flex-shrink-0 sm:sticky sm:top-36 space-y-3 ${mobileView === "matches" || mobileView === "groups" ? "max-sm:hidden" : "w-full"}`}>
             <Leaderboard
               members={computeStandings(MATCHES, members, currentUserId, predictions, scorePredictions)}
               currentUserId={currentUserId}
@@ -396,6 +397,18 @@ export default function LeagueClient({
               </div>
             </div>
           </div>
+        </div>
+
+        {/* Groups view — full width, mobile only tab */}
+        {mobileView === "groups" && (
+          <div className="sm:hidden mt-0">
+            <GroupsView scorePicks={scorePredictions} mono={mono} />
+          </div>
+        )}
+
+        {/* Groups view — desktop always visible below main content */}
+        <div className="hidden sm:block mt-8">
+          <GroupsView scorePicks={scorePredictions} mono={mono} />
         </div>
       </div>
     </div>
