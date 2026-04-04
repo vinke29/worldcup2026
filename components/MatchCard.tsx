@@ -132,10 +132,17 @@ export default function MatchCard({
     return () => clearTimeout(t);
   }, [scoreHome, scoreAway]);
 
-  // Sync when parent updates prediction externally (e.g. from onboarding)
+  // Sync when parent updates externally (e.g. from onboarding)
   useEffect(() => {
     if (savedPrediction !== undefined) setSelected(savedPrediction);
   }, [savedPrediction]);
+
+  useEffect(() => {
+    if (savedScorePick !== undefined) {
+      setScoreHome(String(savedScorePick.home));
+      setScoreAway(String(savedScorePick.away));
+    }
+  }, [savedScorePick]);
 
   const kickoff = matchKickoff(match.date, match.time);
   const countdown = useCountdown(kickoff);

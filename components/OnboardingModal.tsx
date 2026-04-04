@@ -27,6 +27,12 @@ export default function OnboardingModal({
   const [scoreHome, setScoreHome] = useState("");
   const [scoreAway, setScoreAway] = useState("");
 
+  // Prevent background page from scrolling behind the modal
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = ""; };
+  }, []);
+
   // Always dark — onboarding is a cinematic moment
   const bg      = "#0B1E0D";
   const deepBg  = "#0F2411";

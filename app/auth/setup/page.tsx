@@ -1,11 +1,17 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 import Link from "next/link";
 import { createLeague, joinLeague } from "@/app/actions/league";
 
-export default function SetupPage() {
-  const [tab, setTab] = useState<"create" | "join">("create");
+function SetupForm() {
+  const searchParams = useSearchParams();
+  const intent = searchParams.get("intent");
+  const prefillCode = searchParams.get("code") ?? "";
+  const prefillLeagueName = searchParams.get("leagueName") ?? "";
+  const [tab, setTab] = useState<"create" | "join">(intent === "join" ? "join" : "create");
   const [createError, createAction, createPending] = useActionState(createLeague, null);
   const [joinError, joinAction, joinPending] = useActionState(joinLeague, null);
 
@@ -76,6 +82,7 @@ export default function SetupPage() {
                       name="leagueName"
                       placeholder="La Banda del Martes"
                       required
+                      defaultValue={prefillLeagueName}
                     />
                   </SetupField>
                   <SetupButton pending={createPending}>
@@ -108,6 +115,7 @@ export default function SetupPage() {
                       placeholder="BANDA26"
                       required
                       maxLength={10}
+                      defaultValue={prefillCode}
                       style={{ fontFamily: "monospace", letterSpacing: "0.15em" }}
                     />
                   </SetupField>
@@ -181,5 +189,13 @@ function SetupButton({
     >
       {pending ? "Please wait…" : children}
     </button>
+  );
+}
+
+export default function SetupPage() {
+  return (
+    <Suspense>
+      <SetupForm />
+    </Suspense>
   );
 }

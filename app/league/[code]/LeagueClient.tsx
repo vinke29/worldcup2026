@@ -164,6 +164,17 @@ export default function LeagueClient({
       }
     }
     setShowOnboarding(false);
+    window.scrollTo({ top: 0, behavior: "instant" });
+  }
+
+  function scrollToFirstUnpicked() {
+    const firstUnpicked = visibleMatches.find((m) => !predictions[m.id]);
+    if (firstUnpicked) {
+      document.getElementById(`match-${firstUnpicked.id}`)?.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+    }
   }
 
   // Theme tokens
@@ -283,8 +294,9 @@ export default function LeagueClient({
 
             {/* Missing picks banner */}
             {!isLocked && visibleMatches.length > 0 && dayPredicted < visibleMatches.length && (
-              <div
-                className="flex items-center gap-3 mb-4 pl-4 pr-3 py-3 rounded-2xl"
+              <button
+                onClick={scrollToFirstUnpicked}
+                className="flex items-center gap-3 mb-4 pl-4 pr-3 py-3 rounded-2xl w-full text-left cursor-pointer"
                 style={{
                   backgroundColor: mono ? "rgba(26,18,8,0.07)" : "rgba(215,255,90,0.08)",
                   borderTop:    `1px solid ${mono ? "rgba(26,18,8,0.12)" : "rgba(215,255,90,0.18)"}`,
@@ -309,7 +321,7 @@ export default function LeagueClient({
                       : currentPhase.deadline}
                   </span>
                 </div>
-              </div>
+              </button>
             )}
 
             {/* Matches */}
@@ -329,8 +341,8 @@ export default function LeagueClient({
                     </div>
                     <div className="space-y-3">
                       {matchesByGroup[groupName].map((match) => (
+                        <div key={match.id} id={`match-${match.id}`}>
                         <MatchCard
-                          key={match.id}
                           match={match}
                           savedPrediction={predictions[match.id]}
                           savedScorePick={scorePredictions[match.id]}
@@ -339,6 +351,7 @@ export default function LeagueClient({
                           lockedByPhase={isLocked}
                           illustrationStyle={mono ? "mono" : "color"}
                         />
+                        </div>
                       ))}
                     </div>
                   </div>

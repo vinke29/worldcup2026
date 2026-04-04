@@ -19,13 +19,20 @@ export default function Home() {
 
   function handleCreate(e: React.FormEvent) {
     e.preventDefault();
-    router.push("/auth/signup");
+    const params = new URLSearchParams();
+    if (name.trim()) params.set("name", name.trim());
+    if (leagueName.trim()) params.set("leagueName", leagueName.trim());
+    router.push(`/auth/signup?${params}`);
   }
 
   function handleJoin(e: React.FormEvent) {
     e.preventDefault();
     if (!joinCode.trim()) return;
-    router.push(`/auth/signup?intent=join&code=${joinCode.trim().toUpperCase()}`);
+    const params = new URLSearchParams();
+    if (name.trim()) params.set("name", name.trim());
+    params.set("intent", "join");
+    params.set("code", joinCode.trim().toUpperCase());
+    router.push(`/auth/signup?${params}`);
   }
 
   function scrollToForm(t: "create" | "join") {

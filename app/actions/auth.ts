@@ -76,11 +76,13 @@ export async function signup(
   if (!data.user) return "Signup failed — please try again.";
 
   // No session yet → Supabase sent a confirmation email
+  const setupQuery = (formData.get("setupQuery") as string | null) ?? "";
+
   if (!data.session) {
     redirect(`/auth/confirm?email=${encodeURIComponent(email)}`);
   }
 
-  redirect("/auth/setup");
+  redirect(setupQuery ? `/auth/setup?${setupQuery}` : "/auth/setup");
 }
 
 export async function logout() {

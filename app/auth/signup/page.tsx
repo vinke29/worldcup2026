@@ -1,11 +1,24 @@
 "use client";
 
 import { useActionState } from "react";
+import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 import Link from "next/link";
 import { signup } from "@/app/actions/auth";
 
-export default function SignupPage() {
+function SignupForm() {
   const [error, action, pending] = useActionState(signup, null);
+  const searchParams = useSearchParams();
+  const prefillName = searchParams.get("name") ?? "";
+  // Pass intent+code through to the redirect after signup
+  const setupParams = new URLSearchParams();
+  const intent = searchParams.get("intent");
+  const code = searchParams.get("code");
+  const leagueName = searchParams.get("leagueName");
+  if (intent) setupParams.set("intent", intent);
+  if (code) setupParams.set("code", code);
+  if (leagueName) setupParams.set("leagueName", leagueName);
+  const setupQuery = setupParams.toString();
 
   return (
     <main
@@ -54,6 +67,8 @@ export default function SignupPage() {
           )}
 
           <form action={action} className="space-y-4">
+            {/* Pass setup params through so the auth action can redirect correctly */}
+            {setupQuery && <input type="hidden" name="setupQuery" value={setupQuery} />}
             <AuthField label="Your name">
               <input
                 type="text"
@@ -61,6 +76,7 @@ export default function SignupPage() {
                 placeholder="Ignacio"
                 required
                 autoComplete="name"
+                defaultValue={prefillName}
               />
             </AuthField>
             <AuthField label="Email">
@@ -155,5 +171,13 @@ function AuthButton({
     >
       {pending ? "Creating account…" : children}
     </button>
+  );
+}
+
+export default function SignupPage() {
+  return (
+    <Suspense>
+      <SignupForm />
+    </Suspense>
   );
 }
