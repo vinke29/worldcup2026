@@ -241,7 +241,7 @@ export default function LeagueClient({
 
         <div className="flex gap-6 items-start">
           {/* Matches */}
-          <div className={`flex-1 min-w-0 ${mobileView === "standings" ? "hidden sm:block" : "block"}`}>
+          <div className={`flex-1 min-w-0 ${mobileView === "standings" ? "max-sm:hidden" : ""}`}>
 
             {/* Phase / day header */}
             {isLocked ? (
@@ -362,7 +362,7 @@ export default function LeagueClient({
           </div>
 
           {/* Sidebar */}
-          <div className={`w-64 flex-shrink-0 sticky top-36 space-y-3 ${mobileView === "matches" ? "hidden sm:block" : "block"}`}>
+          <div className={`w-64 flex-shrink-0 sticky top-36 space-y-3 ${mobileView === "matches" ? "max-sm:hidden" : ""}`}>
             <Leaderboard
               members={computeStandings(MATCHES, members, currentUserId, predictions, scorePredictions)}
               currentUserId={currentUserId}
