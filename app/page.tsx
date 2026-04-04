@@ -19,13 +19,13 @@ export default function Home() {
 
   function handleCreate(e: React.FormEvent) {
     e.preventDefault();
-    router.push(`/league/${generateCode()}`);
+    router.push("/auth/signup");
   }
 
   function handleJoin(e: React.FormEvent) {
     e.preventDefault();
     if (!joinCode.trim()) return;
-    router.push(`/league/${joinCode.trim().toUpperCase()}`);
+    router.push(`/auth/signup?intent=join&code=${joinCode.trim().toUpperCase()}`);
   }
 
   function scrollToForm(t: "create" | "join") {
@@ -125,6 +125,13 @@ export default function Home() {
               </span>
             </button>
 
+            <a
+              href="/auth/login"
+              className="text-xs font-semibold transition-opacity hover:opacity-60"
+              style={{ color: t.textSec }}
+            >
+              Sign in
+            </a>
             <a
               href="/league/BANDA26"
               className="text-xs font-semibold transition-opacity hover:opacity-60"

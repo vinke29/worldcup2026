@@ -8,9 +8,10 @@ interface HeaderProps {
   leagueCode?: string;
   mono?: boolean;
   onToggleMono?: () => void;
+  onLogout?: () => void;
 }
 
-export default function Header({ leagueName, leagueCode, mono = false, onToggleMono }: HeaderProps) {
+export default function Header({ leagueName, leagueCode, mono = false, onToggleMono, onLogout }: HeaderProps) {
   const [copied, setCopied] = useState(false);
 
   function copyCode() {
@@ -52,6 +53,17 @@ export default function Header({ leagueName, leagueCode, mono = false, onToggleM
         )}
 
         <div className="flex items-center gap-2 flex-shrink-0">
+          {/* Logout */}
+          {onLogout && (
+            <button
+              onClick={onLogout}
+              className="text-[10px] font-bold uppercase tracking-widest transition-opacity hover:opacity-60 cursor-pointer"
+              style={{ color: mono ? "#A09080" : "#4A6B50" }}
+            >
+              Sign out
+            </button>
+          )}
+
           {/* Style toggle */}
           {onToggleMono && (
             <button
