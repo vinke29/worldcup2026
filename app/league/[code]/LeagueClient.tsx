@@ -74,7 +74,7 @@ export default function LeagueClient({
   useEffect(() => {
     // Show onboarding for new users (no picks yet) or preview visitors who haven't seen it
     const hasPredictions = Object.keys(initialPredictions).length > 0;
-    if (!hasPredictions && !localStorage.getItem("quiniela_onboarded")) {
+    if (!hasPredictions && !localStorage.getItem(`quiniela_onboarded_${currentUserId}`)) {
       setShowOnboarding(true);
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -202,6 +202,7 @@ export default function LeagueClient({
           leagueName={leagueName}
           firstMatch={firstOpenMatch}
           mono={mono}
+          currentUserId={currentUserId}
           onComplete={handleOnboardingComplete}
         />
       )}

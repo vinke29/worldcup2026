@@ -7,6 +7,7 @@ interface OnboardingModalProps {
   leagueName: string;
   firstMatch: Match;
   mono: boolean;
+  currentUserId: string;
   onComplete: (matchId?: string, outcome?: Outcome, scoreHome?: number, scoreAway?: number) => void;
 }
 
@@ -20,6 +21,7 @@ export default function OnboardingModal({
   leagueName,
   firstMatch,
   mono,
+  currentUserId,
   onComplete,
 }: OnboardingModalProps) {
   const [step, setStep] = useState<1 | 2>(1);
@@ -61,7 +63,7 @@ export default function OnboardingModal({
 
   function handleDone() {
     if (!picked) return;
-    localStorage.setItem("quiniela_onboarded", "1");
+    localStorage.setItem(`quiniela_onboarded_${currentUserId}`, "1");
     const h = parseInt(scoreHome);
     const a = parseInt(scoreAway);
     const hasScore = !isNaN(h) && !isNaN(a) && scoreHome !== "" && scoreAway !== "";
