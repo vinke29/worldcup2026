@@ -220,9 +220,9 @@ export default function LeagueClient({
       )}
 
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6">
-        {/* Mobile toggle */}
+        {/* Tab toggle */}
         <div
-          className="flex sm:hidden rounded-xl p-1 mb-5 border"
+          className="flex rounded-xl p-1 mb-5 border"
           style={{ backgroundColor: t.cardBg, borderColor: t.border }}
         >
           {(["matches", "groups", "standings"] as const).map((tab) => (
@@ -242,7 +242,7 @@ export default function LeagueClient({
 
         <div className="flex gap-6 items-start">
           {/* Matches */}
-          <div className={`flex-1 min-w-0 ${mobileView !== "matches" ? "max-sm:hidden" : ""}`}>
+          <div className={`flex-1 min-w-0 ${mobileView !== "matches" ? "hidden" : ""}`}>
 
             {/* Phase / day header */}
             {isLocked ? (
@@ -363,7 +363,7 @@ export default function LeagueClient({
           </div>
 
           {/* Sidebar */}
-          <div className={`sm:w-64 flex-shrink-0 sm:sticky sm:top-36 space-y-3 ${mobileView === "matches" || mobileView === "groups" ? "max-sm:hidden" : "w-full"}`}>
+          <div className={`sm:w-64 w-full flex-shrink-0 sm:sticky sm:top-36 space-y-3 ${mobileView !== "standings" ? "hidden" : ""}`}>
             <Leaderboard
               members={computeStandings(MATCHES, members, currentUserId, predictions, scorePredictions)}
               currentUserId={currentUserId}
@@ -399,17 +399,10 @@ export default function LeagueClient({
           </div>
         </div>
 
-        {/* Groups view — full width, mobile only tab */}
+        {/* Groups view */}
         {mobileView === "groups" && (
-          <div className="sm:hidden mt-0">
-            <GroupsView scorePicks={scorePredictions} mono={mono} />
-          </div>
-        )}
-
-        {/* Groups view — desktop always visible below main content */}
-        <div className="hidden sm:block mt-8">
           <GroupsView scorePicks={scorePredictions} mono={mono} />
-        </div>
+        )}
       </div>
     </div>
   );

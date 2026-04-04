@@ -138,6 +138,7 @@ function GroupCard({
           <span className="w-5 text-center text-[9px] font-bold uppercase tracking-widest" style={{ color: t.textMuted }}>W</span>
           <span className="w-5 text-center text-[9px] font-bold uppercase tracking-widest" style={{ color: t.textMuted }}>D</span>
           <span className="w-5 text-center text-[9px] font-bold uppercase tracking-widest" style={{ color: t.textMuted }}>L</span>
+          <span className="w-7 text-center text-[9px] font-bold uppercase tracking-widest" style={{ color: t.textMuted }}>GD</span>
           <span className="w-7 text-right text-[9px] font-bold uppercase tracking-widest" style={{ color: t.textMuted }}>Pts</span>
         </div>
 
@@ -171,8 +172,9 @@ function GroupCard({
               <span className="w-5 text-center text-xs tabular-nums" style={{ color: t.textSec }}>{row.w}</span>
               <span className="w-5 text-center text-xs tabular-nums" style={{ color: t.textSec }}>{row.d}</span>
               <span className="w-5 text-center text-xs tabular-nums" style={{ color: t.textSec }}>{row.l}</span>
-
-              {/* Pts */}
+              <span className="w-7 text-center text-xs tabular-nums font-medium" style={{ color: row.gd > 0 ? (mono ? "#1A1208" : "#4ADE80") : row.gd < 0 ? "#F87171" : t.textMuted }}>
+                {row.gd > 0 ? `+${row.gd}` : row.gd}
+              </span>
               <span className="w-7 text-right text-xs font-black tabular-nums" style={{ color: t.text }}>
                 {row.pts}
               </span>
