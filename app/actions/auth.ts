@@ -61,15 +61,15 @@ export async function signup(
       ? (words[0][0] + words[words.length - 1][0]).toUpperCase()
       : name.slice(0, 2).toUpperCase();
 
-  const { data, error } = await supabase.auth.signUp({ email, password });
+  // Pass name + avatar as user metadata — a DB trigger picks this up and
+  // creates the profiles row (security definer, so it bypasses RLS).
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: { data: { name, avatar } },
+  });
   if (error) return error.message;
   if (!data.user) return "Signup failed — please try again.";
-
-  const { error: profileError } = await supabase
-    .from("profiles")
-    .insert({ id: data.user.id, name, avatar });
-
-  if (profileError) return profileError.message;
 
   redirect("/auth/setup");
 }
