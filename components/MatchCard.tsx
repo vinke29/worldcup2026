@@ -120,6 +120,7 @@ export default function MatchCard({
 }: MatchCardProps) {
   const [selected, setSelected] = useState<Outcome | null>(savedPrediction ?? null);
   const [showOdds, setShowOdds] = useState(false);
+  const [showStats, setShowStats] = useState(false);
   const [justPicked, setJustPicked] = useState(false);
   const [scoreHome, setScoreHome] = useState(savedScorePick ? String(savedScorePick.home) : "");
   const [scoreAway, setScoreAway] = useState(savedScorePick ? String(savedScorePick.away) : "");
@@ -456,46 +457,57 @@ export default function MatchCard({
       )}
 
       {/* Data section */}
-      <div className="px-4 pb-5 pt-3" style={{ borderTop: `1px solid ${isMono ? "#E5E1D8" : "#1F3A24"}` }}>
-        <div className="flex items-center justify-between mb-3">
-          <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: isMono ? "#8A7A6A" : "#4A6B50" }}>
-            {showOdds ? "Expected odds" : "Community picks"}
-          </span>
-          <button
-            onClick={() => setShowOdds(v => !v)}
-            className="text-[10px] font-bold hover:opacity-70 transition-opacity cursor-pointer"
-            style={{ color: isMono ? "#8A7A6A" : "#7A9B84" }}
-          >
-            {showOdds ? "← Picks" : "Odds →"}
-          </button>
-        </div>
+      <div className="px-4 pb-4 pt-3" style={{ borderTop: `1px solid ${isMono ? "#E5E1D8" : "#1F3A24"}` }}>
+        <button
+          onClick={() => setShowStats(v => !v)}
+          className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest hover:opacity-70 transition-opacity cursor-pointer"
+          style={{ color: isMono ? "#8A7A6A" : "#4A6B50" }}
+        >
+          <span>{showStats ? (showOdds ? "Expected odds" : "Community picks") : "Community picks"}</span>
+          <span style={{ color: isMono ? "#A89E8E" : "#7A9B84" }}>{showStats ? "▲" : "▼"}</span>
+        </button>
 
-        <div className="flex items-end justify-between mb-2 gap-1">
-          <div className="flex flex-col">
-            <span className="font-black tabular-nums leading-none" style={{ fontSize: `${16 + (pct.home / 100) * 14}px`, color: "#4ADE80", opacity: pct.home < 20 ? 0.5 : 1 }}>
-              {pct.home}%
-            </span>
-            <span className="text-[10px] mt-0.5" style={{ color: isMono ? "#A89E8E" : "#7A9B84" }}>{match.homeTeam.split(" ")[0]}</span>
-          </div>
-          <div className="flex flex-col items-center">
-            <span className="font-black tabular-nums leading-none" style={{ fontSize: `${14 + (pct.draw / 100) * 10}px`, color: "#FCD34D", opacity: pct.draw < 15 ? 0.4 : 0.9 }}>
-              {pct.draw}%
-            </span>
-            <span className="text-[10px] mt-0.5" style={{ color: isMono ? "#A89E8E" : "#7A9B84" }}>Draw</span>
-          </div>
-          <div className="flex flex-col items-end">
-            <span className="font-black tabular-nums leading-none" style={{ fontSize: `${16 + (pct.away / 100) * 14}px`, color: "#F87171", opacity: pct.away < 20 ? 0.5 : 1 }}>
-              {pct.away}%
-            </span>
-            <span className="text-[10px] mt-0.5 text-right" style={{ color: isMono ? "#A89E8E" : "#7A9B84" }}>{match.awayTeam.split(" ")[0]}</span>
-          </div>
-        </div>
+        {showStats && (
+          <>
+            <div className="flex items-center justify-between mt-2 mb-3">
+              <div />
+              <button
+                onClick={() => setShowOdds(v => !v)}
+                className="text-[10px] font-bold hover:opacity-70 transition-opacity cursor-pointer"
+                style={{ color: isMono ? "#8A7A6A" : "#7A9B84" }}
+              >
+                {showOdds ? "← Picks" : "Odds →"}
+              </button>
+            </div>
 
-        <div className="flex rounded-full overflow-hidden gap-px" style={{ height: "8px", backgroundColor: isMono ? "#DDD9D0" : "#0F2411" }}>
-          <div className="rounded-l-full transition-all duration-700" style={{ width: `${pct.home}%`, backgroundColor: "#4ADE80", boxShadow: pct.home > 50 ? "2px 0 10px rgba(74,222,128,0.4)" : "none" }} />
-          <div className="transition-all duration-700" style={{ width: `${pct.draw}%`, backgroundColor: "#FCD34D" }} />
-          <div className="rounded-r-full transition-all duration-700" style={{ width: `${pct.away}%`, backgroundColor: "#F87171", boxShadow: pct.away > 50 ? "-2px 0 10px rgba(248,113,113,0.4)" : "none" }} />
-        </div>
+            <div className="flex items-end justify-between mb-2 gap-1">
+              <div className="flex flex-col">
+                <span className="font-black tabular-nums leading-none" style={{ fontSize: `${16 + (pct.home / 100) * 14}px`, color: "#4ADE80", opacity: pct.home < 20 ? 0.5 : 1 }}>
+                  {pct.home}%
+                </span>
+                <span className="text-[10px] mt-0.5" style={{ color: isMono ? "#A89E8E" : "#7A9B84" }}>{match.homeTeam.split(" ")[0]}</span>
+              </div>
+              <div className="flex flex-col items-center">
+                <span className="font-black tabular-nums leading-none" style={{ fontSize: `${14 + (pct.draw / 100) * 10}px`, color: "#FCD34D", opacity: pct.draw < 15 ? 0.4 : 0.9 }}>
+                  {pct.draw}%
+                </span>
+                <span className="text-[10px] mt-0.5" style={{ color: isMono ? "#A89E8E" : "#7A9B84" }}>Draw</span>
+              </div>
+              <div className="flex flex-col items-end">
+                <span className="font-black tabular-nums leading-none" style={{ fontSize: `${16 + (pct.away / 100) * 14}px`, color: "#F87171", opacity: pct.away < 20 ? 0.5 : 1 }}>
+                  {pct.away}%
+                </span>
+                <span className="text-[10px] mt-0.5 text-right" style={{ color: isMono ? "#A89E8E" : "#7A9B84" }}>{match.awayTeam.split(" ")[0]}</span>
+              </div>
+            </div>
+
+            <div className="flex rounded-full overflow-hidden gap-px" style={{ height: "8px", backgroundColor: isMono ? "#DDD9D0" : "#0F2411" }}>
+              <div className="rounded-l-full transition-all duration-700" style={{ width: `${pct.home}%`, backgroundColor: "#4ADE80", boxShadow: pct.home > 50 ? "2px 0 10px rgba(74,222,128,0.4)" : "none" }} />
+              <div className="transition-all duration-700" style={{ width: `${pct.draw}%`, backgroundColor: "#FCD34D" }} />
+              <div className="rounded-r-full transition-all duration-700" style={{ width: `${pct.away}%`, backgroundColor: "#F87171", boxShadow: pct.away > 50 ? "-2px 0 10px rgba(248,113,113,0.4)" : "none" }} />
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

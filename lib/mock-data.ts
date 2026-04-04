@@ -49,8 +49,8 @@ export interface League {
 
 export const PHASES: Phase[] = [
   { id: "group-md1", label: "Group Stage · MD1", shortLabel: "MD 1", deadline: "Jun 11 · 13:00", status: "open",   matchCount: 24 },
-  { id: "group-md2", label: "Group Stage · MD2", shortLabel: "MD 2", deadline: "Jun 18 · 12:00", status: "locked", matchCount: 24 },
-  { id: "group-md3", label: "Group Stage · MD3", shortLabel: "MD 3", deadline: "Jun 24 · 12:00", status: "locked", matchCount: 24 },
+  { id: "group-md2", label: "Group Stage · MD2", shortLabel: "MD 2", deadline: "Jun 18 · 12:00", status: "open", matchCount: 24 },
+  { id: "group-md3", label: "Group Stage · MD3", shortLabel: "MD 3", deadline: "Jun 24 · 12:00", status: "open", matchCount: 24 },
   { id: "r32",       label: "Round of 32",        shortLabel: "R32",  deadline: "Jun 29 · 12:00", status: "locked", matchCount: 16 },
   { id: "r16",       label: "Round of 16",        shortLabel: "R16",  deadline: "Jul 4 · 12:00",  status: "locked", matchCount: 8  },
   { id: "qf",        label: "Quarter-finals",     shortLabel: "QF",   deadline: "Jul 9 · 12:00",  status: "locked", matchCount: 4  },

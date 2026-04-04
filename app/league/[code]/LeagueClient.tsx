@@ -362,7 +362,7 @@ export default function LeagueClient({
           </div>
 
           {/* Sidebar */}
-          <div className={`w-64 flex-shrink-0 sticky top-36 space-y-3 ${mobileView === "matches" ? "max-sm:hidden" : ""}`}>
+          <div className={`sm:w-64 flex-shrink-0 sm:sticky sm:top-36 space-y-3 ${mobileView === "matches" ? "max-sm:hidden" : "w-full"}`}>
             <Leaderboard
               members={computeStandings(MATCHES, members, currentUserId, predictions, scorePredictions)}
               currentUserId={currentUserId}
