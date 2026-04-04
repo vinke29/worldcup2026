@@ -1,11 +1,16 @@
 "use client";
 
 import { useActionState } from "react";
+import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 import Link from "next/link";
 import { login } from "@/app/actions/auth";
 
-export default function LoginPage() {
-  const [error, action, pending] = useActionState(login, null);
+function LoginForm() {
+  const [actionError, action, pending] = useActionState(login, null);
+  const searchParams = useSearchParams();
+  const urlError = searchParams.get("error");
+  const error = actionError ?? urlError;
 
   return (
     <main
@@ -88,6 +93,14 @@ export default function LoginPage() {
         </p>
       </div>
     </main>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginForm />
+    </Suspense>
   );
 }
 

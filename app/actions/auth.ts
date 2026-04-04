@@ -63,13 +63,22 @@ export async function signup(
 
   // Pass name + avatar as user metadata — a DB trigger picks this up and
   // creates the profiles row (security definer, so it bypasses RLS).
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
-    options: { data: { name, avatar } },
+    options: {
+      data: { name, avatar },
+      emailRedirectTo: `${siteUrl}/auth/callback`,
+    },
   });
   if (error) return error.message;
   if (!data.user) return "Signup failed — please try again.";
+
+  // No session yet → Supabase sent a confirmation email
+  if (!data.session) {
+    redirect(`/auth/confirm?email=${encodeURIComponent(email)}`);
+  }
 
   redirect("/auth/setup");
 }
