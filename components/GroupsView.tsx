@@ -102,8 +102,6 @@ function GroupCard({
   mono: boolean;
   t: Record<string, string>;
 }) {
-  const [expanded, setExpanded] = useState(false);
-
   return (
     <div
       className="rounded-2xl overflow-hidden border"
@@ -117,27 +115,18 @@ function GroupCard({
         <span className="text-xs font-black uppercase tracking-widest" style={{ color: t.textMuted }}>
           Group {letter}
         </span>
-        <div className="flex items-center gap-2">
-          {correct !== null && (
-            <span
-              className="text-[10px] font-bold px-2 py-0.5 rounded-full"
-              style={{
-                backgroundColor: correct === 4 ? (mono ? "rgba(26,18,8,0.12)" : "rgba(215,255,90,0.12)") : "transparent",
-                color: correct === 4 ? t.accent : correct >= 2 ? t.textSec : t.textMuted,
-                border: `1px solid ${correct >= 2 ? t.border : "transparent"}`,
-              }}
-            >
-              {correct}/4 correct
-            </span>
-          )}
-          <button
-            onClick={() => setExpanded(v => !v)}
-            className="text-[10px] font-bold transition-opacity hover:opacity-60 cursor-pointer"
-            style={{ color: t.textMuted }}
+        {correct !== null && (
+          <span
+            className="text-[10px] font-bold px-2 py-0.5 rounded-full"
+            style={{
+              backgroundColor: correct === 4 ? (mono ? "rgba(26,18,8,0.12)" : "rgba(215,255,90,0.12)") : "transparent",
+              color: correct === 4 ? t.accent : correct >= 2 ? t.textSec : t.textMuted,
+              border: `1px solid ${correct >= 2 ? t.border : "transparent"}`,
+            }}
           >
-            {expanded ? "Less" : "More"}
-          </button>
-        </div>
+            {correct}/4 correct
+          </span>
+        )}
       </div>
 
       {/* Table */}
@@ -146,14 +135,9 @@ function GroupCard({
         <div className="flex items-center gap-2 mb-2">
           <span className="w-4" />
           <span className="flex-1 text-[9px] font-bold uppercase tracking-widest" style={{ color: t.textMuted }}>Team</span>
-          {expanded && (
-            <>
-              <span className="w-5 text-center text-[9px] font-bold uppercase tracking-widest" style={{ color: t.textMuted }}>W</span>
-              <span className="w-5 text-center text-[9px] font-bold uppercase tracking-widest" style={{ color: t.textMuted }}>D</span>
-              <span className="w-5 text-center text-[9px] font-bold uppercase tracking-widest" style={{ color: t.textMuted }}>L</span>
-            </>
-          )}
-          <span className="w-7 text-center text-[9px] font-bold uppercase tracking-widest" style={{ color: t.textMuted }}>GD</span>
+          <span className="w-5 text-center text-[9px] font-bold uppercase tracking-widest" style={{ color: t.textMuted }}>W</span>
+          <span className="w-5 text-center text-[9px] font-bold uppercase tracking-widest" style={{ color: t.textMuted }}>D</span>
+          <span className="w-5 text-center text-[9px] font-bold uppercase tracking-widest" style={{ color: t.textMuted }}>L</span>
           <span className="w-7 text-right text-[9px] font-bold uppercase tracking-widest" style={{ color: t.textMuted }}>Pts</span>
         </div>
 
@@ -184,22 +168,9 @@ function GroupCard({
                 </span>
               </div>
 
-              {/* Expanded stats */}
-              {expanded && (
-                <>
-                  <span className="w-5 text-center text-xs tabular-nums" style={{ color: t.textSec }}>{row.w}</span>
-                  <span className="w-5 text-center text-xs tabular-nums" style={{ color: t.textSec }}>{row.d}</span>
-                  <span className="w-5 text-center text-xs tabular-nums" style={{ color: t.textSec }}>{row.l}</span>
-                </>
-              )}
-
-              {/* GD */}
-              <span
-                className="w-7 text-center text-xs tabular-nums font-medium"
-                style={{ color: row.gd > 0 ? (mono ? "#1A1208" : "#4ADE80") : row.gd < 0 ? "#F87171" : t.textMuted }}
-              >
-                {row.gd > 0 ? `+${row.gd}` : row.gd}
-              </span>
+              <span className="w-5 text-center text-xs tabular-nums" style={{ color: t.textSec }}>{row.w}</span>
+              <span className="w-5 text-center text-xs tabular-nums" style={{ color: t.textSec }}>{row.d}</span>
+              <span className="w-5 text-center text-xs tabular-nums" style={{ color: t.textSec }}>{row.l}</span>
 
               {/* Pts */}
               <span className="w-7 text-right text-xs font-black tabular-nums" style={{ color: t.text }}>
