@@ -19,8 +19,8 @@ export default async function LeaguePage({
         code={code}
         leagueName={MOCK_LEAGUE.name}
         currentUserId="u1"
-        initialPredictions={{ "a1-1": "home", "a1-2": "draw", "j1-1": "home", "i1-1": "home" }}
-        initialScorePicks={{ "a1-1": { home: 2, away: 0 }, "j1-1": { home: 2, away: 0 } }}
+        initialPredictions={{}}
+        initialScorePicks={{}}
         members={MOCK_LEAGUE.members}
         isPreview
       />

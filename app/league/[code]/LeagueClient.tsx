@@ -156,9 +156,12 @@ export default function LeagueClient({
     }
   }
 
-  function handleOnboardingComplete(matchId?: string, outcome?: Outcome) {
+  function handleOnboardingComplete(matchId?: string, outcome?: Outcome, scoreHome?: number, scoreAway?: number) {
     if (matchId && outcome) {
       handlePredict(matchId, outcome);
+      if (scoreHome !== undefined && scoreAway !== undefined) {
+        handleScorePick(matchId, scoreHome, scoreAway);
+      }
     }
     setShowOnboarding(false);
   }

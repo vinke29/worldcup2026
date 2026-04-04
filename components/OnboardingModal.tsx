@@ -1,13 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { Match, Outcome } from "@/lib/mock-data";
 
 interface OnboardingModalProps {
   leagueName: string;
   firstMatch: Match;
   mono: boolean;
-  onComplete: (matchId?: string, outcome?: Outcome) => void;
+  onComplete: (matchId?: string, outcome?: Outcome, scoreHome?: number, scoreAway?: number) => void;
 }
 
 const OUTCOME_COLORS: Record<Outcome, string> = {
@@ -24,6 +24,8 @@ export default function OnboardingModal({
 }: OnboardingModalProps) {
   const [step, setStep] = useState<1 | 2>(1);
   const [picked, setPicked] = useState<Outcome | null>(null);
+  const [scoreHome, setScoreHome] = useState("");
+  const [scoreAway, setScoreAway] = useState("");
 
   // Always dark — onboarding is a cinematic moment
   const bg      = "#0B1E0D";
@@ -34,15 +36,30 @@ export default function OnboardingModal({
   const secondary = "#7A9B84";
   const muted   = "#4A6B50";
 
-  function dismiss(matchId?: string, outcome?: Outcome) {
-    localStorage.setItem("quiniela_onboarded", "1");
-    onComplete(matchId, outcome);
-  }
+  // Infer outcome from scores (mirrors MatchCard logic)
+  useEffect(() => {
+    if (scoreHome === "" || scoreAway === "") return;
+    const h = parseInt(scoreHome);
+    const a = parseInt(scoreAway);
+    if (isNaN(h) || isNaN(a)) return;
+    const implied: Outcome = h > a ? "home" : a > h ? "away" : "draw";
+    setPicked(implied);
+  }, [scoreHome, scoreAway]);
 
   function handlePick(outcome: Outcome) {
-    if (picked) return;
     setPicked(outcome);
-    setTimeout(() => dismiss(firstMatch.id, outcome), 700);
+    // Clear scores when switching outcome via button
+    setScoreHome("");
+    setScoreAway("");
+  }
+
+  function handleDone() {
+    if (!picked) return;
+    localStorage.setItem("quiniela_onboarded", "1");
+    const h = parseInt(scoreHome);
+    const a = parseInt(scoreAway);
+    const hasScore = !isNaN(h) && !isNaN(a) && scoreHome !== "" && scoreAway !== "";
+    onComplete(firstMatch.id, picked, hasScore ? h : undefined, hasScore ? a : undefined);
   }
 
   const buttons: { outcome: Outcome; label: string }[] = [
@@ -57,7 +74,6 @@ export default function OnboardingModal({
         className="fixed inset-0 z-50 overflow-hidden"
         style={{ backgroundColor: deepBg }}
       >
-        {/* Trophy — full-bleed background */}
         <div className="absolute inset-0">
           <img
             src="/onboarding-trophy.png"
@@ -66,17 +82,12 @@ export default function OnboardingModal({
             style={{ objectPosition: "center 20%" }}
           />
         </div>
-
-        {/* Gradient: transparent top → solid bg at bottom */}
         <div
           className="absolute inset-x-0 bottom-0"
           style={{ height: "60%", background: `linear-gradient(to bottom, transparent, ${bg} 50%)` }}
         />
-
-        {/* Content — bottom, constrained width */}
         <div className="absolute inset-x-0 bottom-0 flex justify-center">
           <div className="w-full max-w-lg px-6 pb-12 flex flex-col gap-5">
-            {/* League pill */}
             <div>
               <span
                 className="text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full border"
@@ -85,7 +96,6 @@ export default function OnboardingModal({
                 {leagueName}
               </span>
             </div>
-
             <div>
               <h1
                 className="font-black uppercase leading-none tracking-tight mb-3"
@@ -99,7 +109,6 @@ export default function OnboardingModal({
                 Pick the result of every match and beat your friends to the top of the table.
               </p>
             </div>
-
             <button
               onClick={() => setStep(2)}
               className="w-full py-4 rounded-2xl font-black text-sm uppercase tracking-widest cursor-pointer transition-opacity hover:opacity-90"
@@ -107,8 +116,6 @@ export default function OnboardingModal({
             >
               Let's go →
             </button>
-
-            {/* Step dots */}
             <div className="flex gap-1.5">
               <div className="h-1.5 rounded-full" style={{ width: "20px", backgroundColor: accent }} />
               <div className="h-1.5 rounded-full" style={{ width: "6px", backgroundColor: border }} />
@@ -119,13 +126,12 @@ export default function OnboardingModal({
     );
   }
 
-  // ── Step 2: Who wins? ─────────────────────────────────────────────────────
+  // ── Step 2: Pick result + optional score ──────────────────────────────────
   return (
     <div
       className="fixed inset-0 z-50 overflow-hidden flex flex-col"
       style={{ backgroundColor: bg }}
     >
-      {/* Match illustration as full-bleed background */}
       {firstMatch.illustration ? (
         <>
           <div className="absolute inset-0">
@@ -136,7 +142,6 @@ export default function OnboardingModal({
               style={{ objectPosition: "center 20%", opacity: 0.55 }}
             />
           </div>
-          {/* Gradient over illustration */}
           <div
             className="absolute inset-0"
             style={{ background: `linear-gradient(to bottom, rgba(11,30,13,0.3) 0%, ${bg} 55%)` }}
@@ -146,9 +151,8 @@ export default function OnboardingModal({
         <div className="absolute inset-0" style={{ backgroundColor: deepBg }} />
       )}
 
-      {/* Content */}
       <div className="relative z-10 flex flex-col h-full justify-center">
-        <div className="w-full max-w-lg mx-auto px-6 flex flex-col gap-6">
+        <div className="w-full max-w-lg mx-auto px-6 flex flex-col gap-5">
           {/* Label + heading */}
           <div>
             <p className="text-[10px] font-bold uppercase tracking-widest mb-2" style={{ color: muted }}>
@@ -179,11 +183,10 @@ export default function OnboardingModal({
             </div>
           </div>
 
-          {/* Divider */}
           <div className="h-px" style={{ backgroundColor: border }} />
 
           {/* Pick buttons */}
-          <div className="flex flex-col gap-2.5">
+          <div className="flex flex-col gap-2">
             {buttons.map(({ outcome, label }) => {
               const isActive = picked === outcome;
               const col = OUTCOME_COLORS[outcome];
@@ -191,14 +194,14 @@ export default function OnboardingModal({
                 <button
                   key={outcome}
                   onClick={() => handlePick(outcome)}
-                  className="w-full py-4 rounded-2xl font-black uppercase tracking-widest transition-all duration-200 cursor-pointer"
+                  className="w-full py-3.5 rounded-2xl font-black uppercase tracking-widest transition-all duration-200 cursor-pointer"
                   style={{
                     fontSize: "13px",
                     backgroundColor: isActive ? col : "transparent",
                     color: isActive ? "#0B1E0D" : col,
                     border: `2px solid ${isActive ? col : col + "55"}`,
                     boxShadow: isActive ? `0 0 28px ${col}44` : undefined,
-                    opacity: picked && !isActive ? 0.25 : 1,
+                    opacity: picked && !isActive ? 0.3 : 1,
                     transform: isActive ? "scale(1.01)" : "scale(1)",
                   }}
                 >
@@ -208,11 +211,68 @@ export default function OnboardingModal({
             })}
           </div>
 
-          <p className="text-xs" style={{ color: muted }}>
-            This pick counts for real — change it anytime before the deadline.
-          </p>
+          {/* Score prediction — shown after a pick */}
+          {picked && (
+            <div
+              className="flex items-center gap-3 px-4 py-3 rounded-2xl"
+              style={{
+                backgroundColor: "rgba(255,255,255,0.03)",
+                border: `1px solid ${border}`,
+              }}
+            >
+              <div className="flex-1">
+                <p className="text-[10px] font-black uppercase tracking-widest" style={{ color: secondary }}>
+                  Score prediction
+                </p>
+                <p className="text-[10px] mt-0.5" style={{ color: muted }}>
+                  Optional — worth an extra 2 pts
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <style>{`
+                  .ob-score-input {
+                    width: 44px; height: 44px; text-align: center; font-family: inherit;
+                    font-weight: 900; font-size: 16px; border-radius: 10px;
+                    background: #0F2411; border: 1px solid #2C4832;
+                    color: #F0EDE6; outline: none; appearance: none;
+                    transition: border-color 0.15s;
+                  }
+                  .ob-score-input:focus { border-color: #D7FF5A; }
+                `}</style>
+                <input
+                  type="number" min="0" max="20"
+                  value={scoreHome}
+                  onChange={(e) => setScoreHome(e.target.value)}
+                  placeholder="0"
+                  className="ob-score-input"
+                />
+                <span className="font-black text-sm" style={{ color: muted }}>—</span>
+                <input
+                  type="number" min="0" max="20"
+                  value={scoreAway}
+                  onChange={(e) => setScoreAway(e.target.value)}
+                  placeholder="0"
+                  className="ob-score-input"
+                />
+              </div>
+            </div>
+          )}
 
-          {/* Step dots */}
+          {/* CTA */}
+          <button
+            onClick={handleDone}
+            disabled={!picked}
+            className="w-full py-4 rounded-2xl font-black text-sm uppercase tracking-widest transition-all cursor-pointer"
+            style={{
+              backgroundColor: picked ? accent : border,
+              color: picked ? "#0B1E0D" : muted,
+              opacity: picked ? 1 : 0.5,
+              cursor: picked ? "pointer" : "default",
+            }}
+          >
+            {picked ? "Save pick →" : "Pick a result first"}
+          </button>
+
           <div className="flex gap-1.5">
             <div className="h-1.5 rounded-full" style={{ width: "6px", backgroundColor: border }} />
             <div className="h-1.5 rounded-full" style={{ width: "20px", backgroundColor: accent }} />
