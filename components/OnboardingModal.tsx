@@ -56,9 +56,10 @@ export default function OnboardingModal({
 
   function handlePick(outcome: Outcome) {
     setPicked(outcome);
-    // Clear scores when switching outcome via button
-    setScoreHome("");
-    setScoreAway("");
+    // Default scores based on outcome; only reset if switching
+    const defaults = outcome === "home" ? ["1", "0"] : outcome === "away" ? ["0", "1"] : ["1", "1"];
+    setScoreHome(defaults[0]);
+    setScoreAway(defaults[1]);
   }
 
   function handleDone() {

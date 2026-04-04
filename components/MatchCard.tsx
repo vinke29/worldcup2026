@@ -153,15 +153,17 @@ export default function MatchCard({
   const isFinished = match.homeScore !== null && match.awayScore !== null;
   const disabled = lockedByPhase || isGameLocked;
 
-  function handleSelect(outcome: Outcome, clearScore = false) {
+  function handleSelect(outcome: Outcome) {
     if (disabled) return;
     setSelected(outcome);
     onPredict?.(match.id, outcome);
     setJustPicked(true);
     setTimeout(() => setJustPicked(false), 350);
-    if (clearScore) {
-      setScoreHome("");
-      setScoreAway("");
+    // Default scores when none are set yet
+    if (scoreHome === "" && scoreAway === "") {
+      const defaults = outcome === "home" ? ["1", "0"] : outcome === "away" ? ["0", "1"] : ["1", "1"];
+      setScoreHome(defaults[0]);
+      setScoreAway(defaults[1]);
     }
   }
 
@@ -377,7 +379,7 @@ export default function MatchCard({
               return (
                 <button
                   key={outcome}
-                  onClick={() => handleSelect(outcome, true)}
+                  onClick={() => handleSelect(outcome)}
                   disabled={disabled}
                   className={`flex-1 py-3 rounded-xl text-[8px] sm:text-[10px] font-black uppercase tracking-tight sm:tracking-wide transition-all duration-200${!selected && !disabled ? " btn-unpicked" : ""}`}
                   style={{
