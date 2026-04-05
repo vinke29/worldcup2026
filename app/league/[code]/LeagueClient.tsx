@@ -8,6 +8,7 @@ import MatchCard from "@/components/MatchCard";
 import Leaderboard from "@/components/Leaderboard";
 import OnboardingModal from "@/components/OnboardingModal";
 import GroupsView from "@/components/GroupsView";
+import QualifiersView from "@/components/QualifiersView";
 import { MATCHES, PHASES, type Outcome, type PhaseId, type Member } from "@/lib/mock-data";
 import { computeStandings } from "@/lib/scoring";
 import { savePrediction, saveScorePick } from "@/app/actions/predictions";
@@ -68,7 +69,7 @@ export default function LeagueClient({
   const [activeDay, setActiveDay] = useState<string>(defaultNav.day);
   const [predictions, setPredictions] = useState<Record<string, Outcome>>(initialPredictions);
   const [scorePredictions, setScorePredictions] = useState<Record<string, { home: number; away: number }>>(initialScorePicks);
-  const [mobileView, setMobileView] = useState<"matches" | "standings" | "groups">("matches");
+  const [mobileView, setMobileView] = useState<"matches" | "standings" | "groups" | "qualifiers">("matches");
   const [mono, setMono] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
 
@@ -225,7 +226,7 @@ export default function LeagueClient({
           className="flex rounded-xl p-1 mb-5 border"
           style={{ backgroundColor: t.cardBg, borderColor: t.border }}
         >
-          {(["matches", "groups", "standings"] as const).map((tab) => (
+          {(["matches", "groups", "qualifiers", "standings"] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => setMobileView(tab)}
@@ -242,7 +243,7 @@ export default function LeagueClient({
 
         <div className="flex gap-6 items-start">
           {/* Matches */}
-          <div className={`flex-1 min-w-0 ${mobileView !== "matches" ? "hidden" : ""}`}>
+          <div className={`flex-1 min-w-0 ${mobileView !== "matches" ? "hidden" : "block"}`}>
 
             {/* Phase / day header */}
             {isLocked ? (
@@ -377,7 +378,20 @@ export default function LeagueClient({
                   {code}
                 </span>
               </div>
-              <p className="text-xs" style={{ color: t.textMuted }}>Share this code. Anyone with it can join.</p>
+              <button
+                onClick={() => {
+                  const url = `${window.location.origin}/auth/setup?intent=join&code=${code}`;
+                  if (navigator.share) {
+                    navigator.share({ title: "Join my Quiniela", text: `Join my World Cup 2026 prediction league! Use code ${code} or tap the link.`, url });
+                  } else {
+                    navigator.clipboard.writeText(url);
+                  }
+                }}
+                className="w-full py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all hover:opacity-80 cursor-pointer"
+                style={{ backgroundColor: t.accent, color: t.accentText, border: "none" }}
+              >
+                Share invite link
+              </button>
             </div>
 
             <div className="rounded-2xl border p-4" style={{ backgroundColor: t.cardBg, borderColor: t.border }}>
@@ -402,6 +416,11 @@ export default function LeagueClient({
         {/* Groups view */}
         {mobileView === "groups" && (
           <GroupsView scorePicks={scorePredictions} mono={mono} />
+        )}
+
+        {/* Qualifiers view */}
+        {mobileView === "qualifiers" && (
+          <QualifiersView scorePicks={scorePredictions} mono={mono} />
         )}
       </div>
     </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import type React from "react";
 import type { Match, Outcome } from "@/lib/mock-data";
 
 interface OnboardingModalProps {
@@ -238,31 +239,9 @@ export default function OnboardingModal({
                 </p>
               </div>
               <div className="flex items-center gap-2">
-                <style>{`
-                  .ob-score-input {
-                    width: 44px; height: 44px; text-align: center; font-family: inherit;
-                    font-weight: 900; font-size: 16px; border-radius: 10px;
-                    background: #0F2411; border: 1px solid #2C4832;
-                    color: #F0EDE6; outline: none; appearance: none;
-                    transition: border-color 0.15s;
-                  }
-                  .ob-score-input:focus { border-color: #D7FF5A; }
-                `}</style>
-                <input
-                  type="number" min="0" max="20"
-                  value={scoreHome}
-                  onChange={(e) => setScoreHome(e.target.value)}
-                  placeholder="0"
-                  className="ob-score-input"
-                />
+                <ObStepper value={scoreHome} onChange={setScoreHome} />
                 <span className="font-black text-sm" style={{ color: muted }}>—</span>
-                <input
-                  type="number" min="0" max="20"
-                  value={scoreAway}
-                  onChange={(e) => setScoreAway(e.target.value)}
-                  placeholder="0"
-                  className="ob-score-input"
-                />
+                <ObStepper value={scoreAway} onChange={setScoreAway} />
               </div>
             </div>
           )}
@@ -288,6 +267,24 @@ export default function OnboardingModal({
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+function ObStepper({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const num = value === "" ? 0 : parseInt(value) || 0;
+  const btn: React.CSSProperties = {
+    width: 36, height: 36, borderRadius: 10,
+    border: "1px solid #2C4832", backgroundColor: "transparent",
+    color: "#7A9B84", fontSize: 18, fontWeight: 800,
+    cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+    flexShrink: 0, userSelect: "none",
+  };
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+      <button type="button" style={btn} onClick={() => onChange(String(Math.max(0, num - 1)))}>−</button>
+      <span style={{ width: 32, textAlign: "center", fontWeight: 900, fontSize: 22, color: "#F0EDE6", fontVariantNumeric: "tabular-nums" }}>{num}</span>
+      <button type="button" style={btn} onClick={() => onChange(String(Math.min(20, num + 1)))}>+</button>
     </div>
   );
 }

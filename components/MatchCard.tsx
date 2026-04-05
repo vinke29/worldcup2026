@@ -433,23 +433,9 @@ export default function MatchCard({
                 </span>
               </div>
               <div className="flex items-center gap-2">
-                <input
-                  type="number" min="0" max="20"
-                  value={scoreHome}
-                  onChange={(e) => setScoreHome(e.target.value)}
-                  placeholder="0"
-                  className="w-11 h-10 text-center font-black text-base rounded-lg border bg-transparent appearance-none outline-none"
-                  style={{ color: isMono ? "#1A1208" : "#F0EDE6", borderColor: isMono ? "#DDD9D0" : "#2C4832" }}
-                />
+                <ScoreStepper value={scoreHome} onChange={setScoreHome} mono={isMono} />
                 <span className="font-black text-sm" style={{ color: isMono ? "#C8C0B0" : "#2C4832" }}>—</span>
-                <input
-                  type="number" min="0" max="20"
-                  value={scoreAway}
-                  onChange={(e) => setScoreAway(e.target.value)}
-                  placeholder="0"
-                  className="w-11 h-10 text-center font-black text-base rounded-lg border bg-transparent appearance-none outline-none"
-                  style={{ color: isMono ? "#1A1208" : "#F0EDE6", borderColor: isMono ? "#DDD9D0" : "#2C4832" }}
-                />
+                <ScoreStepper value={scoreAway} onChange={setScoreAway} mono={isMono} />
               </div>
             </div>
           )}
@@ -592,5 +578,48 @@ function StatusBadge({
     <span className={base} style={{ backgroundColor: bg, color: "#4A6B50" }}>
       {match.time}
     </span>
+  );
+}
+
+
+// ── Score Stepper ─────────────────────────────────────────────────────────────
+function ScoreStepper({ value, onChange, mono }: {
+  value: string; onChange: (v: string) => void; mono: boolean;
+}) {
+  const num = value === "" ? 0 : parseInt(value) || 0;
+  const btnStyle = {
+    width: 28, height: 28,
+    borderRadius: 8,
+    border: `1px solid ${mono ? "#DDD9D0" : "#2C4832"}`,
+    backgroundColor: "transparent",
+    color: mono ? "#6B5E4E" : "#7A9B84",
+    fontSize: 16,
+    fontWeight: 800,
+    cursor: "pointer",
+    display: "flex" as const,
+    alignItems: "center" as const,
+    justifyContent: "center" as const,
+    flexShrink: 0 as const,
+    userSelect: "none" as const,
+  };
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+      <button
+        type="button"
+        style={btnStyle}
+        onClick={() => onChange(String(Math.max(0, num - 1)))}
+      >−</button>
+      <span style={{
+        width: 28, textAlign: "center",
+        fontWeight: 900, fontSize: 18,
+        color: mono ? "#1A1208" : "#F0EDE6",
+        fontVariantNumeric: "tabular-nums",
+      }}>{num}</span>
+      <button
+        type="button"
+        style={btnStyle}
+        onClick={() => onChange(String(Math.min(20, num + 1)))}
+      >+</button>
+    </div>
   );
 }
