@@ -160,8 +160,12 @@ export default function MatchCard({
     onPredict?.(match.id, outcome);
     setJustPicked(true);
     setTimeout(() => setJustPicked(false), 350);
-    // Default scores when none are set yet
-    if (scoreHome === "" && scoreAway === "") {
+    // Update scores if they contradict the new outcome (or are empty)
+    const h = parseInt(scoreHome);
+    const a = parseInt(scoreAway);
+    const hasScore = scoreHome !== "" && scoreAway !== "" && !isNaN(h) && !isNaN(a);
+    const currentImplied = hasScore ? (h > a ? "home" : a > h ? "away" : "draw") : null;
+    if (!hasScore || currentImplied !== outcome) {
       const defaults = outcome === "home" ? ["1", "0"] : outcome === "away" ? ["0", "1"] : ["1", "1"];
       setScoreHome(defaults[0]);
       setScoreAway(defaults[1]);
@@ -414,24 +418,13 @@ export default function MatchCard({
 
           {/* Score prediction — shown after picking a result */}
           {selected && !disabled && (
-            <div
-              className="mx-4 mb-4 px-3 py-2.5 rounded-xl flex items-center gap-3"
-              style={{
-                backgroundColor: isMono ? "rgba(26,18,8,0.05)" : "rgba(255,255,255,0.03)",
-                border: `1px solid ${isMono ? "#E5E1D8" : "#1F3A24"}`,
-              }}
-            >
-              <div className="flex-1 flex items-center gap-2">
-                <span className="text-[9px] font-black uppercase tracking-widest" style={{ color: isMono ? "#6B5E4E" : "#7A9B84" }}>
-                  Score prediction
-                </span>
-                <span
-                  className="text-[9px] font-bold transition-opacity duration-300"
-                  style={{ color: "#4ADE80", opacity: scoreSaved ? 1 : 0 }}
-                >
-                  ✓ Saved
-                </span>
-              </div>
+            <div className="mx-4 mb-4 flex items-center justify-between gap-3">
+              <span
+                className="text-[9px] font-bold transition-opacity duration-300"
+                style={{ color: "#4ADE80", opacity: scoreSaved ? 1 : 0 }}
+              >
+                ✓ Saved
+              </span>
               <div className="flex items-center gap-2">
                 <ScoreStepper value={scoreHome} onChange={setScoreHome} mono={isMono} />
                 <span className="font-black text-sm" style={{ color: isMono ? "#C8C0B0" : "#2C4832" }}>—</span>
