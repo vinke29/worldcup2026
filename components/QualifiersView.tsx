@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { MATCHES } from "@/lib/mock-data";
-import { computeGroupTables } from "@/lib/group-standings";
+import { computeGroupTables, rankThirdPlaceTeams, type TeamRow } from "@/lib/group-standings";
 
 interface QualifiersViewProps {
   scorePicks: Record<string, { home: number; away: number }>;
@@ -10,88 +10,127 @@ interface QualifiersViewProps {
 }
 
 // ── Layout constants ──────────────────────────────────────────────────────────
-const POD_W = 130;      // width of one matchup pod
-const POD_H = 48;       // height of pod (two 20px rows + 8px gap)
-const COL_GAP = 36;     // horizontal gap between round columns
-const R32_SLOTS = 8;    // matches per half
-const SLOT_H = 76;      // vertical space per R32 slot
+const POD_W   = 132;  // pod width
+const POD_H   = 48;   // pod height (two team rows)
+const COL_GAP = 32;   // gap between round columns
+const SLOTS   = 8;    // matches per half
+const SLOT_H  = 76;   // vertical space per R32 slot
+const CANVAS_H = SLOTS * SLOT_H; // 608px
 
-// Total canvas height = 8 slots × 76px
-const CANVAS_H = R32_SLOTS * SLOT_H; // 608
-
-// Vertical center of a pod for round r (0=R32), index i
-function slotHeight(r: number) { return SLOT_H * Math.pow(2, r); }
+function slotHeight(r: number)  { return SLOT_H * Math.pow(2, r); }
 function podTop(r: number, i: number) {
   const sh = slotHeight(r);
   return i * sh + (sh - POD_H) / 2;
 }
-function podCenter(r: number, i: number) {
-  return podTop(r, i) + POD_H / 2;
-}
+function podCenter(r: number, i: number) { return podTop(r, i) + POD_H / 2; }
 
-// ── WC2026 bracket definition ─────────────────────────────────────────────────
-// Left half: 8 R32 matches  (Groups A-H + 3rd place slots 1-4 eventually → simplified)
-// Right half: 8 R32 matches (Groups I-L + 3rd place slots)
-// Each slot: { kind:"group", group, pos } | { kind:"third", label }
-type GroupSlot = { kind: "group"; group: string; pos: 1 | 2 };
-type ThirdSlot = { kind: "third"; label: string };
-type BracketSlot = GroupSlot | ThirdSlot;
+// ── Bracket slot types ────────────────────────────────────────────────────────
+type WinnerSlot   = { kind: "winner";  group: string };
+type RunnerUpSlot = { kind: "runner";  group: string };
+type ThirdSlot    = { kind: "third";   eligible: string[] };
+type BracketSlot  = WinnerSlot | RunnerUpSlot | ThirdSlot;
 
-interface R32Matchup { id: string; home: BracketSlot; away: BracketSlot }
+interface R32Match { id: string; home: BracketSlot; away: BracketSlot }
 
-// Left half — top 4 are groups A-D, bottom 4 are groups E-H
-const LEFT_R32: R32Matchup[] = [
-  { id: "r32-1",  home: { kind: "group", group: "A", pos: 1 }, away: { kind: "group", group: "B", pos: 2 } },
-  { id: "r32-2",  home: { kind: "group", group: "C", pos: 1 }, away: { kind: "group", group: "D", pos: 2 } },
-  { id: "r32-3",  home: { kind: "group", group: "B", pos: 1 }, away: { kind: "group", group: "A", pos: 2 } },
-  { id: "r32-4",  home: { kind: "group", group: "D", pos: 1 }, away: { kind: "group", group: "C", pos: 2 } },
-  { id: "r32-5",  home: { kind: "group", group: "E", pos: 1 }, away: { kind: "group", group: "F", pos: 2 } },
-  { id: "r32-6",  home: { kind: "group", group: "G", pos: 1 }, away: { kind: "group", group: "H", pos: 2 } },
-  { id: "r32-7",  home: { kind: "group", group: "F", pos: 1 }, away: { kind: "group", group: "E", pos: 2 } },
-  { id: "r32-8",  home: { kind: "group", group: "H", pos: 1 }, away: { kind: "group", group: "G", pos: 2 } },
+// ── Actual FIFA WC2026 R32 draw ───────────────────────────────────────────────
+// Source: 2026 FIFA World Cup knockout stage bracket (matches 73–88)
+// Left half feeds SF 101; Right half feeds SF 102.
+// Slot ordering within each half drives the bracket tree via podTop/podCenter.
+
+/** Left half — 8 slots top→bottom (feeds into SF 101 side) */
+const LEFT_R32: R32Match[] = [
+  // R16-89 top pair → QF-97
+  { id: "m74", home: { kind: "winner", group: "E" },  away: { kind: "third",  eligible: ["A","B","C","D","F"] } },
+  { id: "m77", home: { kind: "winner", group: "I" },  away: { kind: "third",  eligible: ["C","D","F","G","H"] } },
+  // R16-90 bottom pair → QF-97
+  { id: "m73", home: { kind: "runner", group: "A" },  away: { kind: "runner", group: "B" } },
+  { id: "m75", home: { kind: "winner", group: "F" },  away: { kind: "runner", group: "C" } },
+  // R16-93 top pair → QF-98
+  { id: "m83", home: { kind: "runner", group: "K" },  away: { kind: "runner", group: "L" } },
+  { id: "m84", home: { kind: "winner", group: "H" },  away: { kind: "runner", group: "J" } },
+  // R16-94 bottom pair → QF-98
+  { id: "m81", home: { kind: "winner", group: "D" },  away: { kind: "third",  eligible: ["B","E","F","I","J"] } },
+  { id: "m82", home: { kind: "winner", group: "G" },  away: { kind: "third",  eligible: ["A","E","H","I","J"] } },
 ];
 
-// Right half — groups I-L + 3rd place
-const RIGHT_R32: R32Matchup[] = [
-  { id: "r32-9",  home: { kind: "group", group: "I", pos: 1 }, away: { kind: "group", group: "J", pos: 2 } },
-  { id: "r32-10", home: { kind: "group", group: "K", pos: 1 }, away: { kind: "group", group: "L", pos: 2 } },
-  { id: "r32-11", home: { kind: "group", group: "J", pos: 1 }, away: { kind: "group", group: "I", pos: 2 } },
-  { id: "r32-12", home: { kind: "group", group: "L", pos: 1 }, away: { kind: "group", group: "K", pos: 2 } },
-  { id: "r32-13", home: { kind: "third", label: "3rd A/B" },   away: { kind: "third", label: "3rd C/D" } },
-  { id: "r32-14", home: { kind: "third", label: "3rd E/F" },   away: { kind: "third", label: "3rd G/H" } },
-  { id: "r32-15", home: { kind: "third", label: "3rd I/J" },   away: { kind: "third", label: "3rd K/L" } },
-  { id: "r32-16", home: { kind: "third", label: "3rd best" },  away: { kind: "third", label: "3rd best" } },
+/** Right half — 8 slots top→bottom (feeds into SF 102 side) */
+const RIGHT_R32: R32Match[] = [
+  // R16-91 top pair → QF-99
+  { id: "m76", home: { kind: "winner", group: "C" },  away: { kind: "runner", group: "F" } },
+  { id: "m78", home: { kind: "runner", group: "E" },  away: { kind: "runner", group: "I" } },
+  // R16-92 bottom pair → QF-99
+  { id: "m79", home: { kind: "winner", group: "A" },  away: { kind: "third",  eligible: ["C","E","F","H","I"] } },
+  { id: "m80", home: { kind: "winner", group: "L" },  away: { kind: "third",  eligible: ["E","H","I","J","K"] } },
+  // R16-95 top pair → QF-100
+  { id: "m86", home: { kind: "winner", group: "J" },  away: { kind: "runner", group: "H" } },
+  { id: "m88", home: { kind: "runner", group: "D" },  away: { kind: "runner", group: "G" } },
+  // R16-96 bottom pair → QF-100
+  { id: "m85", home: { kind: "winner", group: "B" },  away: { kind: "third",  eligible: ["E","F","G","I","J"] } },
+  { id: "m87", home: { kind: "winner", group: "K" },  away: { kind: "third",  eligible: ["D","E","I","J","L"] } },
 ];
 
-type TeamInfo = { team: string; flag: string; pts: number } | null;
+// Which matchIds carry a third-place slot and their eligible groups
+const THIRD_SLOTS: Array<{ matchId: string; eligible: string[] }> = [
+  { matchId: "m74", eligible: ["A","B","C","D","F"] },
+  { matchId: "m77", eligible: ["C","D","F","G","H"] },
+  { matchId: "m79", eligible: ["C","E","F","H","I"] },
+  { matchId: "m80", eligible: ["E","H","I","J","K"] },
+  { matchId: "m81", eligible: ["B","E","F","I","J"] },
+  { matchId: "m82", eligible: ["A","E","H","I","J"] },
+  { matchId: "m85", eligible: ["E","F","G","I","J"] },
+  { matchId: "m87", eligible: ["D","E","I","J","L"] },
+];
 
-function resolveSlot(
-  slot: BracketSlot,
-  tables: Record<string, ReturnType<typeof computeGroupTables>[string]>,
-): TeamInfo {
-  if (slot.kind === "third") return null;
-  const rows = tables[`Group ${slot.group}`] ?? [];
-  const row = rows[slot.pos - 1];
-  return row ? { team: row.team, flag: row.flag, pts: row.pts } : null;
+/**
+ * Backtracking assignment: map each 3rd-place slot to one of the 8 qualifying groups,
+ * respecting the eligible-groups constraint. Returns matchId → assigned group letter.
+ */
+function assignThirdPlaceGroups(qualifyingGroups: string[]): Record<string, string> {
+  const assignment: Record<string, string> = {};
+  const used = new Set<string>();
+
+  function bt(idx: number): boolean {
+    if (idx === THIRD_SLOTS.length) return true;
+    const slot = THIRD_SLOTS[idx];
+    for (const g of qualifyingGroups) {
+      if (used.has(g) || !slot.eligible.includes(g)) continue;
+      assignment[slot.matchId] = g;
+      used.add(g);
+      if (bt(idx + 1)) return true;
+      delete assignment[slot.matchId];
+      used.delete(g);
+    }
+    return false;
+  }
+  bt(0);
+  return assignment;
 }
 
-// ── Theme helper ──────────────────────────────────────────────────────────────
+// ── Theme ─────────────────────────────────────────────────────────────────────
 function useTheme(mono: boolean) {
   return mono
-    ? {
-        card: "#EDE8DE", border: "#DDD9D0", text: "#1A1208",
-        textSec: "#6B5E4E", textMuted: "#A89E8E",
-        accent: "#1A1208", accentText: "#F7F4EE",
-        bg: "#F5F0E8", connector: "#C8C0B0",
-        qualify: "rgba(26,18,8,0.06)",
-      }
-    : {
-        card: "#1A2E1F", border: "#2C4832", text: "#F0EDE6",
-        textSec: "#B3C9B7", textMuted: "#7A9B84",
-        accent: "#D7FF5A", accentText: "#0B1E0D",
-        bg: "#0B1E0D", connector: "#2C4832",
-        qualify: "rgba(215,255,90,0.05)",
-      };
+    ? { card: "#EDE8DE", border: "#DDD9D0", text: "#1A1208", textSec: "#6B5E4E", textMuted: "#A89E8E",
+        accent: "#1A1208", accentText: "#F7F4EE", connector: "#C8C0B0", finalBg: "rgba(26,18,8,0.06)" }
+    : { card: "#1A2E1F", border: "#2C4832", text: "#F0EDE6", textSec: "#B3C9B7", textMuted: "#7A9B84",
+        accent: "#D7FF5A", accentText: "#0B1E0D", connector: "#2C4832", finalBg: "rgba(215,255,90,0.06)" };
+}
+
+// ── Slot helpers ──────────────────────────────────────────────────────────────
+function slotLabel(slot: BracketSlot, assignedGroup?: string): string {
+  if (slot.kind === "winner")  return `1${slot.group}`;
+  if (slot.kind === "runner")  return `2${slot.group}`;
+  return assignedGroup ? `3${assignedGroup}` : "3rd";
+}
+
+function resolveTeam(
+  slot: BracketSlot,
+  tables: Record<string, TeamRow[]>,
+  matchId: string,
+  thirdMap: Record<string, TeamRow | null>,
+): TeamRow | null {
+  if (slot.kind === "winner")  return tables[`Group ${slot.group}`]?.[0] ?? null;
+  if (slot.kind === "runner")  return tables[`Group ${slot.group}`]?.[1] ?? null;
+  return thirdMap[matchId] ?? null;
 }
 
 // ── Main component ────────────────────────────────────────────────────────────
@@ -99,102 +138,96 @@ export default function QualifiersView({ scorePicks, mono }: QualifiersViewProps
   const [view, setView] = useState<"predicted" | "actual">("predicted");
   const t = useTheme(mono);
 
-  const hasActual = useMemo(() => MATCHES.some(m => m.homeScore !== null), []);
+  const hasActual       = useMemo(() => MATCHES.some(m => m.homeScore !== null), []);
   const predictedTables = useMemo(() => computeGroupTables(MATCHES, scorePicks, false), [scorePicks]);
   const actualTables    = useMemo(() => computeGroupTables(MATCHES, scorePicks, true), []);
   const tables = view === "predicted" ? predictedTables : actualTables;
 
-  // Resolve all R32 teams
-  const leftTeams  = LEFT_R32.map(m => ({
-    home: resolveSlot(m.home, tables),
-    away: resolveSlot(m.away, tables),
-    homeSlot: m.home,
-    awaySlot: m.away,
-  }));
-  const rightTeams = RIGHT_R32.map(m => ({
-    home: resolveSlot(m.home, tables),
-    away: resolveSlot(m.away, tables),
-    homeSlot: m.home,
-    awaySlot: m.away,
-  }));
+  // Rank 3rd-place teams, pick top 8, assign to slots
+  const thirdMap = useMemo(() => {
+    const ranked  = rankThirdPlaceTeams(tables);
+    const top8    = ranked.slice(0, 8);
+    const byGroup: Record<string, TeamRow> = {};
+    for (const { group, row } of ranked) byGroup[group] = row;
 
-  // ── Column x positions ────────────────────────────────────────────────────
-  // Left bracket (L→R): R32, R16, QF, SF
-  // Center: Final
-  // Right bracket (R←L, mirrored): SF, QF, R16, R32
-  const ROUNDS = 4; // R32=0, R16=1, QF=2, SF=3
+    const qualGroups    = top8.map(t => t.group);
+    const groupAssign   = assignThirdPlaceGroups(qualGroups);      // matchId → group
+    const result: Record<string, TeamRow | null> = {};
+    for (const { matchId } of THIRD_SLOTS) {
+      const g = groupAssign[matchId];
+      result[matchId] = g ? (byGroup[g] ?? null) : null;
+    }
+    return result;
+  }, [tables]);
+
+  const thirdGroupAssign = useMemo(() => {
+    const ranked = rankThirdPlaceTeams(tables);
+    const top8   = ranked.slice(0, 8);
+    return assignThirdPlaceGroups(top8.map(t => t.group));
+  }, [tables]);
+
+  // ── Column positions ───────────────────────────────────────────────────────
+  const ROUNDS = 4;
   const leftColX  = Array.from({ length: ROUNDS }, (_, r) => r * (POD_W + COL_GAP));
   const leftWidth = ROUNDS * POD_W + (ROUNDS - 1) * COL_GAP;
-  const FINAL_GAP = 48;
-  const finalX = leftWidth + FINAL_GAP;
+  const FINAL_GAP = 44;
+  const finalX    = leftWidth + FINAL_GAP;
   const rightStart = finalX + POD_W + FINAL_GAP;
-  const rightColX = Array.from({ length: ROUNDS }, (_, r) => rightStart + (ROUNDS - 1 - r) * (POD_W + COL_GAP));
+  const rightColX  = Array.from({ length: ROUNDS }, (_, r) => rightStart + (ROUNDS - 1 - r) * (POD_W + COL_GAP));
   const totalWidth = rightColX[0] + POD_W;
 
-  // ── SVG connector paths ───────────────────────────────────────────────────
+  // ── SVG connectors ─────────────────────────────────────────────────────────
   function leftConnectors(round: number) {
     const paths: string[] = [];
-    const matchCount = R32_SLOTS / Math.pow(2, round);
+    const count = SLOTS / Math.pow(2, round);
     const x1 = leftColX[round] + POD_W;
     const x2 = leftColX[round + 1];
     const midX = x1 + COL_GAP / 2;
-
-    for (let i = 0; i < matchCount; i += 2) {
+    for (let i = 0; i < count; i += 2) {
       const y1 = podCenter(round, i);
       const y2 = podCenter(round, i + 1);
-      const yNext = podCenter(round + 1, i / 2);
-      // Elbow from match i → next round
-      paths.push(`M ${x1} ${y1} H ${midX} V ${yNext} H ${x2}`);
-      // Elbow from match i+1 → next round
-      paths.push(`M ${x1} ${y2} H ${midX} V ${yNext} H ${x2}`);
+      const yn = podCenter(round + 1, i / 2);
+      paths.push(`M ${x1} ${y1} H ${midX} V ${yn} H ${x2}`);
+      paths.push(`M ${x1} ${y2} H ${midX} V ${yn} H ${x2}`);
     }
     return paths;
   }
 
   function rightConnectors(round: number) {
-    // Mirror: rightColX[round] is the "output" side (right edge)
     const paths: string[] = [];
-    const matchCount = R32_SLOTS / Math.pow(2, round);
-    const x1 = rightColX[round];                 // left edge of this round's column
-    const x2 = rightColX[round + 1] + POD_W;     // right edge of next round inward
-    const midX = x1 - COL_GAP / 2;               // connector meets halfway in the gap
-
-    for (let i = 0; i < matchCount; i += 2) {
+    const count = SLOTS / Math.pow(2, round);
+    const x1   = rightColX[round];
+    const x2   = rightColX[round + 1] + POD_W;
+    const midX = x1 - COL_GAP / 2;
+    for (let i = 0; i < count; i += 2) {
       const y1 = podCenter(round, i);
       const y2 = podCenter(round, i + 1);
-      const yNext = podCenter(round + 1, i / 2);
-      paths.push(`M ${x1} ${y1} H ${midX} V ${yNext} H ${x2}`);
-      paths.push(`M ${x1} ${y2} H ${midX} V ${yNext} H ${x2}`);
+      const yn = podCenter(round + 1, i / 2);
+      paths.push(`M ${x1} ${y1} H ${midX} V ${yn} H ${x2}`);
+      paths.push(`M ${x1} ${y2} H ${midX} V ${yn} H ${x2}`);
     }
     return paths;
   }
 
-  // SF → Final connectors
   function finalConnectors() {
     const paths: string[] = [];
-    // Left SF (round 3, match 0) → final
-    const lx = leftColX[3] + POD_W;
-    const ly = podCenter(3, 0);
-    const fx = finalX;
     const fy = CANVAS_H / 2;
-    const lmid = lx + (fx - lx) / 2;
-    paths.push(`M ${lx} ${ly} H ${lmid} V ${fy} H ${fx}`);
-    // Right SF → final
-    const rx = rightColX[3];
-    const ry = podCenter(3, 0);
-    const rx2 = finalX + POD_W;
-    const rmid = rx - (rx - rx2) / 2;
-    paths.push(`M ${rx} ${ry} H ${rmid} V ${fy} H ${rx2}`);
+    // Left SF → Final
+    const lx  = leftColX[3] + POD_W;
+    const ly  = podCenter(3, 0);
+    const lmx = lx + (finalX - lx) / 2;
+    paths.push(`M ${lx} ${ly} H ${lmx} V ${fy} H ${finalX}`);
+    // Right SF → Final
+    const rx  = rightColX[3];
+    const ry  = podCenter(3, 0);
+    const rmx = rx - (rx - (finalX + POD_W)) / 2;
+    paths.push(`M ${rx} ${ry} H ${rmx} V ${fy} H ${finalX + POD_W}`);
     return paths;
   }
 
-  const allConnectorPaths = [
-    ...leftConnectors(0),
-    ...leftConnectors(1),
-    ...leftConnectors(2),
-    ...rightConnectors(0),
-    ...rightConnectors(1),
-    ...rightConnectors(2),
+  const connectorPaths = [
+    ...leftConnectors(0), ...leftConnectors(1), ...leftConnectors(2),
+    ...rightConnectors(0), ...rightConnectors(1), ...rightConnectors(2),
     ...finalConnectors(),
   ];
 
@@ -204,7 +237,7 @@ export default function QualifiersView({ scorePicks, mono }: QualifiersViewProps
       {/* Toggle */}
       <div className="flex items-center gap-3 mb-5">
         {(["predicted", "actual"] as const).map((v) => {
-          const active = view === v;
+          const active   = view === v;
           const disabled = v === "actual" && !hasActual;
           return (
             <button
@@ -231,172 +264,81 @@ export default function QualifiersView({ scorePicks, mono }: QualifiersViewProps
         )}
       </div>
 
-      {/* Round labels */}
+      {/* Bracket */}
       <div className="overflow-x-auto pb-4">
         <div style={{ width: totalWidth, position: "relative" }}>
-          {/* Labels row */}
+
+          {/* Round labels */}
           <div style={{ position: "relative", height: 20, marginBottom: 8 }}>
-            {(["R32", "R16", "QF", "SF"] as const).map((label, r) => (
-              <span
-                key={label}
-                style={{
-                  position: "absolute",
-                  left: leftColX[r],
-                  width: POD_W,
-                  textAlign: "center",
-                  fontSize: 9,
-                  fontWeight: 900,
-                  letterSpacing: "0.1em",
-                  textTransform: "uppercase",
-                  color: t.textMuted,
-                }}
-              >
-                {label}
+            {(["R32","R16","QF","SF"] as const).map((lbl, r) => (
+              <span key={lbl} style={{ position: "absolute", left: leftColX[r], width: POD_W, textAlign: "center",
+                fontSize: 9, fontWeight: 900, letterSpacing: "0.1em", textTransform: "uppercase", color: t.textMuted }}>
+                {lbl}
               </span>
             ))}
-            <span
-              style={{
-                position: "absolute",
-                left: finalX,
-                width: POD_W,
-                textAlign: "center",
-                fontSize: 9,
-                fontWeight: 900,
-                letterSpacing: "0.1em",
-                textTransform: "uppercase",
-                color: t.accent,
-              }}
-            >
+            <span style={{ position: "absolute", left: finalX, width: POD_W, textAlign: "center",
+              fontSize: 9, fontWeight: 900, letterSpacing: "0.1em", textTransform: "uppercase", color: t.accent }}>
               Final
             </span>
-            {(["SF", "QF", "R16", "R32"] as const).map((label, r) => (
-              <span
-                key={label + "-r"}
-                style={{
-                  position: "absolute",
-                  left: rightColX[ROUNDS - 1 - r],
-                  width: POD_W,
-                  textAlign: "center",
-                  fontSize: 9,
-                  fontWeight: 900,
-                  letterSpacing: "0.1em",
-                  textTransform: "uppercase",
-                  color: t.textMuted,
-                }}
-              >
-                {label}
+            {(["SF","QF","R16","R32"] as const).map((lbl, r) => (
+              <span key={lbl + "r"} style={{ position: "absolute", left: rightColX[ROUNDS - 1 - r], width: POD_W, textAlign: "center",
+                fontSize: 9, fontWeight: 900, letterSpacing: "0.1em", textTransform: "uppercase", color: t.textMuted }}>
+                {lbl}
               </span>
             ))}
           </div>
 
-          {/* Bracket canvas */}
+          {/* Canvas */}
           <div style={{ position: "relative", height: CANVAS_H }}>
+
             {/* SVG connectors */}
-            <svg
-              style={{ position: "absolute", inset: 0, overflow: "visible", pointerEvents: "none" }}
-              width={totalWidth}
-              height={CANVAS_H}
-            >
-              {allConnectorPaths.map((d, i) => (
+            <svg style={{ position: "absolute", inset: 0, overflow: "visible", pointerEvents: "none" }}
+              width={totalWidth} height={CANVAS_H}>
+              {connectorPaths.map((d, i) => (
                 <path key={i} d={d} fill="none" stroke={t.connector} strokeWidth={1.5} />
               ))}
             </svg>
 
-            {/* Left R32 pods */}
-            {leftTeams.map((m, i) => (
-              <MatchPod
-                key={`l-r32-${i}`}
-                x={leftColX[0]}
-                y={podTop(0, i)}
-                home={m.home}
-                away={m.away}
-                homeLabel={slotLabel(m.homeSlot)}
-                awayLabel={slotLabel(m.awaySlot)}
-                isTbd={false}
+            {/* Left R32 */}
+            {LEFT_R32.map((m, i) => (
+              <MatchPod key={m.id}
+                x={leftColX[0]} y={podTop(0, i)}
+                homeTeam={resolveTeam(m.home, tables, m.id, thirdMap)}
+                awayTeam={resolveTeam(m.away, tables, m.id, thirdMap)}
+                homeLabel={slotLabel(m.home, m.home.kind === "third" ? thirdGroupAssign[m.id] : undefined)}
+                awayLabel={slotLabel(m.away, m.away.kind === "third" ? thirdGroupAssign[m.id] : undefined)}
                 t={t}
               />
             ))}
 
-            {/* Left R16 pods (TBD) */}
-            {Array.from({ length: 4 }, (_, i) => (
-              <MatchPod
-                key={`l-r16-${i}`}
-                x={leftColX[1]}
-                y={podTop(1, i)}
-                isTbd
-                t={t}
-              />
-            ))}
+            {/* Left R16 / QF / SF — TBD */}
+            {[1,2,3].flatMap(r =>
+              Array.from({ length: SLOTS / Math.pow(2, r) }, (_, i) => (
+                <TbdPod key={`l-r${r}-${i}`} x={leftColX[r]} y={podTop(r, i)} t={t} />
+              ))
+            )}
 
-            {/* Left QF pods (TBD) */}
-            {Array.from({ length: 2 }, (_, i) => (
-              <MatchPod
-                key={`l-qf-${i}`}
-                x={leftColX[2]}
-                y={podTop(2, i)}
-                isTbd
-                t={t}
-              />
-            ))}
-
-            {/* Left SF pod (TBD) */}
+            {/* Final */}
             <MatchPod
-              x={leftColX[3]}
-              y={podTop(3, 0)}
-              isTbd
-              t={t}
+              x={finalX} y={CANVAS_H / 2 - POD_H / 2}
+              isFinal t={t}
             />
 
-            {/* Final pod */}
-            <MatchPod
-              x={finalX}
-              y={CANVAS_H / 2 - POD_H / 2}
-              isTbd
-              isFinal
-              t={t}
-            />
+            {/* Right SF / QF / R16 — TBD */}
+            {[3,2,1].flatMap(r =>
+              Array.from({ length: SLOTS / Math.pow(2, r) }, (_, i) => (
+                <TbdPod key={`r-r${r}-${i}`} x={rightColX[r]} y={podTop(r, i)} t={t} />
+              ))
+            )}
 
-            {/* Right SF pod (TBD) */}
-            <MatchPod
-              x={rightColX[3]}
-              y={podTop(3, 0)}
-              isTbd
-              t={t}
-            />
-
-            {/* Right QF pods (TBD) */}
-            {Array.from({ length: 2 }, (_, i) => (
-              <MatchPod
-                key={`r-qf-${i}`}
-                x={rightColX[2]}
-                y={podTop(2, i)}
-                isTbd
-                t={t}
-              />
-            ))}
-
-            {/* Right R16 pods (TBD) */}
-            {Array.from({ length: 4 }, (_, i) => (
-              <MatchPod
-                key={`r-r16-${i}`}
-                x={rightColX[1]}
-                y={podTop(1, i)}
-                isTbd
-                t={t}
-              />
-            ))}
-
-            {/* Right R32 pods */}
-            {rightTeams.map((m, i) => (
-              <MatchPod
-                key={`r-r32-${i}`}
-                x={rightColX[0]}
-                y={podTop(0, i)}
-                home={m.home}
-                away={m.away}
-                homeLabel={slotLabel(m.homeSlot)}
-                awayLabel={slotLabel(m.awaySlot)}
-                isTbd={false}
+            {/* Right R32 */}
+            {RIGHT_R32.map((m, i) => (
+              <MatchPod key={m.id}
+                x={rightColX[0]} y={podTop(0, i)}
+                homeTeam={resolveTeam(m.home, tables, m.id, thirdMap)}
+                awayTeam={resolveTeam(m.away, tables, m.id, thirdMap)}
+                homeLabel={slotLabel(m.home, m.home.kind === "third" ? thirdGroupAssign[m.id] : undefined)}
+                awayLabel={slotLabel(m.away, m.away.kind === "third" ? thirdGroupAssign[m.id] : undefined)}
                 t={t}
               />
             ))}
@@ -405,60 +347,49 @@ export default function QualifiersView({ scorePicks, mono }: QualifiersViewProps
       </div>
 
       <p className="text-[10px] mt-2" style={{ color: t.textMuted }}>
-        3rd place: 8 of 12 advance on Pts → GD → GF. Pairings confirmed after group stage. R16 onwards unlocks as matches are played.
+        3rd-place: best 8 of 12 advance (Pts → GD → GF). Slot assignment follows FIFA Annex C.
+        R16 onwards unlocks as matches are played.
       </p>
     </div>
   );
 }
 
-function slotLabel(slot: BracketSlot): string {
-  if (slot.kind === "third") return slot.label;
-  return `${slot.group}${slot.pos}`;
-}
-
-// ── MatchPod ─────────────────────────────────────────────────────────────────
-interface MatchPodProps {
-  x: number;
-  y: number;
-  home?: TeamInfo;
-  away?: TeamInfo;
+// ── Sub-components ────────────────────────────────────────────────────────────
+interface PodProps {
+  x: number; y: number;
+  homeTeam?: TeamRow | null;
+  awayTeam?: TeamRow | null;
   homeLabel?: string;
   awayLabel?: string;
-  isTbd: boolean;
   isFinal?: boolean;
   t: Record<string, string>;
 }
 
-function MatchPod({ x, y, home, away, homeLabel, awayLabel, isTbd, isFinal, t }: MatchPodProps) {
+function MatchPod({ x, y, homeTeam, awayTeam, homeLabel, awayLabel, isFinal, t }: PodProps) {
   return (
-    <div
-      style={{
-        position: "absolute",
-        left: x,
-        top: y,
-        width: POD_W,
-        height: POD_H,
-        borderRadius: 8,
-        border: `1px solid ${isFinal ? t.accent : t.border}`,
-        backgroundColor: isFinal ? (t.accent === "#D7FF5A" ? "rgba(215,255,90,0.07)" : "rgba(26,18,8,0.08)") : t.card,
-        overflow: "hidden",
-        display: "flex",
-        flexDirection: "column",
-      }}
-    >
-      {isTbd ? (
-        <>
-          <TbdRow t={t} />
-          <div style={{ height: 1, backgroundColor: t.border, flexShrink: 0 }} />
-          <TbdRow t={t} />
-        </>
-      ) : (
-        <>
-          <TeamRowPod team={home ?? null} label={homeLabel ?? ""} t={t} />
-          <div style={{ height: 1, backgroundColor: t.border, flexShrink: 0 }} />
-          <TeamRowPod team={away ?? null} label={awayLabel ?? ""} t={t} />
-        </>
-      )}
+    <div style={{
+      position: "absolute", left: x, top: y, width: POD_W, height: POD_H,
+      borderRadius: 8, border: `1px solid ${isFinal ? t.accent : t.border}`,
+      backgroundColor: isFinal ? t.finalBg : t.card,
+      overflow: "hidden", display: "flex", flexDirection: "column",
+    }}>
+      <TeamRow team={homeTeam ?? null} label={homeLabel ?? "TBD"} t={t} />
+      <div style={{ height: 1, backgroundColor: t.border, flexShrink: 0 }} />
+      <TeamRow team={awayTeam ?? null} label={awayLabel ?? "TBD"} t={t} />
+    </div>
+  );
+}
+
+function TbdPod({ x, y, t }: { x: number; y: number; t: Record<string, string> }) {
+  return (
+    <div style={{
+      position: "absolute", left: x, top: y, width: POD_W, height: POD_H,
+      borderRadius: 8, border: `1px solid ${t.border}`,
+      backgroundColor: t.card, overflow: "hidden", display: "flex", flexDirection: "column",
+    }}>
+      <TbdRow t={t} />
+      <div style={{ height: 1, backgroundColor: t.border, flexShrink: 0 }} />
+      <TbdRow t={t} />
     </div>
   );
 }
@@ -471,16 +402,18 @@ function TbdRow({ t }: { t: Record<string, string> }) {
   );
 }
 
-function TeamRowPod({ team, label, t }: { team: TeamInfo; label: string; t: Record<string, string> }) {
+function TeamRow({ team, label, t }: { team: TeamRow | null; label: string; t: Record<string, string> }) {
   return (
     <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 4, paddingInline: 6, minWidth: 0 }}>
-      <span style={{ fontSize: 8, color: t.textMuted, fontWeight: 900, letterSpacing: "0.05em", flexShrink: 0, width: 18 }}>
+      <span style={{ fontSize: 8, color: t.textMuted, fontWeight: 900, letterSpacing: "0.05em",
+        flexShrink: 0, width: 20, textAlign: "left" }}>
         {label}
       </span>
       {team ? (
         <>
           <span style={{ fontSize: 11, lineHeight: 1, flexShrink: 0 }}>{team.flag}</span>
-          <span style={{ fontSize: 10, fontWeight: 700, color: t.text, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+          <span style={{ fontSize: 10, fontWeight: 700, color: t.text, flex: 1,
+            overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
             {team.team.split(" ").slice(-1)[0]}
           </span>
           <span style={{ fontSize: 9, color: t.textMuted, flexShrink: 0 }}>{team.pts}p</span>
