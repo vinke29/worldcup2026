@@ -3,10 +3,12 @@
 import { useState, useMemo } from "react";
 import type { Match } from "@/lib/mock-data";
 import { computeGroupTables, rankThirdPlaceTeams, type TeamRow } from "@/lib/group-standings";
+import { resolveBracketTeams, TOP_R32_IDS, BOT_R32_IDS } from "@/lib/bracket";
 
 interface QualifiersViewProps {
   matches: Match[];
   scorePicks: Record<string, { home: number; away: number }>;
+  actualScores: Record<string, { home: number; away: number }>;
   mono: boolean;
 }
 
@@ -158,7 +160,7 @@ function buildFinalConnectors(): string[] {
 }
 
 // ── Main component ────────────────────────────────────────────────────────────
-export default function QualifiersView({ matches, scorePicks, mono }: QualifiersViewProps) {
+export default function QualifiersView({ matches, scorePicks, actualScores, mono }: QualifiersViewProps) {
   const [view, setView] = useState<"predicted" | "actual">("predicted");
   const t = useTheme(mono);
 
@@ -187,6 +189,28 @@ export default function QualifiersView({ matches, scorePicks, mono }: Qualifiers
     const top8   = ranked.slice(0, 8);
     return assignThirdPlaceGroups(top8.map(t => t.group));
   }, [tables]);
+
+  // Resolve R32 team pairs for bracket propagation
+  const topR32Pairs = useMemo(() =>
+    TOP_R32.map(m => ({
+      home: resolveTeam(m.home, tables, m.id, thirdMap),
+      away: resolveTeam(m.away, tables, m.id, thirdMap),
+    })),
+    [tables, thirdMap]
+  );
+  const botR32Pairs = useMemo(() =>
+    BOTTOM_R32.map(m => ({
+      home: resolveTeam(m.home, tables, m.id, thirdMap),
+      away: resolveTeam(m.away, tables, m.id, thirdMap),
+    })),
+    [tables, thirdMap]
+  );
+
+  // For actual view: propagate R32 winners through R16→QF→SF→Final
+  const bracketTeams = useMemo(
+    () => resolveBracketTeams(topR32Pairs, botR32Pairs, actualScores),
+    [topR32Pairs, botR32Pairs, actualScores]
+  );
 
   // Build all connector paths
   const connectorPaths = [
@@ -283,11 +307,30 @@ export default function QualifiersView({ matches, scorePicks, mono }: Qualifiers
             />
           ))}
 
-          {/* Top half — R16 / QF / SF (TBD) */}
-          {[1, 2, 3].flatMap(r =>
-            Array.from({ length: SLOTS / Math.pow(2, r) }, (_, i) => (
-              <TbdPod key={`top-r${r}-${i}`} x={colX[r]} y={podTop(r, i)} t={t} />
-            ))
+          {/* Top half — R16 / QF / SF */}
+          {view === "actual" ? (
+            <>
+              {bracketTeams.r16Top.map((p, i) => (
+                p.home || p.away
+                  ? <MatchPod key={`top-r16-${i}`} x={colX[1]} y={podTop(1, i)} homeTeam={p.home} awayTeam={p.away} homeLabel="" awayLabel="" t={t} />
+                  : <TbdPod  key={`top-r16-${i}`} x={colX[1]} y={podTop(1, i)} t={t} />
+              ))}
+              {bracketTeams.qfTop.map((p, i) => (
+                p.home || p.away
+                  ? <MatchPod key={`top-qf-${i}`} x={colX[2]} y={podTop(2, i)} homeTeam={p.home} awayTeam={p.away} homeLabel="" awayLabel="" t={t} />
+                  : <TbdPod  key={`top-qf-${i}`} x={colX[2]} y={podTop(2, i)} t={t} />
+              ))}
+              {bracketTeams.sfTop.home || bracketTeams.sfTop.away
+                ? <MatchPod x={colX[3]} y={podTop(3, 0)} homeTeam={bracketTeams.sfTop.home} awayTeam={bracketTeams.sfTop.away} homeLabel="" awayLabel="" t={t} />
+                : <TbdPod  x={colX[3]} y={podTop(3, 0)} t={t} />
+              }
+            </>
+          ) : (
+            [1, 2, 3].flatMap(r =>
+              Array.from({ length: SLOTS / Math.pow(2, r) }, (_, i) => (
+                <TbdPod key={`top-r${r}-${i}`} x={colX[r]} y={podTop(r, i)} t={t} />
+              ))
+            )
           )}
 
           {/* Bottom half — R32 */}
@@ -302,15 +345,37 @@ export default function QualifiersView({ matches, scorePicks, mono }: Qualifiers
             />
           ))}
 
-          {/* Bottom half — R16 / QF / SF (TBD) */}
-          {[1, 2, 3].flatMap(r =>
-            Array.from({ length: SLOTS / Math.pow(2, r) }, (_, i) => (
-              <TbdPod key={`bot-r${r}-${i}`} x={colX[r]} y={HALF_H + podTop(r, i)} t={t} />
-            ))
+          {/* Bottom half — R16 / QF / SF */}
+          {view === "actual" ? (
+            <>
+              {bracketTeams.r16Bot.map((p, i) => (
+                p.home || p.away
+                  ? <MatchPod key={`bot-r16-${i}`} x={colX[1]} y={HALF_H + podTop(1, i)} homeTeam={p.home} awayTeam={p.away} homeLabel="" awayLabel="" t={t} />
+                  : <TbdPod  key={`bot-r16-${i}`} x={colX[1]} y={HALF_H + podTop(1, i)} t={t} />
+              ))}
+              {bracketTeams.qfBot.map((p, i) => (
+                p.home || p.away
+                  ? <MatchPod key={`bot-qf-${i}`} x={colX[2]} y={HALF_H + podTop(2, i)} homeTeam={p.home} awayTeam={p.away} homeLabel="" awayLabel="" t={t} />
+                  : <TbdPod  key={`bot-qf-${i}`} x={colX[2]} y={HALF_H + podTop(2, i)} t={t} />
+              ))}
+              {bracketTeams.sfBot.home || bracketTeams.sfBot.away
+                ? <MatchPod x={colX[3]} y={HALF_H + podTop(3, 0)} homeTeam={bracketTeams.sfBot.home} awayTeam={bracketTeams.sfBot.away} homeLabel="" awayLabel="" t={t} />
+                : <TbdPod  x={colX[3]} y={HALF_H + podTop(3, 0)} t={t} />
+              }
+            </>
+          ) : (
+            [1, 2, 3].flatMap(r =>
+              Array.from({ length: SLOTS / Math.pow(2, r) }, (_, i) => (
+                <TbdPod key={`bot-r${r}-${i}`} x={colX[r]} y={HALF_H + podTop(r, i)} t={t} />
+              ))
+            )
           )}
 
           {/* Final */}
-          <MatchPod x={finalX} y={finalPodY} isFinal t={t} />
+          {view === "actual" && (bracketTeams.final.home || bracketTeams.final.away)
+            ? <MatchPod x={finalX} y={finalPodY} homeTeam={bracketTeams.final.home} awayTeam={bracketTeams.final.away} homeLabel="" awayLabel="" isFinal t={t} />
+            : <MatchPod x={finalX} y={finalPodY} isFinal t={t} />
+          }
         </div>
       </div>
 

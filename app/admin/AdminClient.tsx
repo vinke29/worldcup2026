@@ -3,12 +3,49 @@
 import { useState, useMemo, useTransition } from "react";
 import type { Match, Phase, PhaseId } from "@/lib/mock-data";
 import { saveScore } from "@/app/actions/scores";
+import {
+  R32_LABELS, R16_IDS, QF_IDS, SF_IDS, FINAL_ID,
+  type KnockoutMatchInfo,
+} from "@/lib/bracket";
 
 interface AdminClientProps {
   matches: Match[];
   phases: Phase[];
   initialScores: Record<string, { home: number; away: number }>;
 }
+
+// Knockout match definitions for admin display
+const R16_LABELS: KnockoutMatchInfo[] = [
+  { id: "r16-0", homeLabel: "W m74", awayLabel: "W m77" },
+  { id: "r16-1", homeLabel: "W m73", awayLabel: "W m75" },
+  { id: "r16-2", homeLabel: "W m83", awayLabel: "W m84" },
+  { id: "r16-3", homeLabel: "W m81", awayLabel: "W m82" },
+  { id: "r16-4", homeLabel: "W m76", awayLabel: "W m78" },
+  { id: "r16-5", homeLabel: "W m79", awayLabel: "W m80" },
+  { id: "r16-6", homeLabel: "W m86", awayLabel: "W m88" },
+  { id: "r16-7", homeLabel: "W m85", awayLabel: "W m87" },
+];
+const QF_LABELS: KnockoutMatchInfo[] = [
+  { id: "qf-0", homeLabel: "W r16-0", awayLabel: "W r16-1" },
+  { id: "qf-1", homeLabel: "W r16-2", awayLabel: "W r16-3" },
+  { id: "qf-2", homeLabel: "W r16-4", awayLabel: "W r16-5" },
+  { id: "qf-3", homeLabel: "W r16-6", awayLabel: "W r16-7" },
+];
+const SF_LABELS: KnockoutMatchInfo[] = [
+  { id: "sf-0", homeLabel: "W qf-0", awayLabel: "W qf-1" },
+  { id: "sf-1", homeLabel: "W qf-2", awayLabel: "W qf-3" },
+];
+const FINAL_LABELS: KnockoutMatchInfo[] = [
+  { id: FINAL_ID, homeLabel: "W sf-0", awayLabel: "W sf-1" },
+];
+
+const KNOCKOUT_LABELS: Record<string, KnockoutMatchInfo[]> = {
+  r32: R32_LABELS,
+  r16: R16_LABELS,
+  qf:  QF_LABELS,
+  sf:  SF_LABELS,
+  final: FINAL_LABELS,
+};
 
 const T = {
   bg:       "#0B1E0D",
@@ -37,11 +74,18 @@ export default function AdminClient({ matches, phases, initialScores }: AdminCli
     return first?.date ?? "";
   });
   // Local score state: matchId → { home, away }
+  const allKnockoutIds = [
+    ...R32_LABELS, ...R16_LABELS, ...QF_LABELS, ...SF_LABELS, ...FINAL_LABELS,
+  ].map(m => m.id);
+
   const [scores, setScores] = useState<Record<string, { home: number; away: number }>>(
     () => {
       const init: Record<string, { home: number; away: number }> = {};
       for (const m of matches) {
         init[m.id] = initialScores[m.id] ?? { home: 0, away: 0 };
+      }
+      for (const id of allKnockoutIds) {
+        init[id] = initialScores[id] ?? { home: 0, away: 0 };
       }
       return init;
     }
@@ -74,6 +118,8 @@ export default function AdminClient({ matches, phases, initialScores }: AdminCli
     () => isGroupPhase ? phaseMatches.filter(m => m.date === activeDay) : phaseMatches,
     [phaseMatches, isGroupPhase, activeDay]
   );
+
+  const knockoutLabels: KnockoutMatchInfo[] = isGroupPhase ? [] : (KNOCKOUT_LABELS[activePhase] ?? []);
 
   function handlePhaseChange(phase: PhaseId) {
     setActivePhase(phase);
@@ -184,38 +230,101 @@ export default function AdminClient({ matches, phases, initialScores }: AdminCli
 
       {/* Matches */}
       <div className="max-w-2xl mx-auto px-4 py-6 space-y-8">
-        {groupKeys.map(groupKey => (
-          <div key={groupKey}>
-            {isGroupPhase && (
-              <div className="flex items-center gap-3 mb-3">
-                <span className="text-[10px] font-black uppercase tracking-widest" style={{ color: T.textSec }}>
-                  {groupKey}
-                </span>
-                <div className="flex-1 h-px" style={{ backgroundColor: T.inner }} />
+        {isGroupPhase ? (
+          <>
+            {groupKeys.map(groupKey => (
+              <div key={groupKey}>
+                <div className="flex items-center gap-3 mb-3">
+                  <span className="text-[10px] font-black uppercase tracking-widest" style={{ color: T.textSec }}>
+                    {groupKey}
+                  </span>
+                  <div className="flex-1 h-px" style={{ backgroundColor: T.inner }} />
+                </div>
+                <div className="space-y-2">
+                  {matchesByGroup[groupKey].map(match => (
+                    <MatchScoreRow
+                      key={match.id}
+                      match={match}
+                      score={scores[match.id] ?? { home: 0, away: 0 }}
+                      isSaved={!!saved[match.id]}
+                      onChangeHome={val => setScore(match.id, "home", val)}
+                      onChangeAway={val => setScore(match.id, "away", val)}
+                      onSave={() => handleSave(match.id)}
+                    />
+                  ))}
+                </div>
               </div>
+            ))}
+          </>
+        ) : (
+          /* Knockout phase — use bracket match labels */
+          <div className="space-y-2">
+            {knockoutLabels.map(m => (
+              <KnockoutScoreRow
+                key={m.id}
+                info={m}
+                score={scores[m.id] ?? { home: 0, away: 0 }}
+                isSaved={!!saved[m.id]}
+                onChangeHome={val => setScore(m.id, "home", val)}
+                onChangeAway={val => setScore(m.id, "away", val)}
+                onSave={() => handleSave(m.id)}
+              />
+            ))}
+            {knockoutLabels.length === 0 && (
+              <p className="text-center py-16 text-sm" style={{ color: T.textMuted }}>
+                No matches in this phase.
+              </p>
             )}
-            <div className="space-y-2">
-              {matchesByGroup[groupKey].map(match => (
-                <MatchScoreRow
-                  key={match.id}
-                  match={match}
-                  score={scores[match.id] ?? { home: 0, away: 0 }}
-                  isSaved={!!saved[match.id]}
-                  onChangeHome={val => setScore(match.id, "home", val)}
-                  onChangeAway={val => setScore(match.id, "away", val)}
-                  onSave={() => handleSave(match.id)}
-                />
-              ))}
-            </div>
           </div>
-        ))}
-
-        {visibleMatches.length === 0 && (
-          <p className="text-center py-16 text-sm" style={{ color: T.textMuted }}>
-            No matches in this phase.
-          </p>
         )}
       </div>
+    </div>
+  );
+}
+
+// ── Knockout score row ────────────────────────────────────────────────────────
+function KnockoutScoreRow({
+  info, score, isSaved, onChangeHome, onChangeAway, onSave,
+}: {
+  info: KnockoutMatchInfo;
+  score: { home: number; away: number };
+  isSaved: boolean;
+  onChangeHome: (v: number) => void;
+  onChangeAway: (v: number) => void;
+  onSave: () => void;
+}) {
+  return (
+    <div
+      className="flex items-center gap-3 px-4 py-3 rounded-xl border"
+      style={{
+        backgroundColor: T.card,
+        borderColor: isSaved ? "rgba(215,255,90,0.3)" : T.border,
+      }}
+    >
+      <span className="flex-1 text-xs font-bold truncate text-right" style={{ color: T.textSec }}>
+        {info.homeLabel}
+      </span>
+      <div className="flex items-center gap-1.5 flex-shrink-0">
+        <ScoreInput value={score.home} onChange={onChangeHome} />
+        <span className="text-xs font-black" style={{ color: T.textMuted }}>—</span>
+        <ScoreInput value={score.away} onChange={onChangeAway} />
+      </div>
+      <span className="flex-1 text-xs font-bold truncate" style={{ color: T.textSec }}>
+        {info.awayLabel}
+      </span>
+      <button
+        onClick={onSave}
+        disabled={isSaved}
+        className="flex-shrink-0 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer disabled:cursor-default"
+        style={{
+          backgroundColor: isSaved ? "transparent" : T.accent,
+          color: isSaved ? T.accent : T.accentTx,
+          border: `1px solid ${isSaved ? "rgba(215,255,90,0.4)" : T.accent}`,
+          opacity: isSaved ? 0.7 : 1,
+        }}
+      >
+        {isSaved ? "✓" : "Set"}
+      </button>
     </div>
   );
 }

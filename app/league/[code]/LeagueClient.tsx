@@ -11,6 +11,7 @@ import GroupsView from "@/components/GroupsView";
 import QualifiersView from "@/components/QualifiersView";
 import { MATCHES, PHASES, type Match, type Outcome, type PhaseId, type Member } from "@/lib/mock-data";
 import { computeStandings } from "@/lib/scoring";
+import { computePhaseStatuses } from "@/lib/bracket";
 import { savePrediction, saveScorePick } from "@/app/actions/predictions";
 import { logout } from "@/app/actions/auth";
 
@@ -92,7 +93,13 @@ export default function LeagueClient({
     [actualScores]
   );
 
-  const currentPhase = PHASES.find((p) => p.id === activePhase)!;
+  // Dynamically compute which phases are open/locked/completed based on actual scores
+  const phases = useMemo(() => {
+    const statuses = computePhaseStatuses(MATCHES, actualScores);
+    return PHASES.map(p => ({ ...p, status: statuses[p.id as PhaseId] ?? p.status }));
+  }, [actualScores]);
+
+  const currentPhase = phases.find((p) => p.id === activePhase)!;
   const isGroupPhase = activePhase.startsWith("group");
   const isLocked = currentPhase.status === "locked";
 
@@ -226,7 +233,7 @@ export default function LeagueClient({
         onToggleMono={() => setMono(v => !v)}
         onLogout={isPreview ? undefined : () => startTransition(() => { logout(); })}
       />
-      <PhaseNav phases={PHASES} activePhase={activePhase} onSelect={handlePhaseChange} mono={mono} />
+      <PhaseNav phases={phases} activePhase={activePhase} onSelect={handlePhaseChange} mono={mono} />
       {isGroupPhase && days.length > 0 && (
         <DayNav days={days} activeDay={activeDay} onSelect={setActiveDay} mono={mono} />
       )}
@@ -431,7 +438,7 @@ export default function LeagueClient({
 
         {/* Qualifiers view */}
         {mobileView === "qualifiers" && (
-          <QualifiersView matches={matches} scorePicks={scorePredictions} mono={mono} />
+          <QualifiersView matches={matches} scorePicks={scorePredictions} actualScores={actualScores} mono={mono} />
         )}
       </div>
     </div>
