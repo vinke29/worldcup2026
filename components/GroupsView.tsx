@@ -1,29 +1,30 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { MATCHES } from "@/lib/mock-data";
+import type { Match } from "@/lib/mock-data";
 import { computeGroupTables, countCorrectPositions, hasAnyActualResults, type TeamRow } from "@/lib/group-standings";
 
 interface GroupsViewProps {
+  matches: Match[];
   scorePicks: Record<string, { home: number; away: number }>;
   mono: boolean;
 }
 
 const GROUP_LETTERS = ["A","B","C","D","E","F","G","H","I","J","K","L"];
 
-export default function GroupsView({ scorePicks, mono }: GroupsViewProps) {
+export default function GroupsView({ matches, scorePicks, mono }: GroupsViewProps) {
   const [view, setView] = useState<"predicted" | "actual">("predicted");
 
-  const hasActual = useMemo(() => hasAnyActualResults(MATCHES), []);
+  const hasActual = useMemo(() => hasAnyActualResults(matches), [matches]);
 
   const predictedTables = useMemo(
-    () => computeGroupTables(MATCHES, scorePicks, false),
-    [scorePicks],
+    () => computeGroupTables(matches, scorePicks, false),
+    [matches, scorePicks],
   );
 
   const actualTables = useMemo(
-    () => computeGroupTables(MATCHES, scorePicks, true),
-    [],
+    () => computeGroupTables(matches, scorePicks, true),
+    [matches],
   );
 
   const t = mono

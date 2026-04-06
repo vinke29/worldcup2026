@@ -7,6 +7,22 @@ function actualOutcome(match: Match): Outcome | null {
   return "draw";
 }
 
+// Points for [correct outcome, exact score] by phase
+const PHASE_POINTS: Record<string, [number, number]> = {
+  "group-md1": [1, 3],
+  "group-md2": [1, 3],
+  "group-md3": [1, 3],
+  "r32":       [2, 5],
+  "r16":       [3, 7],
+  "qf":        [5, 10],
+  "sf":        [7, 12],
+  "final":     [10, 15],
+};
+
+export function phasePoints(phase: string): [number, number] {
+  return PHASE_POINTS[phase] ?? [1, 3];
+}
+
 function pointsForPick(
   match: Match,
   prediction: Outcome,
@@ -14,8 +30,13 @@ function pointsForPick(
 ): number {
   const actual = actualOutcome(match);
   if (!actual || prediction !== actual) return 0;
-  if (scorePick && scorePick.home === match.homeScore && scorePick.away === match.awayScore) return 3;
-  return 1;
+
+  const isExact = scorePick != null &&
+    scorePick.home === match.homeScore &&
+    scorePick.away === match.awayScore;
+
+  const [outcomePts, exactPts] = phasePoints(match.phase);
+  return isExact ? exactPts : outcomePts;
 }
 
 export function computeStandings(

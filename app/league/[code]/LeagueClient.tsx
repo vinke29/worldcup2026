@@ -9,7 +9,7 @@ import Leaderboard from "@/components/Leaderboard";
 import OnboardingModal from "@/components/OnboardingModal";
 import GroupsView from "@/components/GroupsView";
 import QualifiersView from "@/components/QualifiersView";
-import { MATCHES, PHASES, type Outcome, type PhaseId, type Member } from "@/lib/mock-data";
+import { MATCHES, PHASES, type Match, type Outcome, type PhaseId, type Member } from "@/lib/mock-data";
 import { computeStandings } from "@/lib/scoring";
 import { savePrediction, saveScorePick } from "@/app/actions/predictions";
 import { logout } from "@/app/actions/auth";
@@ -21,6 +21,7 @@ interface LeagueClientProps {
   initialPredictions: Record<string, Outcome>;
   initialScorePicks: Record<string, { home: number; away: number }>;
   members: Member[];
+  actualScores?: Record<string, { home: number; away: number }>;
   isPreview?: boolean;
 }
 
@@ -60,6 +61,7 @@ export default function LeagueClient({
   initialPredictions,
   initialScorePicks,
   members,
+  actualScores = {},
   isPreview = false,
 }: LeagueClientProps) {
   const [, startTransition] = useTransition();
@@ -81,13 +83,22 @@ export default function LeagueClient({
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Merge actual scores from DB into the static MATCHES array
+  const matches: Match[] = useMemo(
+    () => MATCHES.map(m => {
+      const s = actualScores[m.id];
+      return s != null ? { ...m, homeScore: s.home, awayScore: s.away } : m;
+    }),
+    [actualScores]
+  );
+
   const currentPhase = PHASES.find((p) => p.id === activePhase)!;
   const isGroupPhase = activePhase.startsWith("group");
   const isLocked = currentPhase.status === "locked";
 
   const phaseMatches = useMemo(
-    () => MATCHES.filter((m) => m.phase === activePhase),
-    [activePhase]
+    () => matches.filter((m) => m.phase === activePhase),
+    [matches, activePhase]
   );
 
   const days = useMemo((): Day[] => {
@@ -113,7 +124,7 @@ export default function LeagueClient({
 
   const handlePhaseChange = (phase: PhaseId) => {
     setActivePhase(phase);
-    const first = MATCHES.find((m) => m.phase === phase);
+    const first = matches.find((m) => m.phase === phase);
     if (first) setActiveDay(first.date);
   };
 
@@ -195,7 +206,7 @@ export default function LeagueClient({
     progressBg:   mono ? "#DDD9D0" : "#1F3A24",
   };
 
-  const firstOpenMatch = MATCHES.find((m) => m.phase === "group-md1");
+  const firstOpenMatch = matches.find((m) => m.phase === "group-md1");
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: t.pageBg }}>
@@ -366,7 +377,7 @@ export default function LeagueClient({
           {/* Sidebar */}
           <div className={`sm:w-64 w-full flex-shrink-0 sm:sticky sm:top-36 space-y-3 ${mobileView !== "standings" ? "hidden" : ""}`}>
             <Leaderboard
-              members={computeStandings(MATCHES, members, currentUserId, predictions, scorePredictions)}
+              members={computeStandings(matches, members, currentUserId, predictions, scorePredictions)}
               currentUserId={currentUserId}
               mono={mono}
             />
@@ -398,10 +409,10 @@ export default function LeagueClient({
               <p className="text-[10px] font-bold uppercase tracking-widest mb-3" style={{ color: t.textSec }}>Points</p>
               <div className="space-y-2">
                 {[
-                  { label: "Exact score · Group", pts: "3 pts" },
                   { label: "Correct result · Group", pts: "1 pt" },
-                  { label: "Exact score · Knockout", pts: "5–15 pts" },
-                  { label: "Tournament champion", pts: "25 pts" },
+                  { label: "Exact score · Group", pts: "3 pts" },
+                  { label: "Correct result · R32–Final", pts: "2–10 pts" },
+                  { label: "Exact score · R32–Final", pts: "5–15 pts" },
                 ].map(({ label, pts }) => (
                   <div key={label} className="flex justify-between items-center gap-2">
                     <span className="text-xs" style={{ color: t.textBody }}>{label}</span>
@@ -415,12 +426,12 @@ export default function LeagueClient({
 
         {/* Groups view */}
         {mobileView === "groups" && (
-          <GroupsView scorePicks={scorePredictions} mono={mono} />
+          <GroupsView matches={matches} scorePicks={scorePredictions} mono={mono} />
         )}
 
         {/* Qualifiers view */}
         {mobileView === "qualifiers" && (
-          <QualifiersView scorePicks={scorePredictions} mono={mono} />
+          <QualifiersView matches={matches} scorePicks={scorePredictions} mono={mono} />
         )}
       </div>
     </div>

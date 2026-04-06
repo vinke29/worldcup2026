@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import type { Match, Outcome } from "@/lib/mock-data";
+import { phasePoints } from "@/lib/scoring";
 
 interface MatchCardProps {
   match: Match;
@@ -346,7 +347,12 @@ export default function MatchCard({
                   && scoreAway === String(match.awayScore);
                 return (
                   <span className="text-sm font-black" style={{ color: "#4ADE80" }}>
-                    {isExact ? "✓ Exact score · +3 pts" : "✓ Correct result · +1 pt"}
+                    {(() => {
+                      const [outPts, exPts] = phasePoints(match.phase);
+                      return isExact
+                        ? `✓ Exact score · +${exPts} pts`
+                        : `✓ Correct result · +${outPts} pt${outPts === 1 ? "" : "s"}`;
+                    })()}
                   </span>
                 );
               })() : (
@@ -418,18 +424,18 @@ export default function MatchCard({
 
           {/* Score prediction — shown after picking a result */}
           {selected && !disabled && (
-            <div className="mx-4 mb-4 flex items-center justify-between gap-3">
-              <span
-                className="text-[9px] font-bold transition-opacity duration-300"
-                style={{ color: "#4ADE80", opacity: scoreSaved ? 1 : 0 }}
-              >
-                ✓ Saved
-              </span>
-              <div className="flex items-center gap-2">
-                <ScoreStepper value={scoreHome} onChange={setScoreHome} mono={isMono} />
+            <div className="mx-4 mb-4 flex items-center justify-between">
+              <ScoreStepper value={scoreHome} onChange={setScoreHome} mono={isMono} />
+              <div className="flex flex-col items-center gap-0.5">
                 <span className="font-black text-sm" style={{ color: isMono ? "#C8C0B0" : "#2C4832" }}>—</span>
-                <ScoreStepper value={scoreAway} onChange={setScoreAway} mono={isMono} />
+                <span
+                  className="text-[9px] font-bold transition-opacity duration-300"
+                  style={{ color: "#4ADE80", opacity: scoreSaved ? 1 : 0 }}
+                >
+                  ✓ Saved
+                </span>
               </div>
+              <ScoreStepper value={scoreAway} onChange={setScoreAway} mono={isMono} />
             </div>
           )}
         </>

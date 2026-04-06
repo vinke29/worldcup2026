@@ -109,7 +109,30 @@ create policy "score_picks: users manage their own"
   using (auth.uid() = user_id)
   with check (auth.uid() = user_id);
 
--- ── Indexes ─────────────���──────────────────────────────��──────────────────────
+-- ── match_scores ─────────────────────────────────────────────────────────────
+-- Written by admin only (enforced in server action); read by all authenticated.
+create table if not exists public.match_scores (
+  match_id   text primary key,
+  home_score smallint not null check (home_score >= 0),
+  away_score smallint not null check (away_score >= 0),
+  updated_at timestamptz default now()
+);
+
+alter table public.match_scores enable row level security;
+
+drop policy if exists "match_scores: authenticated can read"  on public.match_scores;
+drop policy if exists "match_scores: authenticated can write" on public.match_scores;
+
+create policy "match_scores: authenticated can read"
+  on public.match_scores for select using (auth.role() = 'authenticated');
+
+-- Write access is open to authenticated; the server action enforces admin-only.
+create policy "match_scores: authenticated can write"
+  on public.match_scores for all
+  using (auth.role() = 'authenticated')
+  with check (auth.role() = 'authenticated');
+
+-- ── Indexes ───────────────────────────────────────────────────────────────────
 create index if not exists predictions_user_id    on public.predictions(user_id);
 create index if not exists predictions_match_id   on public.predictions(match_id);
 create index if not exists score_picks_user_id    on public.score_picks(user_id);

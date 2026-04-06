@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { MATCHES } from "@/lib/mock-data";
+import type { Match } from "@/lib/mock-data";
 import { computeGroupTables, rankThirdPlaceTeams, type TeamRow } from "@/lib/group-standings";
 
 interface QualifiersViewProps {
+  matches: Match[];
   scorePicks: Record<string, { home: number; away: number }>;
   mono: boolean;
 }
@@ -12,12 +13,21 @@ interface QualifiersViewProps {
 // ── Layout constants ──────────────────────────────────────────────────────────
 const POD_W   = 132;  // pod width
 const POD_H   = 48;   // pod height (two team rows)
-const COL_GAP = 32;   // gap between round columns
-const SLOTS   = 8;    // matches per half
-const SLOT_H  = 76;   // vertical space per R32 slot
-const CANVAS_H = SLOTS * SLOT_H; // 608px
+const COL_GAP = 28;   // gap between round columns
+const SLOTS   = 8;    // matches per half-bracket
+const SLOT_H  = 60;   // vertical space per R32 slot
+const HALF_H  = SLOTS * SLOT_H;   // 480px — height of one half
+const TOTAL_H = 2 * HALF_H;       // 960px — full canvas
 
-function slotHeight(r: number)  { return SLOT_H * Math.pow(2, r); }
+// Column x positions — shared by both halves
+const ROUNDS = 4; // R32 → R16 → QF → SF
+const colX   = Array.from({ length: ROUNDS }, (_, r) => r * (POD_W + COL_GAP));
+const finalX = ROUNDS * (POD_W + COL_GAP);
+const totalWidth = finalX + POD_W;
+
+function slotHeight(r: number) { return SLOT_H * Math.pow(2, r); }
+
+// Y helpers (within a half; add yOffset for bottom half)
 function podTop(r: number, i: number) {
   const sh = slotHeight(r);
   return i * sh + (sh - POD_H) / 2;
@@ -33,43 +43,30 @@ type BracketSlot  = WinnerSlot | RunnerUpSlot | ThirdSlot;
 interface R32Match { id: string; home: BracketSlot; away: BracketSlot }
 
 // ── Actual FIFA WC2026 R32 draw ───────────────────────────────────────────────
-// Source: 2026 FIFA World Cup knockout stage bracket (matches 73–88)
-// Left half feeds SF 101; Right half feeds SF 102.
-// Slot ordering within each half drives the bracket tree via podTop/podCenter.
-
-/** Left half — 8 slots top→bottom (feeds into SF 101 side) */
-const LEFT_R32: R32Match[] = [
-  // R16-89 top pair → QF-97
+// Top half (feeds into SF 101)
+const TOP_R32: R32Match[] = [
   { id: "m74", home: { kind: "winner", group: "E" },  away: { kind: "third",  eligible: ["A","B","C","D","F"] } },
   { id: "m77", home: { kind: "winner", group: "I" },  away: { kind: "third",  eligible: ["C","D","F","G","H"] } },
-  // R16-90 bottom pair → QF-97
   { id: "m73", home: { kind: "runner", group: "A" },  away: { kind: "runner", group: "B" } },
   { id: "m75", home: { kind: "winner", group: "F" },  away: { kind: "runner", group: "C" } },
-  // R16-93 top pair → QF-98
   { id: "m83", home: { kind: "runner", group: "K" },  away: { kind: "runner", group: "L" } },
   { id: "m84", home: { kind: "winner", group: "H" },  away: { kind: "runner", group: "J" } },
-  // R16-94 bottom pair → QF-98
   { id: "m81", home: { kind: "winner", group: "D" },  away: { kind: "third",  eligible: ["B","E","F","I","J"] } },
   { id: "m82", home: { kind: "winner", group: "G" },  away: { kind: "third",  eligible: ["A","E","H","I","J"] } },
 ];
 
-/** Right half — 8 slots top→bottom (feeds into SF 102 side) */
-const RIGHT_R32: R32Match[] = [
-  // R16-91 top pair → QF-99
+// Bottom half (feeds into SF 102)
+const BOTTOM_R32: R32Match[] = [
   { id: "m76", home: { kind: "winner", group: "C" },  away: { kind: "runner", group: "F" } },
   { id: "m78", home: { kind: "runner", group: "E" },  away: { kind: "runner", group: "I" } },
-  // R16-92 bottom pair → QF-99
   { id: "m79", home: { kind: "winner", group: "A" },  away: { kind: "third",  eligible: ["C","E","F","H","I"] } },
   { id: "m80", home: { kind: "winner", group: "L" },  away: { kind: "third",  eligible: ["E","H","I","J","K"] } },
-  // R16-95 top pair → QF-100
   { id: "m86", home: { kind: "winner", group: "J" },  away: { kind: "runner", group: "H" } },
   { id: "m88", home: { kind: "runner", group: "D" },  away: { kind: "runner", group: "G" } },
-  // R16-96 bottom pair → QF-100
   { id: "m85", home: { kind: "winner", group: "B" },  away: { kind: "third",  eligible: ["E","F","G","I","J"] } },
   { id: "m87", home: { kind: "winner", group: "K" },  away: { kind: "third",  eligible: ["D","E","I","J","L"] } },
 ];
 
-// Which matchIds carry a third-place slot and their eligible groups
 const THIRD_SLOTS: Array<{ matchId: string; eligible: string[] }> = [
   { matchId: "m74", eligible: ["A","B","C","D","F"] },
   { matchId: "m77", eligible: ["C","D","F","G","H"] },
@@ -81,14 +78,9 @@ const THIRD_SLOTS: Array<{ matchId: string; eligible: string[] }> = [
   { matchId: "m87", eligible: ["D","E","I","J","L"] },
 ];
 
-/**
- * Backtracking assignment: map each 3rd-place slot to one of the 8 qualifying groups,
- * respecting the eligible-groups constraint. Returns matchId → assigned group letter.
- */
 function assignThirdPlaceGroups(qualifyingGroups: string[]): Record<string, string> {
   const assignment: Record<string, string> = {};
   const used = new Set<string>();
-
   function bt(idx: number): boolean {
     if (idx === THIRD_SLOTS.length) return true;
     const slot = THIRD_SLOTS[idx];
@@ -110,9 +102,11 @@ function assignThirdPlaceGroups(qualifyingGroups: string[]): Record<string, stri
 function useTheme(mono: boolean) {
   return mono
     ? { card: "#EDE8DE", border: "#DDD9D0", text: "#1A1208", textSec: "#6B5E4E", textMuted: "#A89E8E",
-        accent: "#1A1208", accentText: "#F7F4EE", connector: "#C8C0B0", finalBg: "rgba(26,18,8,0.06)" }
+        accent: "#1A1208", accentText: "#F7F4EE", connector: "#C8C0B0", finalBg: "rgba(26,18,8,0.06)",
+        halfDivider: "#E5E1D8" }
     : { card: "#1A2E1F", border: "#2C4832", text: "#F0EDE6", textSec: "#B3C9B7", textMuted: "#7A9B84",
-        accent: "#D7FF5A", accentText: "#0B1E0D", connector: "#2C4832", finalBg: "rgba(215,255,90,0.06)" };
+        accent: "#D7FF5A", accentText: "#0B1E0D", connector: "#2C4832", finalBg: "rgba(215,255,90,0.06)",
+        halfDivider: "#1F3A24" };
 }
 
 // ── Slot helpers ──────────────────────────────────────────────────────────────
@@ -133,25 +127,53 @@ function resolveTeam(
   return thirdMap[matchId] ?? null;
 }
 
+// ── SVG connector paths ───────────────────────────────────────────────────────
+function halfConnectors(yOffset: number, round: number): string[] {
+  const paths: string[] = [];
+  const count = SLOTS / Math.pow(2, round);
+  const x1   = colX[round] + POD_W;
+  const x2   = colX[round + 1];
+  const midX = (x1 + x2) / 2;
+  for (let i = 0; i < count; i += 2) {
+    const y1 = yOffset + podCenter(round, i);
+    const y2 = yOffset + podCenter(round, i + 1);
+    const yn = yOffset + podCenter(round + 1, i / 2);
+    paths.push(`M ${x1} ${y1} H ${midX} V ${yn} H ${x2}`);
+    paths.push(`M ${x1} ${y2} H ${midX} V ${yn} H ${x2}`);
+  }
+  return paths;
+}
+
+function buildFinalConnectors(): string[] {
+  const sfRightX   = colX[3] + POD_W;
+  const midX       = (sfRightX + finalX) / 2;
+  const topSFY     = podCenter(3, 0);           // center of top-half SF
+  const botSFY     = HALF_H + podCenter(3, 0);  // center of bottom-half SF
+  const finalTopY  = HALF_H - POD_H / 2 + POD_H * 0.25;  // top finalist row center
+  const finalBotY  = HALF_H - POD_H / 2 + POD_H * 0.75;  // bottom finalist row center
+  return [
+    `M ${sfRightX} ${topSFY} H ${midX} V ${finalTopY} H ${finalX}`,
+    `M ${sfRightX} ${botSFY} H ${midX} V ${finalBotY} H ${finalX}`,
+  ];
+}
+
 // ── Main component ────────────────────────────────────────────────────────────
-export default function QualifiersView({ scorePicks, mono }: QualifiersViewProps) {
+export default function QualifiersView({ matches, scorePicks, mono }: QualifiersViewProps) {
   const [view, setView] = useState<"predicted" | "actual">("predicted");
   const t = useTheme(mono);
 
-  const hasActual       = useMemo(() => MATCHES.some(m => m.homeScore !== null), []);
-  const predictedTables = useMemo(() => computeGroupTables(MATCHES, scorePicks, false), [scorePicks]);
-  const actualTables    = useMemo(() => computeGroupTables(MATCHES, scorePicks, true), []);
+  const hasActual       = useMemo(() => matches.some(m => m.homeScore !== null), [matches]);
+  const predictedTables = useMemo(() => computeGroupTables(matches, scorePicks, false), [matches, scorePicks]);
+  const actualTables    = useMemo(() => computeGroupTables(matches, scorePicks, true), [matches]);
   const tables = view === "predicted" ? predictedTables : actualTables;
 
-  // Rank 3rd-place teams, pick top 8, assign to slots
   const thirdMap = useMemo(() => {
     const ranked  = rankThirdPlaceTeams(tables);
     const top8    = ranked.slice(0, 8);
     const byGroup: Record<string, TeamRow> = {};
     for (const { group, row } of ranked) byGroup[group] = row;
-
-    const qualGroups    = top8.map(t => t.group);
-    const groupAssign   = assignThirdPlaceGroups(qualGroups);      // matchId → group
+    const qualGroups  = top8.map(t => t.group);
+    const groupAssign = assignThirdPlaceGroups(qualGroups);
     const result: Record<string, TeamRow | null> = {};
     for (const { matchId } of THIRD_SLOTS) {
       const g = groupAssign[matchId];
@@ -166,72 +188,15 @@ export default function QualifiersView({ scorePicks, mono }: QualifiersViewProps
     return assignThirdPlaceGroups(top8.map(t => t.group));
   }, [tables]);
 
-  // ── Column positions ───────────────────────────────────────────────────────
-  const ROUNDS = 4;
-  const leftColX  = Array.from({ length: ROUNDS }, (_, r) => r * (POD_W + COL_GAP));
-  const leftWidth = ROUNDS * POD_W + (ROUNDS - 1) * COL_GAP;
-  const FINAL_GAP = 44;
-  const finalX    = leftWidth + FINAL_GAP;
-  const rightStart = finalX + POD_W + FINAL_GAP;
-  const rightColX  = Array.from({ length: ROUNDS }, (_, r) => rightStart + (ROUNDS - 1 - r) * (POD_W + COL_GAP));
-  const totalWidth = rightColX[0] + POD_W;
-
-  // ── SVG connectors ─────────────────────────────────────────────────────────
-  function leftConnectors(round: number) {
-    const paths: string[] = [];
-    const count = SLOTS / Math.pow(2, round);
-    const x1 = leftColX[round] + POD_W;
-    const x2 = leftColX[round + 1];
-    const midX = x1 + COL_GAP / 2;
-    for (let i = 0; i < count; i += 2) {
-      const y1 = podCenter(round, i);
-      const y2 = podCenter(round, i + 1);
-      const yn = podCenter(round + 1, i / 2);
-      paths.push(`M ${x1} ${y1} H ${midX} V ${yn} H ${x2}`);
-      paths.push(`M ${x1} ${y2} H ${midX} V ${yn} H ${x2}`);
-    }
-    return paths;
-  }
-
-  function rightConnectors(round: number) {
-    const paths: string[] = [];
-    const count = SLOTS / Math.pow(2, round);
-    const x1   = rightColX[round];
-    const x2   = rightColX[round + 1] + POD_W;
-    const midX = x1 - COL_GAP / 2;
-    for (let i = 0; i < count; i += 2) {
-      const y1 = podCenter(round, i);
-      const y2 = podCenter(round, i + 1);
-      const yn = podCenter(round + 1, i / 2);
-      paths.push(`M ${x1} ${y1} H ${midX} V ${yn} H ${x2}`);
-      paths.push(`M ${x1} ${y2} H ${midX} V ${yn} H ${x2}`);
-    }
-    return paths;
-  }
-
-  function finalConnectors() {
-    const paths: string[] = [];
-    const fy = CANVAS_H / 2;
-    // Left SF → Final
-    const lx  = leftColX[3] + POD_W;
-    const ly  = podCenter(3, 0);
-    const lmx = lx + (finalX - lx) / 2;
-    paths.push(`M ${lx} ${ly} H ${lmx} V ${fy} H ${finalX}`);
-    // Right SF → Final
-    const rx  = rightColX[3];
-    const ry  = podCenter(3, 0);
-    const rmx = rx - (rx - (finalX + POD_W)) / 2;
-    paths.push(`M ${rx} ${ry} H ${rmx} V ${fy} H ${finalX + POD_W}`);
-    return paths;
-  }
-
+  // Build all connector paths
   const connectorPaths = [
-    ...leftConnectors(0), ...leftConnectors(1), ...leftConnectors(2),
-    ...rightConnectors(0), ...rightConnectors(1), ...rightConnectors(2),
-    ...finalConnectors(),
+    ...halfConnectors(0, 0), ...halfConnectors(0, 1), ...halfConnectors(0, 2),
+    ...halfConnectors(HALF_H, 0), ...halfConnectors(HALF_H, 1), ...halfConnectors(HALF_H, 2),
+    ...buildFinalConnectors(),
   ];
 
-  // ── Render ────────────────────────────────────────────────────────────────
+  const finalPodY = HALF_H - POD_H / 2;
+
   return (
     <div>
       {/* Toggle */}
@@ -264,85 +229,88 @@ export default function QualifiersView({ scorePicks, mono }: QualifiersViewProps
         )}
       </div>
 
+      {/* Round labels */}
+      <div style={{ position: "relative", height: 20, marginBottom: 6, width: totalWidth }}>
+        {(["R32","R16","QF","SF"] as const).map((lbl, r) => (
+          <span key={lbl} style={{
+            position: "absolute", left: colX[r], width: POD_W, textAlign: "center",
+            fontSize: 9, fontWeight: 900, letterSpacing: "0.1em",
+            textTransform: "uppercase", color: t.textMuted,
+          }}>
+            {lbl}
+          </span>
+        ))}
+        <span style={{
+          position: "absolute", left: finalX, width: POD_W, textAlign: "center",
+          fontSize: 9, fontWeight: 900, letterSpacing: "0.1em",
+          textTransform: "uppercase", color: t.accent,
+        }}>
+          Final
+        </span>
+      </div>
+
       {/* Bracket */}
       <div className="overflow-x-auto pb-4">
-        <div style={{ width: totalWidth, position: "relative" }}>
+        <div style={{ width: totalWidth, position: "relative", height: TOTAL_H }}>
 
-          {/* Round labels */}
-          <div style={{ position: "relative", height: 20, marginBottom: 8 }}>
-            {(["R32","R16","QF","SF"] as const).map((lbl, r) => (
-              <span key={lbl} style={{ position: "absolute", left: leftColX[r], width: POD_W, textAlign: "center",
-                fontSize: 9, fontWeight: 900, letterSpacing: "0.1em", textTransform: "uppercase", color: t.textMuted }}>
-                {lbl}
-              </span>
+          {/* Half-bracket divider line */}
+          <div style={{
+            position: "absolute",
+            top: HALF_H,
+            left: 0,
+            width: colX[3] + POD_W,
+            height: 1,
+            backgroundColor: t.halfDivider,
+          }} />
+
+          {/* SVG connectors */}
+          <svg style={{ position: "absolute", inset: 0, overflow: "visible", pointerEvents: "none" }}
+            width={totalWidth} height={TOTAL_H}>
+            {connectorPaths.map((d, i) => (
+              <path key={i} d={d} fill="none" stroke={t.connector} strokeWidth={1.5} />
             ))}
-            <span style={{ position: "absolute", left: finalX, width: POD_W, textAlign: "center",
-              fontSize: 9, fontWeight: 900, letterSpacing: "0.1em", textTransform: "uppercase", color: t.accent }}>
-              Final
-            </span>
-            {(["SF","QF","R16","R32"] as const).map((lbl, r) => (
-              <span key={lbl + "r"} style={{ position: "absolute", left: rightColX[ROUNDS - 1 - r], width: POD_W, textAlign: "center",
-                fontSize: 9, fontWeight: 900, letterSpacing: "0.1em", textTransform: "uppercase", color: t.textMuted }}>
-                {lbl}
-              </span>
-            ))}
-          </div>
+          </svg>
 
-          {/* Canvas */}
-          <div style={{ position: "relative", height: CANVAS_H }}>
-
-            {/* SVG connectors */}
-            <svg style={{ position: "absolute", inset: 0, overflow: "visible", pointerEvents: "none" }}
-              width={totalWidth} height={CANVAS_H}>
-              {connectorPaths.map((d, i) => (
-                <path key={i} d={d} fill="none" stroke={t.connector} strokeWidth={1.5} />
-              ))}
-            </svg>
-
-            {/* Left R32 */}
-            {LEFT_R32.map((m, i) => (
-              <MatchPod key={m.id}
-                x={leftColX[0]} y={podTop(0, i)}
-                homeTeam={resolveTeam(m.home, tables, m.id, thirdMap)}
-                awayTeam={resolveTeam(m.away, tables, m.id, thirdMap)}
-                homeLabel={slotLabel(m.home, m.home.kind === "third" ? thirdGroupAssign[m.id] : undefined)}
-                awayLabel={slotLabel(m.away, m.away.kind === "third" ? thirdGroupAssign[m.id] : undefined)}
-                t={t}
-              />
-            ))}
-
-            {/* Left R16 / QF / SF — TBD */}
-            {[1,2,3].flatMap(r =>
-              Array.from({ length: SLOTS / Math.pow(2, r) }, (_, i) => (
-                <TbdPod key={`l-r${r}-${i}`} x={leftColX[r]} y={podTop(r, i)} t={t} />
-              ))
-            )}
-
-            {/* Final */}
-            <MatchPod
-              x={finalX} y={CANVAS_H / 2 - POD_H / 2}
-              isFinal t={t}
+          {/* Top half — R32 */}
+          {TOP_R32.map((m, i) => (
+            <MatchPod key={m.id}
+              x={colX[0]} y={podTop(0, i)}
+              homeTeam={resolveTeam(m.home, tables, m.id, thirdMap)}
+              awayTeam={resolveTeam(m.away, tables, m.id, thirdMap)}
+              homeLabel={slotLabel(m.home, m.home.kind === "third" ? thirdGroupAssign[m.id] : undefined)}
+              awayLabel={slotLabel(m.away, m.away.kind === "third" ? thirdGroupAssign[m.id] : undefined)}
+              t={t}
             />
+          ))}
 
-            {/* Right SF / QF / R16 — TBD */}
-            {[3,2,1].flatMap(r =>
-              Array.from({ length: SLOTS / Math.pow(2, r) }, (_, i) => (
-                <TbdPod key={`r-r${r}-${i}`} x={rightColX[r]} y={podTop(r, i)} t={t} />
-              ))
-            )}
+          {/* Top half — R16 / QF / SF (TBD) */}
+          {[1, 2, 3].flatMap(r =>
+            Array.from({ length: SLOTS / Math.pow(2, r) }, (_, i) => (
+              <TbdPod key={`top-r${r}-${i}`} x={colX[r]} y={podTop(r, i)} t={t} />
+            ))
+          )}
 
-            {/* Right R32 */}
-            {RIGHT_R32.map((m, i) => (
-              <MatchPod key={m.id}
-                x={rightColX[0]} y={podTop(0, i)}
-                homeTeam={resolveTeam(m.home, tables, m.id, thirdMap)}
-                awayTeam={resolveTeam(m.away, tables, m.id, thirdMap)}
-                homeLabel={slotLabel(m.home, m.home.kind === "third" ? thirdGroupAssign[m.id] : undefined)}
-                awayLabel={slotLabel(m.away, m.away.kind === "third" ? thirdGroupAssign[m.id] : undefined)}
-                t={t}
-              />
-            ))}
-          </div>
+          {/* Bottom half — R32 */}
+          {BOTTOM_R32.map((m, i) => (
+            <MatchPod key={m.id}
+              x={colX[0]} y={HALF_H + podTop(0, i)}
+              homeTeam={resolveTeam(m.home, tables, m.id, thirdMap)}
+              awayTeam={resolveTeam(m.away, tables, m.id, thirdMap)}
+              homeLabel={slotLabel(m.home, m.home.kind === "third" ? thirdGroupAssign[m.id] : undefined)}
+              awayLabel={slotLabel(m.away, m.away.kind === "third" ? thirdGroupAssign[m.id] : undefined)}
+              t={t}
+            />
+          ))}
+
+          {/* Bottom half — R16 / QF / SF (TBD) */}
+          {[1, 2, 3].flatMap(r =>
+            Array.from({ length: SLOTS / Math.pow(2, r) }, (_, i) => (
+              <TbdPod key={`bot-r${r}-${i}`} x={colX[r]} y={HALF_H + podTop(r, i)} t={t} />
+            ))
+          )}
+
+          {/* Final */}
+          <MatchPod x={finalX} y={finalPodY} isFinal t={t} />
         </div>
       </div>
 
