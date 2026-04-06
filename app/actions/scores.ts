@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 
 const ADMIN_USER_ID = process.env.ADMIN_USER_ID;
@@ -17,6 +18,9 @@ export async function saveScore(matchId: string, homeScore: number, awayScore: n
     { onConflict: "match_id" }
   );
   if (error) throw error;
+
+  // Invalidate all league pages so the next load picks up the new score
+  revalidatePath("/league", "layout");
 }
 
 export async function getActualScores(): Promise<Record<string, { home: number; away: number }>> {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import Header from "@/components/Header";
 import PhaseNav from "@/components/PhaseNav";
 import DayNav, { type Day } from "@/components/DayNav";
@@ -66,6 +67,15 @@ export default function LeagueClient({
   isPreview = false,
 }: LeagueClientProps) {
   const [, startTransition] = useTransition();
+  const router = useRouter();
+
+  // Poll for updated scores every 60s when the tab is visible
+  useEffect(() => {
+    const id = setInterval(() => {
+      if (document.visibilityState === "visible") router.refresh();
+    }, 60_000);
+    return () => clearInterval(id);
+  }, [router]);
 
   const defaultNav = getDefaultNav();
   const [activePhase, setActivePhase] = useState<PhaseId>(defaultNav.phase);
@@ -314,7 +324,7 @@ export default function LeagueClient({
             )}
 
             {/* Missing picks banner */}
-            {!isLocked && visibleMatches.length > 0 && dayPredicted < visibleMatches.length && (
+            {!isLocked && currentPhase.status !== "completed" && visibleMatches.length > 0 && dayPredicted < visibleMatches.length && (
               <button
                 onClick={scrollToFirstUnpicked}
                 className="flex items-center gap-3 mb-4 pl-4 pr-3 py-3 rounded-2xl w-full text-left cursor-pointer"

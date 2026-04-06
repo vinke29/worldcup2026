@@ -26,14 +26,17 @@ export default function PhaseNav({ phases, activePhase, onSelect, mono = false }
           style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
         >
           {phases.map((phase) => {
-            const isActive = phase.id === activePhase;
-            const isLocked = phase.status === "locked";
-            const isOpen = phase.status === "open";
+            const isActive    = phase.id === activePhase;
+            const isLocked    = phase.status === "locked";
+            const isOpen      = phase.status === "open";
+            const isCompleted = phase.status === "completed";
 
             const color = isActive
               ? mono ? "#1A1208" : "#D7FF5A"
               : isLocked
               ? mono ? "#B0A090" : "#4A6B50"
+              : isCompleted
+              ? mono ? "#5A4E40" : "#7A9B84"
               : mono ? "#6B5E4E" : "#7A9B84";
 
             return (
@@ -59,6 +62,11 @@ export default function PhaseNav({ phases, activePhase, onSelect, mono = false }
                       style={{ backgroundColor: "#4ADE80" }}
                     />
                   )}
+                  {isCompleted && (
+                    <svg width="8" height="8" viewBox="0 0 8 8" fill="none" className="opacity-70">
+                      <path d="M1 4L3 6L7 2" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  )}
                   <span className="text-xs font-bold whitespace-nowrap tracking-wide">
                     {phase.shortLabel}
                   </span>
@@ -71,6 +79,11 @@ export default function PhaseNav({ phases, activePhase, onSelect, mono = false }
                 {isLocked && (
                   <span className="text-[9px] whitespace-nowrap" style={{ color: mono ? "#B0A090" : "#4A6B50" }}>
                     {phase.matchCount} matches
+                  </span>
+                )}
+                {isCompleted && (
+                  <span className="text-[9px] whitespace-nowrap" style={{ color: mono ? "#8A7A6A" : "#4A6B50" }}>
+                    Done
                   </span>
                 )}
               </button>
