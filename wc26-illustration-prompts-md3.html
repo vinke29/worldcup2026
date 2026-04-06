@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WC2026 · Illustration Prompts · Matchday 3</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #0B1E0D;
+    color: #F0EDE6;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    padding: 48px 24px;
+    line-height: 1.5;
+  }
+  header {
+    max-width: 900px;
+    margin: 0 auto 48px;
+    border-bottom: 1px solid #2C4832;
+    padding-bottom: 32px;
+  }
+  header h1 { font-size: 32px; font-weight: 900; letter-spacing: -0.5px; margin-bottom: 8px; }
+  header h1 span { color: #7EB8F7; }
+  .subtitle { color: #7A9B84; font-size: 15px; margin-bottom: 24px; }
+  .style-guide {
+    background: #1A2E1F;
+    border: 1px solid #2C4832;
+    border-radius: 16px;
+    padding: 20px 24px;
+    font-size: 13px;
+    color: #B3C9B7;
+  }
+  .style-guide strong { color: #7EB8F7; display: block; margin-bottom: 8px; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; }
+  .style-guide p { margin-bottom: 4px; }
+  .file-convention {
+    max-width: 900px;
+    margin: 0 auto 32px;
+    background: #1A2E1F;
+    border: 1px solid #2C4832;
+    border-radius: 12px;
+    padding: 16px 20px;
+    font-size: 13px;
+    color: #7A9B84;
+  }
+  .file-convention code {
+    background: #0F2411;
+    color: #7EB8F7;
+    font-family: monospace;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 12px;
+  }
+  .group-section { max-width: 900px; margin: 0 auto 40px; }
+  .group-label {
+    font-size: 10px; font-weight: 800; text-transform: uppercase;
+    letter-spacing: 0.15em; color: #7A9B84; margin-bottom: 12px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .group-label::after { content: ""; flex: 1; height: 1px; background: #1F3A24; }
+  .match-card {
+    background: #1A2E1F; border: 1px solid #2C4832;
+    border-radius: 16px; margin-bottom: 12px; overflow: hidden;
+  }
+  .match-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 20px; border-bottom: 1px solid #1F3A24;
+  }
+  .match-teams { font-size: 18px; font-weight: 900; text-transform: uppercase; letter-spacing: -0.3px; }
+  .match-meta { font-size: 11px; color: #4A6B50; }
+  .match-filename {
+    font-family: monospace; font-size: 11px; color: #7EB8F7;
+    background: #0F2411; padding: 2px 8px; border-radius: 4px;
+  }
+  .match-body { padding: 16px 20px; }
+  .prompt-label {
+    font-size: 10px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.12em; color: #4A6B50; margin-bottom: 8px;
+  }
+  .prompt-text {
+    font-size: 13.5px; color: #B3C9B7; line-height: 1.7;
+    background: #0F2411; border: 1px solid #1F3A24;
+    border-radius: 10px; padding: 14px 16px;
+    cursor: text; white-space: pre-wrap;
+  }
+  .copy-btn {
+    display: block; margin-top: 10px; background: transparent;
+    border: 1px solid #2C4832; color: #7A9B84;
+    font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.08em; padding: 6px 14px; border-radius: 8px;
+    cursor: pointer; transition: all 0.15s; font-family: inherit;
+  }
+  .copy-btn:hover { border-color: #7EB8F7; color: #7EB8F7; }
+  .copy-btn.copied { border-color: #4ADE80; color: #4ADE80; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>WC2026 · Illustration Prompts<br><span>Matchday 3 · All 24 Games</span></h1>
+  <p class="subtitle">24 matches · June 24–27, 2026 · Vintage travel poster / WPA style</p>
+  <div class="style-guide">
+    <strong>Consistent style across all 24 illustrations — DIFFERENT from Matchday 1 &amp; 2</strong>
+    <p>· Background: deep forest green (#0B1E0D) — matches the app background exactly</p>
+    <p>· Style: vintage 1950s travel poster / WPA poster — bold geometric flat shapes, clean hard edges, diagonal compositions, art deco sensibility</p>
+    <p>· NO texture, NO grain, NO halftone dots, NO carved lines — smooth flat color fills only</p>
+    <p>· Colors: 2–3 vivid bold spot colors per illustration, drawn from each team's national palette</p>
+    <p>· Composition: two national symbols, stylized into clean geometric forms, strong visual hierarchy — each commanding their half in a diagonal or mirrored arrangement</p>
+    <p>· Format: horizontal, 3:2 ratio (e.g. 1500×1000px), no text</p>
+    <p>· Mood: optimistic and graphic — like a vintage airline poster, national parks WPA print, or 1950s Olympic Games program cover</p>
+    <p>· Key contrast vs MD1 (halftone grain) and MD2 (woodblock texture): MD3 is clean, smooth, and geometric — zero texture</p>
+  </div>
+</header>
+
+<div class="file-convention">
+  <strong>File naming convention:</strong> save as <code>match-{group}-{home abbr}-{away abbr}.png</code> and drop in <code>/quiniela/public/</code><br>
+  Example: <code>match-a-cze-mex.png</code> for Czech Republic vs Mexico (Group A Matchday 3)
+</div>
+
+<!-- GROUP A -->
+<div class="group-section">
+  <div class="group-label">Group A — Czech Republic · Mexico · South Africa · South Korea</div>
+
+  <div class="match-card">
+    <div class="match-header">
+      <div>
+        <div class="match-teams">🇨🇿 Czech Republic vs Mexico 🇲🇽</div>
+        <div class="match-meta">Jun 24 · 22:00 · Estadio Azteca, Mexico City</div>
+      </div>
+      <span class="match-filename">match-a-cze-mex.png</span>
+    </div>
+    <div class="match-body">
+      <div class="prompt-label">Illustration prompt</div>
+      <div class="prompt-text" id="p-a-cze-mex">Vintage 1950s travel poster / WPA poster illustration on deep forest green (#0B1E0D) background. Czech Republic vs Mexico. On the left, the Czech double-tailed lion — simplified into bold geometric flat shapes, rampant posture, rendered in deep crimson and white, clean hard edges. On the right, a Mexican golden eagle — stylized into a flat art deco silhouette, wings spread, rendered in vivid gold and warm orange. Diagonal composition, each symbol commanding their half. Zero texture, zero grain, smooth flat color fills, bold graphic forms. No text. Horizontal 3:2 format. Clean and bold like a 1950s Olympic Games program cover.</div>
+      <button class="copy-btn" onclick="copyPrompt('p-a-cze-mex', this)">Copy prompt</button>
+    </div>
+  </div>
+
+  <div class="match-card">
+    <div class="match-header">
+      <div>
+        <div class="match-teams">🇿🇦 South Africa vs South Korea 🇰🇷</div>
+        <div class="match-meta">Jun 24 · 22:00 · Estadio BBVA, Guadalupe</div>
+      </div>
+      <span class="match-filename">match-a-rsa-kor.png</span>
+    </div>
+    <div class="match-body">
+      <div class="prompt-label">Illustration prompt</div>
+      <div class="prompt-text" id="p-a-rsa-kor">Vintage 1950s travel poster / WPA poster illustration on deep forest green (#0B1E0D) background. South Africa vs South Korea. On the left, a springbok — simplified into a clean geometric silhouette, mid-leap, rendered in warm gold and ochre with bold flat shapes. On the right, a Korean white tiger (Baekho) — stylized into a flat art deco form, rendered in pure white and crimson red, clean hard edges with no texture. Mirrored composition across the horizontal center. Zero texture, zero grain, smooth flat color fills. No text. Horizontal 3:2 format. Bold and graphic like a vintage airline poster.</div>
+      <button class="copy-btn" onclick="copyPrompt('p-a-rsa-kor', this)">Copy prompt</button>
+    </div>
+  </div>
+</div>
+
+<!-- GROUP B -->
+<div class="group-section">
+  <div class="group-label">Group B — Switzerland · Canada · Bosnia & Herzegovina · Qatar</div>
+
+  <div class="match-card">
+    <div class="match-header">
+      <div>
+        <div class="match-teams">🇨🇭 Switzerland vs Canada 🇨🇦</div>
+        <div class="match-meta">Jun 24 · 22:00 · BC Place, Vancouver</div>
+      </div>
+      <span class="match-filename">match-b-sui-can.png</span>
+    </div>
+    <div class="match-body">
+      <div class="prompt-label">Illustration prompt</div>
+      <div class="prompt-text" id="p-b-sui-can">Vintage 1950s travel poster / WPA poster illustration on deep forest green (#0B1E0D) background. Switzerland vs Canada. On the left, a bold Swiss cross — clean geometric white cross on deep red, simplified to a flat graphic emblem — with a stylized alpine mountain range below it in flat wedge shapes, rendered in white, red, and cool grey. On the right, a maple leaf — stylized into a bold flat geometric form — above a polar bear silhouette rendered in crisp white and deep crimson. Diagonal composition with bold color blocking. Zero texture or grain, smooth flat fills. No text. Horizontal 3:2 format.</div>
+      <button class="copy-btn" onclick="copyPrompt('p-b-sui-can', this)">Copy prompt</button>
+    </div>
+  </div>
+
+  <div class="match-card">
+    <div class="match-header">
+      <div>
+        <div class="match-teams">🇧🇦 Bosnia & Herzegovina vs Qatar 🇶🇦</div>
+        <div class="match-meta">Jun 24 · 22:00 · Lumen Field, Seattle</div>
+      </div>
+      <span class="match-filename">match-b-bih-qat.png</span>
+    </div>
+    <div class="match-body">
+      <div class="prompt-label">Illustration prompt</div>
+      <div class="prompt-text" id="p-b-bih-qat">Vintage 1950s travel poster / WPA poster illustration on deep forest green (#0B1E0D) background. Bosnia and Herzegovina vs Qatar. On the left, a Bosnian medieval lily (ljiljan) — simplified into a bold flat geometric fleur shape, rendered in deep cobalt blue and gold, clean hard edges. On the right, an Arabian oryx — Qatar's national animal — stylized into a sleek geometric silhouette, long horns as bold diagonal lines, rendered in maroon and cream. Strong diagonal composition. Zero texture, zero grain, smooth flat color fills. No text. Horizontal 3:2 format.</div>
+      <button class="copy-btn" onclick="copyPrompt('p-b-bih-qat', this)">Copy prompt</button>
+    </div>
+  </div>
+</div>
+
+<!-- GROUP C -->
+<div class="group-section">
+  <div class="group-label">Group C — Scotland · Brazil · Morocco · Haiti</div>
+
+  <div class="match-card">
+    <div class="match-header">
+      <div>
+        <div class="match-teams">🏴󠁧󠁢󠁳󠁣󠁴󠁿 Scotland vs Brazil 🇧🇷</div>
+        <div class="match-meta">Jun 24 · 22:00 · Hard Rock Stadium, Miami</div>
+      </div>
+      <span class="match-filename">match-c-sco-bra.png</span>
+    </div>
+    <div class="match-body">
+      <div class="prompt-label">Illustration prompt</div>
+      <div class="prompt-text" id="p-c-sco-bra">Vintage 1950s travel poster / WPA poster illustration on deep forest green (#0B1E0D) background. Scotland vs Brazil. On the left, a Scottish thistle — stylized into a bold flat geometric flower form with spiky petals as clean angular shapes, rendered in deep purple and white. On the right, a toucan — Brazil's iconic bird, simplified into a graphic flat silhouette with bold geometric color blocking on the bill, rendered in vivid yellow and cobalt blue. Strong diagonal composition, each symbol filling its half. Zero texture, zero grain, smooth flat color fills. No text. Horizontal 3:2 format.</div>
+      <button class="copy-btn" onclick="copyPrompt('p-c-sco-bra', this)">Copy prompt</button>
+    </div>
+  </div>
+
+  <div class="match-card">
+    <div class="match-header">
+      <div>
+        <div class="match-teams">🇲🇦 Morocco vs Haiti 🇭🇹</div>
+        <div class="match-meta">Jun 24 · 22:00 · Mercedes-Benz Stadium, Atlanta</div>
+      </div>
+      <span class="match-filename">match-c-mar-hai.png</span>
+    </div>
+    <div class="match-body">
+      <div class="prompt-label">Illustration prompt</div>
+      <div class="prompt-text" id="p-c-mar-hai">Vintage 1950s travel poster / WPA poster illustration on deep forest green (#0B1E0D) background. Morocco vs Haiti. On the left, the Moroccan five-pointed star — bold, geometric, rendered in flat gold on deep red — with stylized Atlas mountain silhouettes below as clean triangular shapes in warm sienna. On the right, a Haitian royal palm tree — simplified into a bold vertical geometric form, fronds as clean radiating flat shapes, rendered in warm gold and cobalt blue. Balanced mirrored composition. Zero texture, zero grain, smooth flat color fills. No text. Horizontal 3:2 format.</div>
+      <button class="copy-btn" onclick="copyPrompt('p-c-mar-hai', this)">Copy prompt</button>
+    </div>
+  </div>
+</div>
+
+<!-- GROUP D -->
+<div class="group-section">
+  <div class="group-label">Group D — Turkey · United States · Paraguay · Australia</div>
+
+  <div class="match-card">
+    <div class="match-header">
+      <div>
+        <div class="match-teams">🇹🇷 Turkey vs United States 🇺🇸</div>
+        <div class="match-meta">Jun 25 · 22:00 · SoFi Stadium, Los Angeles</div>
+      </div>
+      <span class="match-filename">match-d-tur-usa.png</span>
+    </div>
+    <div class="match-body">
+      <div class="prompt-label">Illustration prompt</div>
+      <div class="prompt-text" id="p-d-tur-usa">Vintage 1950s travel poster / WPA poster illustration on deep forest green (#0B1E0D) background. Turkey vs United States. On the left, a Turkish crescent and star — bold, geometric, rendered in flat deep red — above a stylized tulip form as a clean geometric shape, in warm red and gold. On the right, an American bald eagle — simplified into a flat art deco silhouette, wings spread symmetrically — rendered in clean white and deep navy, no feather detail, pure geometric form. Strong diagonal composition. Zero texture or grain, smooth flat color fills. No text. Horizontal 3:2 format.</div>
+      <button class="copy-btn" onclick="copyPrompt('p-d-tur-usa', this)">Copy prompt</button>
+    </div>
+  </div>
+
+  <div class="match-card">
+    <div class="match-header">
+      <div>
+        <div class="match-teams">🇵🇾 Paraguay vs Australia 🇦🇺</div>
+        <div class="match-meta">Jun 25 · 22:00 · Levi's Stadium, San Francisco</div>
+      </div>
+      <span class="match-filename">match-d-par-aus.png</span>
+    </div>
+    <div class="match-body">
+      <div class="prompt-label">Illustration prompt</div>
+      <div class="prompt-text" id="p-d-par-aus">Vintage 1950s travel poster / WPA poster illustration on deep forest green (#0B1E0D) background. Paraguay vs Australia. On the left, a Paraguayan lion — simplified to a bold flat geometric silhouette, rampant, rendered in deep red and gold with clean hard edges. On the right, a kangaroo — Australia's icon — stylized into a clean flat geometric form, upright stance, in vivid ochre and terracotta. Diagonal composition with bold color blocking. Zero texture, zero grain, smooth flat color fills. No text. Horizontal 3:2 format. Bold and graphic like a 1950s national parks poster.</div>
+      <button class="copy-btn" onclick="copyPrompt('p-d-par-aus', this)">Copy prompt</button>
+    </div>
+  </div>
+</div>
+
+<!-- GROUP E -->
+<div class="group-section">
+  <div class="group-label">Group E — Curaçao · Ivory Coast · Ecuador · Germany</div>
+
+  <div class="match-card">
+    <div class="match-header">
+      <div>
+        <div class="match-teams">🇨🇼 Curaçao vs Ivory Coast 🇨🇮</div>
+        <div class="match-meta">Jun 25 · 22:00 · Lincoln Financial Field, Philadelphia</div>
+      </div>
+      <span class="match-filename">match-e-cur-civ.png</span>
+    </div>
+    <div class="match-body">
+      <div class="prompt-label">Illustration prompt</div>
+      <div class="prompt-text" id="p-e-cur-civ">Vintage 1950s travel poster / WPA poster illustration on deep forest green (#0B1E0D) background. Curaçao vs Ivory Coast. On the left, a divi-divi tree — Curaçao's wind-bent icon — simplified into a bold flat silhouette with diagonal form suggesting trade winds, rendered in aqua blue and warm white against a flat sky. On the right, a West African forest elephant — Ivory Coast's symbol — stylized into a powerful flat geometric form, rendered in deep orange and charcoal. Diagonal composition with strong color contrast. Zero texture or grain, smooth flat color fills. No text. Horizontal 3:2 format.</div>
+      <button class="copy-btn" onclick="copyPrompt('p-e-cur-civ', this)">Copy prompt</button>
+    </div>
+  </div>
+
+  <div class="match-card">
+    <div class="match-header">
+      <div>
+        <div class="match-teams">🇪🇨 Ecuador vs Germany 🇩🇪</div>
+        <div class="match-meta">Jun 25 · 22:00 · MetLife Stadium, New York</div>
+      </div>
+      <span class="match-filename">match-e-ecu-ger.png</span>
+    </div>
+    <div class="match-body">
+      <div class="prompt-label">Illustration prompt</div>
+      <div class="prompt-text" id="p-e-ecu-ger">Vintage 1950s travel poster / WPA poster illustration on deep forest green (#0B1E0D) background. Ecuador vs Germany. On the left, an Andean condor — Ecuador's national bird — simplified into a bold flat silhouette, wings fully spread, rendered in deep yellow and black, clean geometric form. On the right, the German eagle (Bundesadler) — simplified to a flat bold geometric silhouette, talons spread — rendered in solid black and gold. Mirrored diagonal composition, two eagles facing each other. Zero texture or grain, smooth flat color fills. No text. Horizontal 3:2 format. Bold and graphic like a vintage Lufthansa poster.</div>
+      <button class="copy-btn" onclick="copyPrompt('p-e-ecu-ger', this)">Copy prompt</button>
+    </div>
+  </div>
+</div>
+
+<!-- GROUP F -->
+<div class="group-section">
+  <div class="group-label">Group F — Japan · Sweden · Tunisia · Netherlands</div>
+
+  <div class="match-card">
+    <div class="match-header">
+      <div>
+        <div class="match-teams">🇯🇵 Japan vs Sweden 🇸🇪</div>
+        <div class="match-meta">Jun 25 · 22:00 · AT&T Stadium, Dallas</div>
+      </div>
+      <span class="match-filename">match-f-jpn-swe.png</span>
+    </div>
+    <div class="match-body">
+      <div class="prompt-label">Illustration prompt</div>
+      <div class="prompt-text" id="p-f-jpn-swe">Vintage 1950s travel poster / WPA poster illustration on deep forest green (#0B1E0D) background. Japan vs Sweden. On the left, a Japanese chrysanthemum — the imperial crest — simplified into a perfect flat geometric bloom, radiating petals as clean angular shapes, rendered in deep crimson and gold. On the right, three Swedish crowns — stylized into clean geometric flat forms — above a bold blue elk (älg) silhouette in flat cobalt blue and gold. Strong diagonal composition, bold color blocking. Zero texture, zero grain, smooth flat color fills. No text. Horizontal 3:2 format.</div>
+      <button class="copy-btn" onclick="copyPrompt('p-f-jpn-swe', this)">Copy prompt</button>
+    </div>
+  </div>
+
+  <div class="match-card">
+    <div class="match-header">
+      <div>
+        <div class="match-teams">🇹🇳 Tunisia vs Netherlands 🇳🇱</div>
+        <div class="match-meta">Jun 25 · 22:00 · Arrowhead Stadium, Kansas City</div>
+      </div>
+      <span class="match-filename">match-f-tun-ned.png</span>
+    </div>
+    <div class="match-body">
+      <div class="prompt-label">Illustration prompt</div>
+      <div class="prompt-text" id="p-f-tun-ned">Vintage 1950s travel poster / WPA poster illustration on deep forest green (#0B1E0D) background. Tunisia vs Netherlands. On the left, a Tunisian crescent — bold, geometric — above a flat olive branch silhouette, rendered in deep red and warm cream. On the right, a Dutch windmill — simplified into a bold geometric form with four flat rectangular sails as strong graphic elements — rendered in deep orange and cobalt blue. Diagonal composition, each element geometric and clean. Zero texture or grain, smooth flat color fills. No text. Horizontal 3:2 format. Bold like a vintage KLM poster.</div>
+      <button class="copy-btn" onclick="copyPrompt('p-f-tun-ned', this)">Copy prompt</button>
+    </div>
+  </div>
+</div>
+
+<!-- GROUP G -->
+<div class="group-section">
+  <div class="group-label">Group G — Egypt · Iran · New Zealand · Belgium</div>
+
+  <div class="match-card">
+    <div class="match-header">
+      <div>
+        <div class="match-teams">🇪🇬 Egypt vs Iran 🇮🇷</div>
+        <div class="match-meta">Jun 26 · 22:00 · Lumen Field, Seattle</div>
+      </div>
+      <span class="match-filename">match-g-egy-ira.png</span>
+    </div>
+    <div class="match-body">
+      <div class="prompt-label">Illustration prompt</div>
+      <div class="prompt-text" id="p-g-egy-ira">Vintage 1950s travel poster / WPA poster illustration on deep forest green (#0B1E0D) background. Egypt vs Iran. On the left, the Egyptian Eagle of Saladin — simplified into a bold flat geometric heraldic form, rendered in vivid gold on deep red, clean hard edges. On the right, the Persian lion-and-sun (Shir-o-Khorshid) — stylized into a flat art deco emblem, lion as a clean geometric silhouette, radiant sun as bold flat rays — rendered in warm gold and deep green. Strong diagonal composition. Zero texture or grain, smooth flat color fills. No text. Horizontal 3:2 format.</div>
+      <button class="copy-btn" onclick="copyPrompt('p-g-egy-ira', this)">Copy prompt</button>
+    </div>
+  </div>
+
+  <div class="match-card">
+    <div class="match-header">
+      <div>
+        <div class="match-teams">🇳🇿 New Zealand vs Belgium 🇧🇪</div>
+        <div class="match-meta">Jun 26 · 22:00 · BC Place, Vancouver</div>
+      </div>
+      <span class="match-filename">match-g-nzl-bel.png</span>
+    </div>
+    <div class="match-body">
+      <div class="prompt-label">Illustration prompt</div>
+      <div class="prompt-text" id="p-g-nzl-bel">Vintage 1950s travel poster / WPA poster illustration on deep forest green (#0B1E0D) background. New Zealand vs Belgium. On the left, a silver fern — New Zealand's iconic symbol — simplified into a bold flat geometric frond, leaves as clean repeating triangular shapes, rendered in silver-white and deep black. On the right, the Belgian black lion — rampant — simplified into a flat bold geometric silhouette, rendered in solid black and vivid gold. Strong diagonal composition, bold graphic contrast. Zero texture or grain, smooth flat color fills. No text. Horizontal 3:2 format.</div>
+      <button class="copy-btn" onclick="copyPrompt('p-g-nzl-bel', this)">Copy prompt</button>
+    </div>
+  </div>
+</div>
+
+<!-- GROUP H -->
+<div class="group-section">
+  <div class="group-label">Group H — Cape Verde · Saudi Arabia · Uruguay · Spain</div>
+
+  <div class="match-card">
+    <div class="match-header">
+      <div>
+        <div class="match-teams">🇨🇻 Cape Verde vs Saudi Arabia 🇸🇦</div>
+        <div class="match-meta">Jun 26 · 22:00 · NRG Stadium, Houston</div>
+      </div>
+      <span class="match-filename">match-h-cpv-ksa.png</span>
+    </div>
+    <div class="match-body">
+      <div class="prompt-label">Illustration prompt</div>
+      <div class="prompt-text" id="p-h-cpv-ksa">Vintage 1950s travel poster / WPA poster illustration on deep forest green (#0B1E0D) background. Cape Verde vs Saudi Arabia. On the left, an albatross — Cape Verde's maritime symbol — simplified into a bold flat silhouette with wings in a clean geometric spread, rendered in white and aqua blue, suggesting Atlantic ocean winds. On the right, a Najdi Arabian falcon — Saudi Arabia's national bird — simplified into a flat art deco form, rendered in deep green and warm gold. Diagonal composition with bold graphic hierarchy. Zero texture or grain, smooth flat color fills. No text. Horizontal 3:2 format.</div>
+      <button class="copy-btn" onclick="copyPrompt('p-h-cpv-ksa', this)">Copy prompt</button>
+    </div>
+  </div>
+
+  <div class="match-card">
+    <div class="match-header">
+      <div>
+        <div class="match-teams">🇺🇾 Uruguay vs Spain 🇪🇸</div>
+        <div class="match-meta">Jun 26 · 22:00 · Estadio Akron, Guadalupe</div>
+      </div>
+      <span class="match-filename">match-h-uru-esp.png</span>
+    </div>
+    <div class="match-body">
+      <div class="prompt-label">Illustration prompt</div>
+      <div class="prompt-text" id="p-h-uru-esp">Vintage 1950s travel poster / WPA poster illustration on deep forest green (#0B1E0D) background. Uruguay vs Spain. On the left, the Uruguayan Sun of May — simplified to a bold flat geometric radiant sun face, rays as clean rectangular spikes, rendered in sky blue and gold. On the right, a Spanish bull — stylized into a bold clean geometric silhouette, the iconic Osborne bull form — rendered in solid black. Strong contrast composition with vivid flat color fields. Zero texture or grain, smooth flat color fills. No text. Horizontal 3:2 format. Bold like a vintage Iberia Airlines poster.</div>
+      <button class="copy-btn" onclick="copyPrompt('p-h-uru-esp', this)">Copy prompt</button>
+    </div>
+  </div>
+</div>
+
+<!-- GROUP I -->
+<div class="group-section">
+  <div class="group-label">Group I — Norway · France · Senegal · Iraq</div>
+
+  <div class="match-card">
+    <div class="match-header">
+      <div>
+        <div class="match-teams">🇳🇴 Norway vs France 🇫🇷</div>
+        <div class="match-meta">Jun 26 · 22:00 · Gillette Stadium, Boston</div>
+      </div>
+      <span class="match-filename">match-i-nor-fra.png</span>
+    </div>
+    <div class="match-body">
+      <div class="prompt-label">Illustration prompt</div>
+      <div class="prompt-text" id="p-i-nor-fra">Vintage 1950s travel poster / WPA poster illustration on deep forest green (#0B1E0D) background. Norway vs France. On the left, a Viking longship — simplified into a clean bold geometric silhouette, the dragon prow as a strong diagonal graphic element, rendered in deep red and white, sail as a flat triangle. On the right, the Gallic rooster (Coq Gaulois) — stylized into a flat art deco bird form, crest as bold geometric shapes — rendered in deep cobalt blue and vivid gold. Diagonal composition with strong visual hierarchy. Zero texture or grain, smooth flat color fills. No text. Horizontal 3:2 format.</div>
+      <button class="copy-btn" onclick="copyPrompt('p-i-nor-fra', this)">Copy prompt</button>
+    </div>
+  </div>
+
+  <div class="match-card">
+    <div class="match-header">
+      <div>
+        <div class="match-teams">🇸🇳 Senegal vs Iraq 🇮🇶</div>
+        <div class="match-meta">Jun 26 · 22:00 · BMO Field, Toronto</div>
+      </div>
+      <span class="match-filename">match-i-sen-irq.png</span>
+    </div>
+    <div class="match-body">
+      <div class="prompt-label">Illustration prompt</div>
+      <div class="prompt-text" id="p-i-sen-irq">Vintage 1950s travel poster / WPA poster illustration on deep forest green (#0B1E0D) background. Senegal vs Iraq. On the left, a baobab tree — Senegal's iconic silhouette — simplified into a bold flat geometric form, its massive trunk and stubby branches as clean geometric shapes, rendered in warm gold and deep green. On the right, a stylized Mesopotamian arch (Ishtar Gate motif) — clean geometric archway form with bold flat color — rendered in cobalt blue and warm terracotta, suggesting ancient Babylon. Strong diagonal composition. Zero texture or grain, smooth flat color fills. No text. Horizontal 3:2 format.</div>
+      <button class="copy-btn" onclick="copyPrompt('p-i-sen-irq', this)">Copy prompt</button>
+    </div>
+  </div>
+</div>
+
+<!-- GROUP J -->
+<div class="group-section">
+  <div class="group-label">Group J — Algeria · Austria · Jordan · Argentina</div>
+
+  <div class="match-card">
+    <div class="match-header">
+      <div>
+        <div class="match-teams">🇩🇿 Algeria vs Austria 🇦🇹</div>
+        <div class="match-meta">Jun 27 · 22:00 · Arrowhead Stadium, Kansas City</div>
+      </div>
+      <span class="match-filename">match-j-alg-aut.png</span>
+    </div>
+    <div class="match-body">
+      <div class="prompt-label">Illustration prompt</div>
+      <div class="prompt-text" id="p-j-alg-aut">Vintage 1950s travel poster / WPA poster illustration on deep forest green (#0B1E0D) background. Algeria vs Austria. On the left, an Algerian crescent and star — bold, geometric — above stylized Atlas mountain silhouettes as clean flat triangular shapes, rendered in deep green and vivid white. On the right, an Austrian edelweiss flower — simplified into a perfect flat geometric bloom, petals as clean angular shapes — rendered in crisp white and deep red. Balanced mirrored composition. Zero texture or grain, smooth flat color fills. No text. Horizontal 3:2 format. Clean and graphic like a vintage Austrian Airlines poster.</div>
+      <button class="copy-btn" onclick="copyPrompt('p-j-alg-aut', this)">Copy prompt</button>
+    </div>
+  </div>
+
+  <div class="match-card">
+    <div class="match-header">
+      <div>
+        <div class="match-teams">🇯🇴 Jordan vs Argentina 🇦🇷</div>
+        <div class="match-meta">Jun 27 · 22:00 · AT&T Stadium, Dallas</div>
+      </div>
+      <span class="match-filename">match-j-jor-arg.png</span>
+    </div>
+    <div class="match-body">
+      <div class="prompt-label">Illustration prompt</div>
+      <div class="prompt-text" id="p-j-jor-arg">Vintage 1950s travel poster / WPA poster illustration on deep forest green (#0B1E0D) background. Jordan vs Argentina. On the left, a Jordanian Hashemite star (seven-pointed star) — bold flat geometric star — above stylized Petra arch silhouettes as clean geometric shapes, rendered in deep red and warm gold. On the right, the Argentine Sun of May — a radiant flat geometric sun face, rays as clean rectangular spikes — rendered in sky blue and vivid gold. Strong diagonal composition, two bold solar symbols facing off. Zero texture or grain, smooth flat color fills. No text. Horizontal 3:2 format.</div>
+      <button class="copy-btn" onclick="copyPrompt('p-j-jor-arg', this)">Copy prompt</button>
+    </div>
+  </div>
+</div>
+
+<!-- GROUP K -->
+<div class="group-section">
+  <div class="group-label">Group K — Colombia · Portugal · DR Congo · Uzbekistan</div>
+
+  <div class="match-card">
+    <div class="match-header">
+      <div>
+        <div class="match-teams">🇨🇴 Colombia vs Portugal 🇵🇹</div>
+        <div class="match-meta">Jun 27 · 22:00 · Hard Rock Stadium, Miami</div>
+      </div>
+      <span class="match-filename">match-k-col-por.png</span>
+    </div>
+    <div class="match-body">
+      <div class="prompt-label">Illustration prompt</div>
+      <div class="prompt-text" id="p-k-col-por">Vintage 1950s travel poster / WPA poster illustration on deep forest green (#0B1E0D) background. Colombia vs Portugal. On the left, a yellow orchid (Cattleya) — Colombia's national flower — simplified into a bold flat geometric bloom with petals as clean angular shapes, rendered in vivid yellow and deep blue. On the right, a Portuguese armillary sphere — the navigator's instrument — simplified into a bold flat geometric ring form, rendered in deep crimson and gold. Diagonal composition, flowers and global discovery. Zero texture or grain, smooth flat color fills. No text. Horizontal 3:2 format.</div>
+      <button class="copy-btn" onclick="copyPrompt('p-k-col-por', this)">Copy prompt</button>
+    </div>
+  </div>
+
+  <div class="match-card">
+    <div class="match-header">
+      <div>
+        <div class="match-teams">🇨🇩 DR Congo vs Uzbekistan 🇺🇿</div>
+        <div class="match-meta">Jun 27 · 22:00 · Mercedes-Benz Stadium, Atlanta</div>
+      </div>
+      <span class="match-filename">match-k-cgo-uzb.png</span>
+    </div>
+    <div class="match-body">
+      <div class="prompt-label">Illustration prompt</div>
+      <div class="prompt-text" id="p-k-cgo-uzb">Vintage 1950s travel poster / WPA poster illustration on deep forest green (#0B1E0D) background. DR Congo vs Uzbekistan. On the left, an okapi — Congo's national animal — simplified into a bold flat geometric silhouette, its distinctive stripe pattern rendered as clean geometric color blocks, in deep blue and warm cream. On the right, a stylized Registan arch (Uzbekistan's iconic Samarkand tile arch) — simplified to a bold flat geometric arch form with interior pattern as clean geometric shapes, rendered in vivid turquoise and warm gold. Diagonal composition. Zero texture or grain, smooth flat color fills. No text. Horizontal 3:2 format.</div>
+      <button class="copy-btn" onclick="copyPrompt('p-k-cgo-uzb', this)">Copy prompt</button>
+    </div>
+  </div>
+</div>
+
+<!-- GROUP L -->
+<div class="group-section">
+  <div class="group-label">Group L — Panama · England · Croatia · Ghana</div>
+
+  <div class="match-card">
+    <div class="match-header">
+      <div>
+        <div class="match-teams">🇵🇦 Panama vs England 🏴󠁧󠁢󠁥󠁮󠁧󠁿</div>
+        <div class="match-meta">Jun 27 · 22:00 · MetLife Stadium, New York</div>
+      </div>
+      <span class="match-filename">match-l-pan-eng.png</span>
+    </div>
+    <div class="match-body">
+      <div class="prompt-label">Illustration prompt</div>
+      <div class="prompt-text" id="p-l-pan-eng">Vintage 1950s travel poster / WPA poster illustration on deep forest green (#0B1E0D) background. Panama vs England. On the left, a harpy eagle — Panama's national bird — simplified into a bold flat art deco silhouette, wings spread, rendered in deep blue and vivid gold, clean geometric form. On the right, the English three lions — simplified to a bold flat graphic emblem, three clean geometric lion silhouettes stacked, rendered in deep gold and red. Strong diagonal composition. Zero texture or grain, smooth flat color fills. No text. Horizontal 3:2 format. Bold and graphic like a vintage BOAC airline poster.</div>
+      <button class="copy-btn" onclick="copyPrompt('p-l-pan-eng', this)">Copy prompt</button>
+    </div>
+  </div>
+
+  <div class="match-card">
+    <div class="match-header">
+      <div>
+        <div class="match-teams">🇭🇷 Croatia vs Ghana 🇬🇭</div>
+        <div class="match-meta">Jun 27 · 22:00 · Lincoln Financial Field, Philadelphia</div>
+      </div>
+      <span class="match-filename">match-l-cro-gha.png</span>
+    </div>
+    <div class="match-body">
+      <div class="prompt-label">Illustration prompt</div>
+      <div class="prompt-text" id="p-l-cro-gha">Vintage 1950s travel poster / WPA poster illustration on deep forest green (#0B1E0D) background. Croatia vs Ghana. On the left, the Croatian checkerboard (šahovnica) — bold geometric grid of red and white squares — as a flat graphic pattern filling its half, clean and precise, rendered in deep crimson and white. On the right, Ghana's Black Star — a bold five-pointed geometric star — above a flat Sankofa bird silhouette, rendered in solid black and vivid gold. Strong mirrored composition, geometry vs symbolism. Zero texture or grain, smooth flat color fills. No text. Horizontal 3:2 format.</div>
+      <button class="copy-btn" onclick="copyPrompt('p-l-cro-gha', this)">Copy prompt</button>
+    </div>
+  </div>
+</div>
+
+<script>
+function copyPrompt(id, btn) {
+  const text = document.getElementById(id).textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = "Copied!";
+    btn.classList.add("copied");
+    setTimeout(() => { btn.textContent = "Copy prompt"; btn.classList.remove("copied"); }, 2000);
+  });
+}
+</script>
+</body>
+</html>

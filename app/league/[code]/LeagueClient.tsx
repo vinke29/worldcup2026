@@ -249,7 +249,7 @@ export default function LeagueClient({
       )}
 
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6">
-        {/* Tab toggle */}
+        {/* Tab toggle — all 4 tabs on mobile; only Groups/Qualifiers on desktop */}
         <div
           className="flex rounded-xl p-1 mb-5 border"
           style={{ backgroundColor: t.cardBg, borderColor: t.border }}
@@ -258,7 +258,7 @@ export default function LeagueClient({
             <button
               key={tab}
               onClick={() => setMobileView(tab)}
-              className="flex-1 py-2 text-sm font-bold rounded-lg capitalize transition-all duration-150 cursor-pointer"
+              className={`flex-1 py-2 text-sm font-bold rounded-lg capitalize transition-all duration-150 cursor-pointer${tab === "matches" || tab === "standings" ? " sm:hidden" : ""}`}
               style={{
                 backgroundColor: mobileView === tab ? t.accent : "transparent",
                 color: mobileView === tab ? t.accentText : t.textSec,
@@ -270,8 +270,8 @@ export default function LeagueClient({
         </div>
 
         <div className="flex gap-6 items-start">
-          {/* Matches */}
-          <div className={`flex-1 min-w-0 ${mobileView !== "matches" ? "hidden" : "block"}`}>
+          {/* Matches — always visible on desktop, tab-driven on mobile */}
+          <div className={`flex-1 min-w-0 ${mobileView !== "matches" ? "hidden sm:block" : "block"}`}>
 
             {/* Phase / day header */}
             {isLocked ? (
@@ -391,8 +391,8 @@ export default function LeagueClient({
             )}
           </div>
 
-          {/* Sidebar */}
-          <div className={`sm:w-64 w-full flex-shrink-0 sm:sticky sm:top-36 space-y-3 ${mobileView !== "standings" ? "hidden" : ""}`}>
+          {/* Sidebar — always visible on desktop, tab-driven on mobile */}
+          <div className={`sm:w-64 w-full flex-shrink-0 sm:sticky sm:top-36 space-y-3 ${mobileView !== "standings" ? "hidden sm:block" : ""}`}>
             <Leaderboard
               members={computeStandings(matches, members, currentUserId, predictions, scorePredictions)}
               currentUserId={currentUserId}
