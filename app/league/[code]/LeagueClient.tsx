@@ -467,9 +467,9 @@ export default function LeagueClient({
       {/* Fixed next-day banner — slides down from top when all picks are done */}
       {isGroupPhase && nextDay && mobileView === "matches" && (
         <div
-          className="fixed top-0 inset-x-0 z-40 flex justify-center px-4 pt-4 pointer-events-none"
+          className="fixed top-14 inset-x-0 z-[60] flex justify-center px-4 pt-2 pointer-events-none"
           style={{
-            transform: nextDayBannerVisible ? "translateY(0)" : "translateY(calc(-100% - 16px))",
+            transform: nextDayBannerVisible ? "translateY(0)" : "translateY(calc(-100% - 72px))",
             transition: "transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)",
           }}
         >

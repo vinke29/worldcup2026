@@ -48,23 +48,23 @@ export default function DayNav({ days, activeDay, onSelect, mono = false }: DayN
                 className="flex-shrink-0 flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-lg transition-all duration-150 cursor-pointer"
                 style={{
                   backgroundColor: isActive
-                    ? mono ? "#D8D2C8" : "#1A2E1F"
+                    ? mono ? "#1A1208" : "#D7FF5A"
                     : "transparent",
-                  border: `1px solid ${isActive ? (mono ? "#C8C0B0" : "#2C4832") : "transparent"}`,
+                  border: `1px solid ${isActive ? (mono ? "#1A1208" : "#D7FF5A") : "transparent"}`,
                 }}
               >
                 <div className="flex items-center gap-1.5">
                   {day.hasLive && (
                     <span
                       className="w-1.5 h-1.5 rounded-full animate-pulse flex-shrink-0"
-                      style={{ backgroundColor: "#4ADE80" }}
+                      style={{ backgroundColor: isActive ? (mono ? "#F7F4EE" : "#0B1E0D") : "#4ADE80" }}
                     />
                   )}
                   <span
                     className="text-xs font-bold whitespace-nowrap"
                     style={{
                       color: isActive
-                        ? mono ? "#1A1208" : "#F0EDE6"
+                        ? mono ? "#F7F4EE" : "#0B1E0D"
                         : day.hasPast
                         ? mono ? "#A09080" : "#4A6B50"
                         : mono ? "#6B5E4E" : "#7A9B84",
@@ -75,7 +75,7 @@ export default function DayNav({ days, activeDay, onSelect, mono = false }: DayN
                 </div>
                 <span
                   className="text-[9px] font-medium whitespace-nowrap"
-                  style={{ color: isActive ? (mono ? "#6B5E4E" : "#7A9B84") : (mono ? "#A09080" : "#4A6B50") }}
+                  style={{ color: isActive ? (mono ? "#F7F4EE" : "#0B1E0D") : (mono ? "#A09080" : "#4A6B50"), opacity: isActive ? 0.7 : 1 }}
                 >
                   {day.matchCount} {day.matchCount === 1 ? "match" : "matches"}
                 </span>
