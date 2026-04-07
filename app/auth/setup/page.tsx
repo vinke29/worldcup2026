@@ -11,8 +11,11 @@ function SetupForm() {
   const intent = searchParams.get("intent");
   const prefillCode = searchParams.get("code") ?? "";
   const prefillLeagueName = searchParams.get("leagueName") ?? "";
-  const prefillMode = searchParams.get("mode") ?? "phase_by_phase";
+  const prefillMode = searchParams.get("mode") ?? "entire_tournament";
   const [tab, setTab] = useState<"create" | "join">(intent === "join" ? "join" : "create");
+  const [leagueMode, setLeagueMode] = useState<"phase_by_phase" | "entire_tournament">(
+    prefillMode === "phase_by_phase" ? "phase_by_phase" : "entire_tournament"
+  );
   const [createError, createAction, createPending] = useActionState(createLeague, null);
   const [joinError, joinAction, joinPending] = useActionState(joinLeague, null);
 
@@ -77,7 +80,7 @@ function SetupForm() {
                   </div>
                 )}
                 <form action={createAction} className="space-y-4">
-                  <input type="hidden" name="mode" value={prefillMode} />
+                  <input type="hidden" name="mode" value={leagueMode} />
                   <SetupField label="League name">
                     <input
                       type="text"
@@ -87,6 +90,35 @@ function SetupForm() {
                       defaultValue={prefillLeagueName}
                     />
                   </SetupField>
+                  {/* Format picker */}
+                  <div className="space-y-1.5">
+                    <label className="block text-[10px] font-bold uppercase tracking-widest" style={{ color: "#4A6B50" }}>
+                      Format
+                    </label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {([
+                        { value: "entire_tournament", label: "Full bracket", sub: "Pick every round before it starts" },
+                        { value: "phase_by_phase", label: "Phase by phase", sub: "Unlock each round after the last ends" },
+                      ] as const).map(({ value, label, sub }) => {
+                        const active = leagueMode === value;
+                        return (
+                          <button
+                            key={value}
+                            type="button"
+                            onClick={() => setLeagueMode(value)}
+                            className="text-left px-3 py-3 rounded-xl border transition-all cursor-pointer"
+                            style={{
+                              backgroundColor: active ? "rgba(215,255,90,0.08)" : "#0F2411",
+                              borderColor: active ? "#D7FF5A" : "#2C4832",
+                            }}
+                          >
+                            <p className="text-xs font-black mb-0.5" style={{ color: active ? "#D7FF5A" : "#F0EDE6" }}>{label}</p>
+                            <p className="text-[10px] leading-snug" style={{ color: "#4A6B50" }}>{sub}</p>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
                   <SetupButton pending={createPending}>
                     Create league →
                   </SetupButton>
