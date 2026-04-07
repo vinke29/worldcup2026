@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import type React from "react";
 import type { Match, Outcome } from "@/lib/mock-data";
+import FlagImage from "@/lib/flag-image";
 
 interface OnboardingModalProps {
   leagueName: string;
@@ -179,14 +180,14 @@ export default function OnboardingModal({
           {/* Team flags */}
           <div className="flex items-center gap-4">
             <div className="flex flex-col items-center gap-2">
-              <span style={{ fontSize: "clamp(52px, 10vw, 72px)", lineHeight: 1 }}>{firstMatch.homeFlag}</span>
+              <FlagImage emoji={firstMatch.homeFlag} size={64} team={firstMatch.homeTeam} />
               <span className="text-xs font-black uppercase tracking-wide" style={{ color: secondary }}>
                 {firstMatch.homeTeam.split(" ")[0]}
               </span>
             </div>
             <span className="text-sm font-black" style={{ color: muted }}>vs</span>
             <div className="flex flex-col items-center gap-2">
-              <span style={{ fontSize: "clamp(52px, 10vw, 72px)", lineHeight: 1 }}>{firstMatch.awayFlag}</span>
+              <FlagImage emoji={firstMatch.awayFlag} size={64} team={firstMatch.awayTeam} />
               <span className="text-xs font-black uppercase tracking-wide" style={{ color: secondary }}>
                 {firstMatch.awayTeam.split(" ")[0]}
               </span>

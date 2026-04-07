@@ -4,6 +4,7 @@ import { useState, useMemo } from "react";
 import type { Match } from "@/lib/mock-data";
 import { computeGroupTables, rankThirdPlaceTeams, type TeamRow } from "@/lib/group-standings";
 import { resolveBracketTeams, TOP_R32_IDS, BOT_R32_IDS } from "@/lib/bracket";
+import FlagImage from "@/lib/flag-image";
 
 interface QualifiersViewProps {
   matches: Match[];
@@ -444,7 +445,7 @@ function TeamRow({ team, label, t }: { team: TeamRow | null; label: string; t: R
       </span>
       {team ? (
         <>
-          <span style={{ fontSize: 11, lineHeight: 1, flexShrink: 0 }}>{team.flag}</span>
+          <FlagImage emoji={team.flag} size={14} team={team.team} />
           <span style={{ fontSize: 10, fontWeight: 700, color: t.text, flex: 1,
             overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
             {team.team.split(" ").slice(-1)[0]}

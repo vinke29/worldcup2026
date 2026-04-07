@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import type { Match, Outcome } from "@/lib/mock-data";
 import { phasePoints } from "@/lib/scoring";
+import FlagImage from "@/lib/flag-image";
 
 interface MatchCardProps {
   match: Match;
@@ -73,7 +74,7 @@ function IllustrationPlaceholder({ match }: { match: Match }) {
     >
       {/* Left flag + team */}
       <div className="flex flex-col items-center gap-1 z-10">
-        <span style={{ fontSize: "52px", lineHeight: 1 }}>{match.homeFlag}</span>
+        <FlagImage emoji={match.homeFlag} size={52} team={match.homeTeam} />
         <span className="text-[10px] font-black uppercase tracking-widest text-center" style={{ color: "#4A6B50", maxWidth: "80px" }}>
           {match.homeTeam}
         </span>
@@ -86,7 +87,7 @@ function IllustrationPlaceholder({ match }: { match: Match }) {
 
       {/* Right flag + team */}
       <div className="flex flex-col items-center gap-1 z-10">
-        <span style={{ fontSize: "52px", lineHeight: 1 }}>{match.awayFlag}</span>
+        <FlagImage emoji={match.awayFlag} size={52} team={match.awayTeam} />
         <span className="text-[10px] font-black uppercase tracking-widest text-center" style={{ color: "#4A6B50", maxWidth: "80px" }}>
           {match.awayTeam}
         </span>
@@ -295,7 +296,7 @@ export default function MatchCard({
       <div className="px-4 pt-4 pb-3">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2.5 min-w-0 flex-1">
-            {match.illustration && <span className="text-3xl leading-none flex-shrink-0">{match.homeFlag}</span>}
+            {match.illustration && <FlagImage emoji={match.homeFlag} size={28} team={match.homeTeam} />}
             <span className="font-black text-lg sm:text-xl uppercase tracking-tight leading-none truncate" style={{ color: isMono ? "#1A1208" : "#F0EDE6" }}>
               {match.homeTeam}
             </span>
@@ -313,7 +314,7 @@ export default function MatchCard({
             <span className="font-black text-lg sm:text-xl uppercase tracking-tight leading-none truncate text-right" style={{ color: isMono ? "#1A1208" : "#F0EDE6" }}>
               {match.awayTeam}
             </span>
-            {match.illustration && <span className="text-3xl leading-none flex-shrink-0">{match.awayFlag}</span>}
+            {match.illustration && <FlagImage emoji={match.awayFlag} size={28} team={match.awayTeam} />}
           </div>
         </div>
       </div>

@@ -3,6 +3,7 @@
 import { useState, useMemo } from "react";
 import type { Match } from "@/lib/mock-data";
 import { computeGroupTables, countCorrectPositions, hasAnyActualResults, type TeamRow } from "@/lib/group-standings";
+import FlagImage from "@/lib/flag-image";
 
 interface GroupsViewProps {
   matches: Match[];
@@ -164,7 +165,7 @@ function GroupCard({
 
               {/* Flag + name */}
               <div className="flex-1 flex items-center gap-1.5 min-w-0">
-                <span className="text-sm leading-none">{row.flag}</span>
+                <FlagImage emoji={row.flag} size={16} team={row.team} />
                 <span className="text-xs font-semibold truncate" style={{ color: t.text }}>
                   {row.team}
                 </span>
