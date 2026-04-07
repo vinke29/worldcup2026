@@ -85,6 +85,7 @@ export default function LeagueClient({
   const [mobileView, setMobileView] = useState<"matches" | "standings" | "groups" | "qualifiers">("matches");
   const [mono, setMono] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [nextDayBannerVisible, setNextDayBannerVisible] = useState(false);
 
   useEffect(() => {
     // Show onboarding for new users (no picks yet) or preview visitors who haven't seen it
@@ -168,6 +169,15 @@ export default function LeagueClient({
     const idx = days.findIndex(d => d.date === activeDay);
     return idx >= 0 && idx < days.length - 1 ? days[idx + 1] : null;
   }, [days, activeDay]);
+
+  const allDoneToday = isGroupPhase && !!nextDay && visibleMatches.length > 0 && mobileView === "matches" && dayPredicted === visibleMatches.length;
+
+  // Debounce the banner by 2s so score adjustments can happen first
+  useEffect(() => {
+    if (!allDoneToday) { setNextDayBannerVisible(false); return; }
+    const id = setTimeout(() => setNextDayBannerVisible(true), 2000);
+    return () => clearTimeout(id);
+  }, [allDoneToday]);
 
   const dayFirstKickoff = useMemo(() => {
     if (visibleMatches.length === 0) return null;
@@ -458,12 +468,12 @@ export default function LeagueClient({
         )}
       </div>
 
-      {/* Fixed next-day banner — slides up when all picks for the day are done */}
-      {isGroupPhase && nextDay && visibleMatches.length > 0 && mobileView === "matches" && (
+      {/* Fixed next-day banner — slides up after a short delay once all picks are done */}
+      {isGroupPhase && nextDay && mobileView === "matches" && (
         <div
           className="fixed bottom-0 inset-x-0 z-40 flex justify-center px-4 pb-4 pointer-events-none"
           style={{
-            transform: dayPredicted === visibleMatches.length ? "translateY(0)" : "translateY(calc(100% + 16px))",
+            transform: nextDayBannerVisible ? "translateY(0)" : "translateY(calc(100% + 16px))",
             transition: "transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)",
           }}
         >
