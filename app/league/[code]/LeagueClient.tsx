@@ -158,6 +158,10 @@ export default function LeagueClient({
     setActivePhase(phase);
     const first = matches.find((m) => m.phase === phase);
     if (first) setActiveDay(first.date);
+    // In entire_tournament mode, knockout phases have no match cards — go straight to Qualifiers
+    if (mode === "entire_tournament" && !phase.startsWith("group")) {
+      setMobileView("qualifiers");
+    }
   };
 
   const visibleMatches = useMemo(() => {
@@ -178,6 +182,9 @@ export default function LeagueClient({
 
   const dayPredicted = visibleMatches.filter((m) => predictions[m.id]).length;
   const phasePredicted = phaseMatches.filter((m) => predictions[m.id]).length;
+
+  const totalGroupMatches = useMemo(() => matches.filter(m => m.phase.startsWith("group")).length, [matches]);
+  const totalGroupPredicted = useMemo(() => matches.filter(m => m.phase.startsWith("group") && predictions[m.id]).length, [matches, predictions]);
 
   const nextDay = useMemo(() => {
     const idx = days.findIndex(d => d.date === activeDay);
@@ -316,17 +323,23 @@ export default function LeagueClient({
                   <div
                     className="h-full rounded-full transition-all duration-500"
                     style={{
-                      width: visibleMatches.length > 0 ? `${(dayPredicted / visibleMatches.length) * 100}%` : "0%",
+                      width: mode === "entire_tournament"
+                        ? (totalGroupMatches > 0 ? `${(totalGroupPredicted / totalGroupMatches) * 100}%` : "0%")
+                        : (visibleMatches.length > 0 ? `${(dayPredicted / visibleMatches.length) * 100}%` : "0%"),
                       backgroundColor: t.accent,
                     }}
                   />
                 </div>
                 <span className="text-xs font-bold tabular-nums whitespace-nowrap" style={{ color: t.textBody }}>
-                  {dayPredicted}/{visibleMatches.length} today
+                  {mode === "entire_tournament"
+                    ? `${totalGroupPredicted}/${totalGroupMatches} groups`
+                    : `${dayPredicted}/${visibleMatches.length} today`}
                 </span>
-                <span className="text-xs whitespace-nowrap hidden sm:inline" style={{ color: t.textMuted }}>
-                  {phasePredicted}/{phaseMatches.length} phase
-                </span>
+                {mode !== "entire_tournament" && (
+                  <span className="text-xs whitespace-nowrap hidden sm:inline" style={{ color: t.textMuted }}>
+                    {phasePredicted}/{phaseMatches.length} phase
+                  </span>
+                )}
               </div>
             ) : (
               <div className="flex items-center gap-3 mb-5">
@@ -360,18 +373,21 @@ export default function LeagueClient({
               >
                 <div className="flex-1 min-w-0">
                   <span className="font-black" style={{ fontSize: "15px", color: t.accent }}>
-                    {visibleMatches.length - dayPredicted === 1
-                      ? "1 pick left today"
-                      : visibleMatches.length - dayPredicted === visibleMatches.length
-                        ? `${visibleMatches.length} picks to make`
-                        : `${visibleMatches.length - dayPredicted} picks left today`}
+                    {mode === "entire_tournament"
+                      ? `${totalGroupMatches - totalGroupPredicted} group picks left`
+                      : visibleMatches.length - dayPredicted === 1
+                        ? "1 pick left today"
+                        : visibleMatches.length - dayPredicted === visibleMatches.length
+                          ? `${visibleMatches.length} picks to make`
+                          : `${visibleMatches.length - dayPredicted} picks left today`}
                   </span>
                   <span className="text-xs font-medium" style={{ color: t.textSec }}>
-                    {" "}· Locks{" "}
-                    {dayFirstKickoff
-                      ? dayFirstKickoff.toLocaleDateString(undefined, { month: "short", day: "numeric" }) + " at " +
-                        dayFirstKickoff.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit", hour12: true })
-                      : currentPhase.deadline}
+                    {mode === "entire_tournament"
+                      ? " · set your full bracket in Qualifiers"
+                      : ` · Locks ${dayFirstKickoff
+                          ? dayFirstKickoff.toLocaleDateString(undefined, { month: "short", day: "numeric" }) + " at " +
+                            dayFirstKickoff.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit", hour12: true })
+                          : currentPhase.deadline}`}
                   </span>
                 </div>
               </button>
@@ -380,7 +396,9 @@ export default function LeagueClient({
             {/* Matches */}
             {visibleMatches.length === 0 ? (
               <div className="text-center py-16 text-sm" style={{ color: t.textMuted }}>
-                {isLocked ? "Matches will appear once this phase opens." : "No matches on this day."}
+                {isLocked ? "Matches will appear once this phase opens."
+                  : mode === "entire_tournament" && !isGroupPhase ? "Bracket picks are in the Qualifiers tab."
+                  : "No matches on this day."}
               </div>
             ) : (
               <div className="space-y-8">
@@ -510,21 +528,21 @@ export default function LeagueClient({
             }}
             className="pointer-events-auto w-full max-w-lg flex items-center justify-between px-5 py-4 rounded-2xl cursor-pointer"
             style={{
-              backgroundColor: mono ? "#EDE8E0" : "#1A2E1F",
-              border: `1px solid ${mono ? "rgba(26,18,8,0.2)" : "rgba(215,255,90,0.3)"}`,
-              boxShadow: mono ? "0 8px 32px rgba(0,0,0,0.15)" : "0 8px 32px rgba(0,0,0,0.5)",
+              backgroundColor: mono ? "#1A1208" : "#D7FF5A",
+              border: "none",
+              boxShadow: mono ? "0 8px 32px rgba(0,0,0,0.3)" : "0 8px 32px rgba(215,255,90,0.35)",
             }}
           >
             <div className="flex items-center gap-3">
-              <span className="text-base" style={{ color: t.accent }}>✓</span>
+              <span className="text-base" style={{ color: mono ? "#D7FF5A" : "#0B1E0D" }}>✓</span>
               <div className="text-left">
-                <p className="text-sm font-black" style={{ color: t.textPrimary }}>All done for today</p>
-                <p className="text-xs" style={{ color: t.textSec }}>
+                <p className="text-sm font-black" style={{ color: mono ? "#F7F4EE" : "#0B1E0D" }}>All done for today</p>
+                <p className="text-xs font-medium" style={{ color: mono ? "rgba(247,244,238,0.6)" : "rgba(11,30,13,0.6)" }}>
                   Next up: {nextDay.date} · {nextDay.matchCount} {nextDay.matchCount === 1 ? "match" : "matches"}
                 </p>
               </div>
             </div>
-            <span className="text-sm font-bold" style={{ color: t.accent }}>→</span>
+            <span className="text-sm font-bold" style={{ color: mono ? "#F7F4EE" : "#0B1E0D" }}>→</span>
           </button>
         </div>
       )}

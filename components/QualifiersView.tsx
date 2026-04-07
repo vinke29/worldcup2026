@@ -164,7 +164,8 @@ function buildFinalConnectors(): string[] {
 // ── Main component ────────────────────────────────────────────────────────────
 export default function QualifiersView({ matches, scorePicks, actualScores, mono, mode = "phase_by_phase" }: QualifiersViewProps) {
   const hasActual = useMemo(() => matches.some(m => m.homeScore !== null), [matches]);
-  const defaultView = (mode === "entire_tournament" && hasActual) ? "compare" : "predicted";
+  // When actual results exist, default to compare; otherwise show predicted (no toggle)
+  const defaultView = hasActual ? "compare" : "predicted";
   const [view, setView] = useState<"predicted" | "actual" | "compare">(defaultView);
   const t = useTheme(mono);
 
@@ -261,38 +262,31 @@ export default function QualifiersView({ matches, scorePicks, actualScores, mono
 
   return (
     <div>
-      {/* Toggle */}
-      <div className="flex items-center gap-2 mb-5">
-        {([
-          { id: "predicted" as const, label: "My Picks", disabled: false },
-          { id: "actual" as const, label: "Actual", disabled: !hasActual },
-          { id: "compare" as const, label: "Compare", disabled: !hasActual },
-        ]).map(({ id, label, disabled }) => {
-          const active = view === id;
-          return (
-            <button
-              key={id}
-              onClick={() => !disabled && setView(id)}
-              disabled={disabled}
-              className="text-xs font-bold uppercase tracking-widest px-3 py-1.5 rounded-lg transition-all"
-              style={{
-                backgroundColor: active ? t.accent : "transparent",
-                color: active ? t.accentText : disabled ? t.textMuted : t.textSec,
-                border: `1px solid ${active ? t.accent : t.border}`,
-                cursor: disabled ? "default" : "pointer",
-                opacity: disabled ? 0.4 : 1,
-              }}
-            >
-              {label}
-            </button>
-          );
-        })}
-        {!hasActual && (
-          <span className="text-[11px]" style={{ color: t.textMuted }}>
-            Actual &amp; Compare unlock once results are in
-          </span>
-        )}
-      </div>
+      {/* Toggle — only shown when actual results exist */}
+      {hasActual && (
+        <div className="flex items-center gap-2 mb-5">
+          {([
+            { id: "compare" as const, label: "Compare" },
+            { id: "actual" as const, label: "Actual" },
+          ]).map(({ id, label }) => {
+            const active = view === id;
+            return (
+              <button
+                key={id}
+                onClick={() => setView(id)}
+                className="text-xs font-bold uppercase tracking-widest px-3 py-1.5 rounded-lg transition-all cursor-pointer"
+                style={{
+                  backgroundColor: active ? t.accent : "transparent",
+                  color: active ? t.accentText : t.textSec,
+                  border: `1px solid ${active ? t.accent : t.border}`,
+                }}
+              >
+                {label}
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       {/* Round labels */}
       <div style={{ position: "relative", height: 20, marginBottom: 6, width: totalWidth }}>
@@ -428,7 +422,7 @@ export default function QualifiersView({ matches, scorePicks, actualScores, mono
 
       <p className="text-[10px] mt-2" style={{ color: t.textMuted }}>
         3rd-place: best 8 of 12 advance (Pts → GD → GF). Slot assignment follows FIFA Annex C.
-        {view === "compare" ? " Compare shows your predicted R32 slots vs actual group qualifiers." : " R16 onwards unlocks as matches are played."}
+        {view === "compare" ? " Strikethroughs show where actual qualifiers differ from your picks." : " R16 onwards unlocks as matches are played."}
       </p>
     </div>
   );

@@ -16,8 +16,8 @@ const GROUP_LETTERS = ["A","B","C","D","E","F","G","H","I","J","K","L"];
 
 export default function GroupsView({ matches, scorePicks, mono, mode = "phase_by_phase" }: GroupsViewProps) {
   const hasActual = useMemo(() => hasAnyActualResults(matches), [matches]);
-  // Default to "compare" if actual results are in and we're in entire_tournament mode
-  const defaultView = (mode === "entire_tournament" && hasActual) ? "compare" : "predicted";
+  // When actual results exist, default to compare; otherwise show predicted (no toggle)
+  const defaultView = hasActual ? "compare" : "predicted";
   const [view, setView] = useState<"predicted" | "actual" | "compare">(defaultView);
 
   const predictedTables = useMemo(
@@ -36,40 +36,33 @@ export default function GroupsView({ matches, scorePicks, mono, mode = "phase_by
 
   const activeTables = view === "actual" ? actualTables : predictedTables;
 
-  const tabs = [
-    { id: "predicted" as const, label: "My picks" },
-    { id: "actual" as const, label: "Actual", disabled: !hasActual },
-    { id: "compare" as const, label: "Compare", disabled: !hasActual },
-  ];
-
   return (
     <div>
-      {/* View toggle */}
-      <div className="flex items-center gap-2 mb-5">
-        {tabs.map(({ id, label, disabled }) => {
-          const active = view === id;
-          return (
-            <button
-              key={id}
-              onClick={() => !disabled && setView(id)}
-              disabled={disabled}
-              className="text-xs font-bold uppercase tracking-widest px-3 py-1.5 rounded-lg transition-all"
-              style={{
-                backgroundColor: active ? t.accent : "transparent",
-                color: active ? t.accentText : disabled ? t.textMuted : t.textSec,
-                border: `1px solid ${active ? t.accent : t.border}`,
-                cursor: disabled ? "default" : "pointer",
-                opacity: disabled ? 0.4 : 1,
-              }}
-            >
-              {label}
-            </button>
-          );
-        })}
-        {!hasActual && (
-          <span className="text-[11px]" style={{ color: t.textMuted }}>Actual &amp; Compare unlock once results are in</span>
-        )}
-      </div>
+      {/* View toggle — only shown when actual results exist */}
+      {hasActual && (
+        <div className="flex items-center gap-2 mb-5">
+          {([
+            { id: "compare" as const, label: "Compare" },
+            { id: "actual" as const, label: "Actual" },
+          ]).map(({ id, label }) => {
+            const active = view === id;
+            return (
+              <button
+                key={id}
+                onClick={() => setView(id)}
+                className="text-xs font-bold uppercase tracking-widest px-3 py-1.5 rounded-lg transition-all cursor-pointer"
+                style={{
+                  backgroundColor: active ? t.accent : "transparent",
+                  color: active ? t.accentText : t.textSec,
+                  border: `1px solid ${active ? t.accent : t.border}`,
+                }}
+              >
+                {label}
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       {/* Groups grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
