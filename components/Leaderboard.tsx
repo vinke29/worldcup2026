@@ -5,9 +5,10 @@ interface LeaderboardProps {
   currentUserId?: string;
   mono?: boolean;
   variant?: "compact" | "full";
+  onSelectMember?: (member: Member) => void;
 }
 
-export default function Leaderboard({ members, currentUserId, mono = false, variant = "compact" }: LeaderboardProps) {
+export default function Leaderboard({ members, currentUserId, mono = false, variant = "compact", onSelectMember }: LeaderboardProps) {
   const sorted = [...members].sort((a, b) => b.points - a.points);
 
   const t = mono
@@ -30,13 +31,17 @@ export default function Leaderboard({ members, currentUserId, mono = false, vari
           const isYou = member.id === currentUserId;
           const medal = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : null;
 
+          const clickable = !!onSelectMember;
+
           return (
             <div
               key={member.id}
-              className="flex items-center gap-3 px-5 py-3.5"
+              onClick={clickable ? () => onSelectMember(member) : undefined}
+              className="flex items-center gap-3 px-5 py-3.5 transition-colors"
               style={{
                 borderBottom: i < sorted.length - 1 ? `1px solid ${t.borderInner}` : "none",
                 backgroundColor: isYou ? t.youBg : "transparent",
+                cursor: clickable ? "pointer" : "default",
               }}
             >
               {/* Rank */}
@@ -90,11 +95,14 @@ export default function Leaderboard({ members, currentUserId, mono = false, vari
                 </span>
               </div>
 
-              {/* Picks made */}
+              {/* Picks made / chevron */}
               <div className="w-16 text-right hidden sm:block">
                 <span className="text-sm tabular-nums" style={{ color: t.textSec }}>{member.picked}</span>
                 <span className="text-[10px]" style={{ color: t.textMuted }}>/104</span>
               </div>
+              {clickable && (
+                <span className="text-xs flex-shrink-0" style={{ color: t.textMuted }}>›</span>
+              )}
             </div>
           );
         })}

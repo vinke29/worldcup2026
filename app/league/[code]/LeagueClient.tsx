@@ -8,6 +8,7 @@ import DayNav, { type Day } from "@/components/DayNav";
 import MatchCard from "@/components/MatchCard";
 import Leaderboard from "@/components/Leaderboard";
 import OnboardingModal from "@/components/OnboardingModal";
+import MemberPicksModal from "@/components/MemberPicksModal";
 import GroupsView from "@/components/GroupsView";
 import QualifiersView from "@/components/QualifiersView";
 import { MATCHES, PHASES, type Match, type Outcome, type PhaseId, type Member, type LeagueMode } from "@/lib/mock-data";
@@ -88,6 +89,7 @@ export default function LeagueClient({
   const [mono, setMono] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [dismissedDays, setDismissedDays] = useState<Set<string>>(new Set());
+  const [selectedMember, setSelectedMember] = useState<Member | null>(null);
 
   useEffect(() => {
     // Show onboarding for new users (no picks yet) or preview visitors who haven't seen it
@@ -244,6 +246,16 @@ export default function LeagueClient({
           leagueName={leagueName}
           currentUserId={currentUserId}
           onComplete={handleOnboardingComplete}
+        />
+      )}
+      {selectedMember && (
+        <MemberPicksModal
+          member={selectedMember}
+          matches={matches}
+          actualScores={actualScores}
+          mono={mono}
+          mode={mode}
+          onClose={() => setSelectedMember(null)}
         />
       )}
       <Header
@@ -412,6 +424,7 @@ export default function LeagueClient({
               currentUserId={currentUserId}
               mono={mono}
               variant="full"
+              onSelectMember={setSelectedMember}
             />
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
