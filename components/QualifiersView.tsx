@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import type { Match, LeagueMode } from "@/lib/mock-data";
 import { computeGroupTables, rankThirdPlaceTeams, type TeamRow } from "@/lib/group-standings";
 import { resolveBracketTeams, TOP_R32_IDS, BOT_R32_IDS, R16_IDS, QF_IDS, SF_IDS, FINAL_ID, KNOCKOUT_MATCH_META } from "@/lib/bracket";
@@ -668,6 +668,15 @@ function MobileMatchCard({
   const pens      = scorePicks[id]?.pens;
   const tied      = homeScore === awayScore;
   const meta      = KNOCKOUT_MATCH_META[id];
+  const hasPick   = scorePicks[id] !== undefined;
+
+  const [saved, setSaved] = useState(hasPick);
+  useEffect(() => {
+    if (!hasPick) { setSaved(false); return; }
+    setSaved(false);
+    const timer = setTimeout(() => setSaved(true), 800);
+    return () => clearTimeout(timer);
+  }, [homeScore, awayScore, pens]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function TeamRow_({ team, label, score, onMinus, onPlus }: {
     team: TeamRow | null; label: string;
@@ -709,7 +718,16 @@ function MobileMatchCard({
           <span style={{ fontSize: 11, fontWeight: 700, color: t.textSec }}>{meta.date}</span>
           <span style={{ fontSize: 11, color: t.border }}>·</span>
           <span style={{ fontSize: 10, color: t.textMuted, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{meta.venue}</span>
-          <span style={{ fontSize: 10, color: t.textMuted, flexShrink: 0 }}>{meta.time}</span>
+          <span
+            className="transition-all duration-300"
+            style={{
+              fontSize: 10, fontWeight: 700, flexShrink: 0,
+              color: "#4ADE80",
+              opacity: hasPick ? (saved ? 1 : 0.4) : 0,
+            }}
+          >
+            ✓ Saved
+          </span>
         </div>
       )}
 
