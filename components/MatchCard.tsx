@@ -156,22 +156,10 @@ export default function MatchCard({
   const isFinished = match.homeScore !== null && match.awayScore !== null;
   const disabled = lockedByPhase || isGameLocked;
 
-  function handleSelect(outcome: Outcome) {
-    if (disabled) return;
-    setSelected(outcome);
-    onPredict?.(match.id, outcome);
-    setJustPicked(true);
-    setTimeout(() => setJustPicked(false), 350);
-    // Update scores if they contradict the new outcome (or are empty)
-    const h = parseInt(scoreHome);
-    const a = parseInt(scoreAway);
-    const hasScore = scoreHome !== "" && scoreAway !== "" && !isNaN(h) && !isNaN(a);
-    const currentImplied = hasScore ? (h > a ? "home" : a > h ? "away" : "draw") : null;
-    if (!hasScore || currentImplied !== outcome) {
-      const defaults = outcome === "home" ? ["1", "0"] : outcome === "away" ? ["0", "1"] : ["1", "1"];
-      setScoreHome(defaults[0]);
-      setScoreAway(defaults[1]);
-    }
+  // On first stepper touch, initialize the other side to "0" so both are always set together
+  function handleScoreChange(side: "home" | "away", newVal: string) {
+    setScoreHome(h => side === "home" ? newVal : (h === "" ? "0" : h));
+    setScoreAway(a => side === "away" ? newVal : (a === "" ? "0" : a));
   }
 
   // Infer outcome from scores — runs after both state values are committed,
@@ -205,11 +193,7 @@ export default function MatchCard({
     : dominant === "away" ? `rgba(248,113,113,${tintIntensity * 0.07})`
     : `rgba(252,211,77,${tintIntensity * 0.05})`;
 
-  const buttons: { outcome: Outcome; label: string }[] = [
-    { outcome: "home", label: match.homeTeam },
-    { outcome: "draw", label: "Draw" },
-    { outcome: "away", label: match.awayTeam },
-  ];
+  const hasPick = scoreHome !== "" && scoreAway !== "";
 
   // Post-game result
   const actualOutcome: Outcome | null = isFinished
@@ -383,60 +367,29 @@ export default function MatchCard({
             <span className="truncate">{match.venue.split("·")[0].trim()}</span>
           </div>
 
-          {/* Prediction buttons */}
-          <div className="flex gap-1.5 px-4 pb-3">
-            {buttons.map(({ outcome, label }) => {
-              const isActive = selected === outcome;
-              const col = OUTCOME_COLORS[outcome];
-              return (
-                <button
-                  key={outcome}
-                  onClick={() => handleSelect(outcome)}
-                  disabled={disabled}
-                  className={`flex-1 py-3 rounded-xl text-[8px] sm:text-[10px] font-black uppercase tracking-tight sm:tracking-wide transition-all duration-200${!selected && !disabled ? " btn-unpicked" : ""}`}
-                  style={{
-                    backgroundColor: isActive ? col : "transparent",
-                    color: isActive ? "#0B1E0D" : disabled ? "#3A5A40" : "#7A9B84",
-                    border: `1.5px solid ${isActive ? col : disabled ? "#1F3A24" : "#2C4832"}`,
-                    cursor: disabled ? "default" : "pointer",
-                    boxShadow: isActive ? `0 0 14px ${col}44` : undefined,
-                    transform: isActive ? "translateY(-1px)" : "none",
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!disabled && !isActive) {
-                      const el = e.currentTarget as HTMLButtonElement;
-                      el.style.borderColor = col + "80";
-                      el.style.color = col;
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!disabled && !isActive) {
-                      const el = e.currentTarget as HTMLButtonElement;
-                      el.style.borderColor = "#2C4832";
-                      el.style.color = "#7A9B84";
-                    }
-                  }}
-                >
-                  {label}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Score prediction — shown after picking a result */}
-          {selected && !disabled && (
+          {/* Score prediction — always visible when game is open */}
+          {!disabled && (
             <div className="mx-4 mb-4 flex items-center justify-between">
-              <ScoreStepper value={scoreHome} onChange={setScoreHome} mono={isMono} />
+              <ScoreStepper value={scoreHome} onChange={(v) => handleScoreChange("home", v)} mono={isMono} />
               <div className="flex flex-col items-center gap-0.5">
                 <span className="font-black text-sm" style={{ color: isMono ? "#C8C0B0" : "#2C4832" }}>—</span>
                 <span
                   className="text-[9px] font-bold transition-opacity duration-300"
-                  style={{ color: "#4ADE80", opacity: scoreSaved ? 1 : 0 }}
+                  style={{ color: hasPick ? "#4ADE80" : (isMono ? "#A89E8E" : "#4A6B50"), opacity: hasPick ? (scoreSaved ? 1 : 0.6) : 1 }}
                 >
-                  ✓ Saved
+                  {hasPick ? "✓ Saved" : "tap to predict"}
                 </span>
               </div>
-              <ScoreStepper value={scoreAway} onChange={setScoreAway} mono={isMono} />
+              <ScoreStepper value={scoreAway} onChange={(v) => handleScoreChange("away", v)} mono={isMono} />
+            </div>
+          )}
+
+          {/* Locked with a saved score — show read-only */}
+          {disabled && hasPick && (
+            <div className="mx-4 mb-4 flex items-center justify-center gap-3">
+              <span className="text-2xl font-black tabular-nums" style={{ color: isMono ? "#6B5E4E" : "#7A9B84" }}>
+                {scoreHome} — {scoreAway}
+              </span>
             </div>
           )}
         </>

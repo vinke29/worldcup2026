@@ -85,7 +85,6 @@ export default function LeagueClient({
   const [mobileView, setMobileView] = useState<"matches" | "standings" | "groups" | "qualifiers">("matches");
   const [mono, setMono] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
-  const [nextDayBannerVisible, setNextDayBannerVisible] = useState(false);
 
   useEffect(() => {
     // Show onboarding for new users (no picks yet) or preview visitors who haven't seen it
@@ -170,14 +169,7 @@ export default function LeagueClient({
     return idx >= 0 && idx < days.length - 1 ? days[idx + 1] : null;
   }, [days, activeDay]);
 
-  const allDoneToday = isGroupPhase && !!nextDay && visibleMatches.length > 0 && mobileView === "matches" && dayPredicted === visibleMatches.length;
-
-  // Debounce the banner by 2s so score adjustments can happen first
-  useEffect(() => {
-    if (!allDoneToday) { setNextDayBannerVisible(false); return; }
-    const id = setTimeout(() => setNextDayBannerVisible(true), 2000);
-    return () => clearTimeout(id);
-  }, [allDoneToday]);
+  const nextDayBannerVisible = isGroupPhase && !!nextDay && visibleMatches.length > 0 && mobileView === "matches" && dayPredicted === visibleMatches.length;
 
   const dayFirstKickoff = useMemo(() => {
     if (visibleMatches.length === 0) return null;
