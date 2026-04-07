@@ -165,9 +165,11 @@ export default function LeagueClient({
   };
 
   const visibleMatches = useMemo(() => {
+    // entire_tournament: show all group matches at once (no day filter)
+    if (isGroupPhase && mode === "entire_tournament") return phaseMatches;
     if (isGroupPhase) return phaseMatches.filter((m) => m.date === activeDay);
     return phaseMatches;
-  }, [phaseMatches, isGroupPhase, activeDay]);
+  }, [phaseMatches, isGroupPhase, activeDay, mode]);
 
   const matchesByGroup = useMemo(() => {
     const groups: Record<string, typeof visibleMatches> = {};
@@ -191,7 +193,27 @@ export default function LeagueClient({
     return idx >= 0 && idx < days.length - 1 ? days[idx + 1] : null;
   }, [days, activeDay]);
 
-  const nextDayBannerVisible = isGroupPhase && !!nextDay && visibleMatches.length > 0 && mobileView === "matches" && dayPredicted === visibleMatches.length && !dismissedDays.has(activeDay);
+  // Which phases have matches today (for entire_tournament mode dot indicators)
+  const todayPhases = useMemo(() => {
+    const now = Date.now();
+    const s = new Set<string>();
+    for (const m of matches) {
+      const dayStart = parseDateStr(m.date).getTime();
+      if (now >= dayStart && now < dayStart + 24 * 60 * 60 * 1000) s.add(m.phase);
+    }
+    return s;
+  }, [matches]);
+
+  // Next group phase (for entire_tournament "group complete" banner)
+  const nextGroupPhase = useMemo(() => {
+    if (!isGroupPhase || mode !== "entire_tournament") return null;
+    const groupPhases = phases.filter(p => p.id.startsWith("group"));
+    const idx = groupPhases.findIndex(p => p.id === activePhase);
+    return idx >= 0 && idx < groupPhases.length - 1 ? groupPhases[idx + 1] : null;
+  }, [phases, activePhase, isGroupPhase, mode]);
+
+  const nextDayBannerVisible = mode !== "entire_tournament" && isGroupPhase && !!nextDay && visibleMatches.length > 0 && mobileView === "matches" && dayPredicted === visibleMatches.length && !dismissedDays.has(activeDay);
+  const nextGroupBannerVisible = mode === "entire_tournament" && isGroupPhase && !!nextGroupPhase && phaseMatches.length > 0 && mobileView === "matches" && phasePredicted === phaseMatches.length && !dismissedDays.has(activePhase);
 
   const dayFirstKickoff = useMemo(() => {
     if (visibleMatches.length === 0) return null;
@@ -272,8 +294,8 @@ export default function LeagueClient({
         onToggleMono={() => setMono(v => !v)}
         onLogout={isPreview ? undefined : () => startTransition(() => { logout(); })}
       />
-      <PhaseNav phases={phases} activePhase={activePhase} onSelect={handlePhaseChange} mono={mono} />
-      {isGroupPhase && days.length > 0 && (
+      <PhaseNav phases={phases} activePhase={activePhase} onSelect={handlePhaseChange} mono={mono} todayPhases={mode === "entire_tournament" ? todayPhases : undefined} />
+      {isGroupPhase && days.length > 0 && mode !== "entire_tournament" && (
         <DayNav days={days} activeDay={activeDay} onSelect={setActiveDay} mono={mono} />
       )}
 
@@ -323,16 +345,14 @@ export default function LeagueClient({
                   <div
                     className="h-full rounded-full transition-all duration-500"
                     style={{
-                      width: mode === "entire_tournament"
-                        ? (totalGroupMatches > 0 ? `${(totalGroupPredicted / totalGroupMatches) * 100}%` : "0%")
-                        : (visibleMatches.length > 0 ? `${(dayPredicted / visibleMatches.length) * 100}%` : "0%"),
+                      width: visibleMatches.length > 0 ? `${(dayPredicted / visibleMatches.length) * 100}%` : "0%",
                       backgroundColor: t.accent,
                     }}
                   />
                 </div>
                 <span className="text-xs font-bold tabular-nums whitespace-nowrap" style={{ color: t.textBody }}>
                   {mode === "entire_tournament"
-                    ? `${totalGroupPredicted}/${totalGroupMatches} groups`
+                    ? `${dayPredicted}/${visibleMatches.length} Group ${currentPhase.shortLabel}`
                     : `${dayPredicted}/${visibleMatches.length} today`}
                 </span>
                 {mode !== "entire_tournament" && (
@@ -393,12 +413,66 @@ export default function LeagueClient({
               </button>
             )}
 
+            {/* Today jump pill — entire_tournament mode, when viewing a different group */}
+            {mode === "entire_tournament" && isGroupPhase && todayPhases.size > 0 && !todayPhases.has(activePhase) && (() => {
+              const todayPhaseId = [...todayPhases][0];
+              const todayLabel = phases.find(p => p.id === todayPhaseId)?.shortLabel ?? "";
+              return (
+                <button
+                  onClick={() => handlePhaseChange(todayPhaseId as PhaseId)}
+                  className="flex items-center gap-2 mb-4 px-4 py-2.5 rounded-xl w-full text-left cursor-pointer"
+                  style={{ backgroundColor: "rgba(74,222,128,0.08)", border: "1px solid rgba(74,222,128,0.2)" }}
+                >
+                  <span className="w-1.5 h-1.5 rounded-full animate-pulse flex-shrink-0" style={{ backgroundColor: "#4ADE80" }} />
+                  <span className="text-xs font-bold" style={{ color: "#4ADE80" }}>Today · Group {todayLabel}</span>
+                  <span className="ml-auto text-xs font-bold" style={{ color: "#4ADE80" }}>→</span>
+                </button>
+              );
+            })()}
+
             {/* Matches */}
             {visibleMatches.length === 0 ? (
               <div className="text-center py-16 text-sm" style={{ color: t.textMuted }}>
                 {isLocked ? "Matches will appear once this phase opens."
                   : mode === "entire_tournament" && !isGroupPhase ? "Bracket picks are in the Qualifiers tab."
                   : "No matches on this day."}
+              </div>
+            ) : mode === "entire_tournament" && isGroupPhase ? (
+              // entire_tournament: group all 6 matches by date with date sub-headers
+              <div className="space-y-6">
+                {(() => {
+                  const dateGroups: [string, Match[]][] = [];
+                  for (const m of visibleMatches) {
+                    const last = dateGroups[dateGroups.length - 1];
+                    if (last && last[0] === m.date) last[1].push(m);
+                    else dateGroups.push([m.date, [m]]);
+                  }
+                  return dateGroups.map(([date, dateMatches]) => (
+                    <div key={date}>
+                      <div className="flex items-center gap-3 mb-3">
+                        <span className="text-[10px] font-black uppercase tracking-widest" style={{ color: t.textSec }}>
+                          {date}
+                        </span>
+                        <div className="flex-1 h-px" style={{ backgroundColor: t.borderInner }} />
+                      </div>
+                      <div className="space-y-3">
+                        {dateMatches.map((match) => (
+                          <div key={match.id} id={`match-${match.id}`}>
+                            <MatchCard
+                              match={match}
+                              savedPrediction={predictions[match.id]}
+                              savedScorePick={scorePredictions[match.id]}
+                              onPredict={handlePredict}
+                              onScorePick={handleScorePick}
+                              lockedByPhase={isLocked}
+                              illustrationStyle={mono ? "mono" : "color"}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ));
+                })()}
               </div>
             ) : (
               <div className="space-y-8">
@@ -512,19 +586,24 @@ export default function LeagueClient({
         )}
       </div>
 
-      {/* Fixed next-day banner — slides down from top when all picks are done */}
-      {isGroupPhase && nextDay && mobileView === "matches" && (
+      {/* Fixed completion banner — slides down when all picks done for day (phase_by_phase) or group (entire_tournament) */}
+      {isGroupPhase && (nextDay || nextGroupPhase) && mobileView === "matches" && (
         <div
           className="fixed top-14 inset-x-0 z-[60] flex justify-center px-4 pt-2 pointer-events-none"
           style={{
-            transform: nextDayBannerVisible ? "translateY(0)" : "translateY(calc(-100% - 72px))",
+            transform: (nextDayBannerVisible || nextGroupBannerVisible) ? "translateY(0)" : "translateY(calc(-100% - 72px))",
             transition: "transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)",
           }}
         >
           <button
             onClick={() => {
-              setDismissedDays(prev => new Set([...prev, activeDay]));
-              setActiveDay(nextDay.date);
+              if (mode === "entire_tournament" && nextGroupPhase) {
+                setDismissedDays(prev => new Set([...prev, activePhase]));
+                handlePhaseChange(nextGroupPhase.id as PhaseId);
+              } else if (nextDay) {
+                setDismissedDays(prev => new Set([...prev, activeDay]));
+                setActiveDay(nextDay.date);
+              }
             }}
             className="pointer-events-auto w-full max-w-lg flex items-center justify-between px-5 py-4 rounded-2xl cursor-pointer"
             style={{
@@ -536,9 +615,17 @@ export default function LeagueClient({
             <div className="flex items-center gap-3">
               <span className="text-base" style={{ color: mono ? "#D7FF5A" : "#0B1E0D" }}>✓</span>
               <div className="text-left">
-                <p className="text-sm font-black" style={{ color: mono ? "#F7F4EE" : "#0B1E0D" }}>All done for today</p>
+                <p className="text-sm font-black" style={{ color: mono ? "#F7F4EE" : "#0B1E0D" }}>
+                  {mode === "entire_tournament"
+                    ? `Group ${currentPhase.shortLabel} complete`
+                    : "All done for today"}
+                </p>
                 <p className="text-xs font-medium" style={{ color: mono ? "rgba(247,244,238,0.6)" : "rgba(11,30,13,0.6)" }}>
-                  Next up: {nextDay.date} · {nextDay.matchCount} {nextDay.matchCount === 1 ? "match" : "matches"}
+                  {mode === "entire_tournament" && nextGroupPhase
+                    ? `Next up: Group ${nextGroupPhase.shortLabel} · ${nextGroupPhase.matchCount} matches`
+                    : nextDay
+                      ? `Next up: ${nextDay.date} · ${nextDay.matchCount} ${nextDay.matchCount === 1 ? "match" : "matches"}`
+                      : ""}
                 </p>
               </div>
             </div>

@@ -7,9 +7,10 @@ interface PhaseNavProps {
   activePhase: PhaseId;
   onSelect: (phase: PhaseId) => void;
   mono?: boolean;
+  todayPhases?: Set<string>;
 }
 
-export default function PhaseNav({ phases, activePhase, onSelect, mono = false }: PhaseNavProps) {
+export default function PhaseNav({ phases, activePhase, onSelect, mono = false, todayPhases }: PhaseNavProps) {
   return (
     <div
       className="sticky top-14 z-40 border-b overflow-hidden"
@@ -56,7 +57,13 @@ export default function PhaseNav({ phases, activePhase, onSelect, mono = false }
                       <path d="M2 3.5V2.5a2 2 0 0 1 4 0v1" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" />
                     </svg>
                   )}
-                  {isOpen && (
+                  {isOpen && !todayPhases && (
+                    <span
+                      className="w-1.5 h-1.5 rounded-full flex-shrink-0 animate-pulse"
+                      style={{ backgroundColor: "#4ADE80" }}
+                    />
+                  )}
+                  {todayPhases?.has(phase.id) && (
                     <span
                       className="w-1.5 h-1.5 rounded-full flex-shrink-0 animate-pulse"
                       style={{ backgroundColor: "#4ADE80" }}
@@ -71,9 +78,14 @@ export default function PhaseNav({ phases, activePhase, onSelect, mono = false }
                     {phase.shortLabel}
                   </span>
                 </div>
-                {isOpen && (
+                {isOpen && !todayPhases && (
                   <span className="text-[9px] font-medium whitespace-nowrap" style={{ color: mono ? "#8A7A6A" : "#7A9B84" }}>
                     Due {phase.deadline}
+                  </span>
+                )}
+                {todayPhases?.has(phase.id) && (
+                  <span className="text-[9px] font-medium whitespace-nowrap" style={{ color: "#4ADE80" }}>
+                    Today
                   </span>
                 )}
                 {isLocked && (
