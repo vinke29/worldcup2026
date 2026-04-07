@@ -588,10 +588,6 @@ export default function QualifiersView({ matches, scorePicks, actualScores, mono
       </div>
       </div>{/* end desktop-only wrapper */}
 
-      <p className="text-[10px] mt-2" style={{ color: t.textMuted }}>
-        3rd-place: best 8 of 12 advance (Pts → GD → GF). Slot assignment follows FIFA Annex C.
-        {showPickers ? " Pick scores round by round — winners advance automatically." : view === "compare" ? " Strikethroughs show where actual qualifiers differ from your picks." : " R16 onwards unlocks as matches are played."}
-      </p>
     </div>
   );
 }

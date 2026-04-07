@@ -375,9 +375,9 @@ export default function MatchCard({
                 <span className="font-black text-sm" style={{ color: isMono ? "#C8C0B0" : "#2C4832" }}>—</span>
                 <span
                   className="text-[9px] font-bold transition-opacity duration-300"
-                  style={{ color: hasPick ? "#4ADE80" : (isMono ? "#A89E8E" : "#4A6B50"), opacity: hasPick ? (scoreSaved ? 1 : 0.6) : 1 }}
+                  style={{ color: "#4ADE80", opacity: hasPick ? (scoreSaved ? 1 : 0.6) : 0 }}
                 >
-                  {hasPick ? "✓ Saved" : "tap to predict"}
+                  ✓ Saved
                 </span>
               </div>
               <ScoreStepper value={scoreAway} onChange={(v) => handleScoreChange("away", v)} mono={isMono} />
@@ -565,9 +565,9 @@ function ScoreStepper({ value, onChange, mono }: {
       <span style={{
         width: 28, textAlign: "center",
         fontWeight: 900, fontSize: 18,
-        color: mono ? "#1A1208" : "#F0EDE6",
+        color: value === "" ? (mono ? "#A89E8E" : "#2C4832") : (mono ? "#1A1208" : "#F0EDE6"),
         fontVariantNumeric: "tabular-nums",
-      }}>{num}</span>
+      }}>{value === "" ? "—" : num}</span>
       <button
         type="button"
         style={btnStyle}
