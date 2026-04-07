@@ -395,28 +395,6 @@ export default function LeagueClient({
               </div>
             )}
 
-            {/* Next-day prompt — appears when all picks for the day are done */}
-            {isGroupPhase && nextDay && visibleMatches.length > 0 && dayPredicted === visibleMatches.length && (
-              <button
-                onClick={() => setActiveDay(nextDay.date)}
-                className="mt-6 w-full flex items-center justify-between px-5 py-4 rounded-2xl cursor-pointer transition-all hover:opacity-80 active:scale-[0.99]"
-                style={{
-                  backgroundColor: mono ? "rgba(26,18,8,0.06)" : "rgba(215,255,90,0.07)",
-                  border: `1px solid ${mono ? "rgba(26,18,8,0.15)" : "rgba(215,255,90,0.2)"}`,
-                }}
-              >
-                <div className="flex items-center gap-3">
-                  <span className="text-base" style={{ color: t.accent }}>✓</span>
-                  <div className="text-left">
-                    <p className="text-sm font-black" style={{ color: t.textPrimary }}>All done for today</p>
-                    <p className="text-xs" style={{ color: t.textSec }}>
-                      Next up: {nextDay.date} · {nextDay.matchCount} {nextDay.matchCount === 1 ? "match" : "matches"}
-                    </p>
-                  </div>
-                </div>
-                <span className="text-sm font-bold" style={{ color: t.accent }}>→</span>
-              </button>
-            )}
           </div>
 
           {/* Sidebar — always visible on desktop, tab-driven on mobile */}
@@ -479,6 +457,38 @@ export default function LeagueClient({
           <QualifiersView matches={matches} scorePicks={scorePredictions} actualScores={actualScores} mono={mono} />
         )}
       </div>
+
+      {/* Fixed next-day banner — slides up when all picks for the day are done */}
+      {isGroupPhase && nextDay && visibleMatches.length > 0 && mobileView === "matches" && (
+        <div
+          className="fixed bottom-0 inset-x-0 z-40 flex justify-center px-4 pb-4 pointer-events-none"
+          style={{
+            transform: dayPredicted === visibleMatches.length ? "translateY(0)" : "translateY(calc(100% + 16px))",
+            transition: "transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)",
+          }}
+        >
+          <button
+            onClick={() => setActiveDay(nextDay.date)}
+            className="pointer-events-auto w-full max-w-lg flex items-center justify-between px-5 py-4 rounded-2xl cursor-pointer"
+            style={{
+              backgroundColor: mono ? "#EDE8E0" : "#1A2E1F",
+              border: `1px solid ${mono ? "rgba(26,18,8,0.2)" : "rgba(215,255,90,0.3)"}`,
+              boxShadow: mono ? "0 8px 32px rgba(0,0,0,0.15)" : "0 8px 32px rgba(0,0,0,0.5)",
+            }}
+          >
+            <div className="flex items-center gap-3">
+              <span className="text-base" style={{ color: t.accent }}>✓</span>
+              <div className="text-left">
+                <p className="text-sm font-black" style={{ color: t.textPrimary }}>All done for today</p>
+                <p className="text-xs" style={{ color: t.textSec }}>
+                  Next up: {nextDay.date} · {nextDay.matchCount} {nextDay.matchCount === 1 ? "match" : "matches"}
+                </p>
+              </div>
+            </div>
+            <span className="text-sm font-bold" style={{ color: t.accent }}>→</span>
+          </button>
+        </div>
+      )}
     </div>
   );
 }
