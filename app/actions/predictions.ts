@@ -23,7 +23,8 @@ export async function savePrediction(
 export async function saveScorePick(
   matchId: string,
   homeScore: number,
-  awayScore: number
+  awayScore: number,
+  pensWinner?: "home" | "away"
 ): Promise<void> {
   const supabase = await createClient();
   const {
@@ -36,5 +37,6 @@ export async function saveScorePick(
     match_id: matchId,
     home_score: homeScore,
     away_score: awayScore,
+    pens_winner: pensWinner ?? null,
   });
 }

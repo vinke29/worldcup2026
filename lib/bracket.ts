@@ -21,6 +21,48 @@ export const FINAL_ID = "final-0";
 
 export const ALL_KNOCKOUT_IDS = [...R32_IDS, ...R16_IDS, ...QF_IDS, ...SF_IDS, FINAL_ID];
 
+// ── Match metadata (date / time / venue) ──────────────────────────────────────
+export interface KnockoutMatchMeta { date: string; time: string; venue: string }
+
+export const KNOCKOUT_MATCH_META: Record<string, KnockoutMatchMeta> = {
+  // R32 — Jun 28 – Jul 2
+  "m73": { date: "Jun 28", time: "18:00", venue: "MetLife Stadium · East Rutherford" },
+  "m74": { date: "Jun 28", time: "22:00", venue: "AT&T Stadium · Arlington" },
+  "m75": { date: "Jun 29", time: "18:00", venue: "SoFi Stadium · Inglewood" },
+  "m76": { date: "Jun 29", time: "22:00", venue: "Hard Rock Stadium · Miami" },
+  "m77": { date: "Jun 29", time: "18:00", venue: "NRG Stadium · Houston" },
+  "m78": { date: "Jun 30", time: "18:00", venue: "Levi's Stadium · Santa Clara" },
+  "m79": { date: "Jun 30", time: "22:00", venue: "Estadio Azteca · Mexico City" },
+  "m80": { date: "Jun 30", time: "18:00", venue: "Lumen Field · Seattle" },
+  "m81": { date: "Jul 1",  time: "18:00", venue: "Arrowhead Stadium · Kansas City" },
+  "m82": { date: "Jul 1",  time: "22:00", venue: "BC Place · Vancouver" },
+  "m83": { date: "Jul 1",  time: "18:00", venue: "Estadio BBVA · Guadalupe" },
+  "m84": { date: "Jul 1",  time: "22:00", venue: "Mercedes-Benz Stadium · Atlanta" },
+  "m85": { date: "Jul 2",  time: "18:00", venue: "Lincoln Financial Field · Philadelphia" },
+  "m86": { date: "Jul 2",  time: "22:00", venue: "Gillette Stadium · Foxborough" },
+  "m87": { date: "Jul 2",  time: "18:00", venue: "BMO Field · Toronto" },
+  "m88": { date: "Jul 2",  time: "22:00", venue: "Estadio Akron · Guadalupe" },
+  // R16 — Jul 4–5
+  "r16-0": { date: "Jul 4",  time: "18:00", venue: "MetLife Stadium · East Rutherford" },
+  "r16-1": { date: "Jul 4",  time: "22:00", venue: "AT&T Stadium · Arlington" },
+  "r16-2": { date: "Jul 4",  time: "18:00", venue: "SoFi Stadium · Inglewood" },
+  "r16-3": { date: "Jul 4",  time: "22:00", venue: "Hard Rock Stadium · Miami" },
+  "r16-4": { date: "Jul 5",  time: "18:00", venue: "NRG Stadium · Houston" },
+  "r16-5": { date: "Jul 5",  time: "22:00", venue: "Levi's Stadium · Santa Clara" },
+  "r16-6": { date: "Jul 5",  time: "18:00", venue: "Arrowhead Stadium · Kansas City" },
+  "r16-7": { date: "Jul 5",  time: "22:00", venue: "Mercedes-Benz Stadium · Atlanta" },
+  // QF — Jul 9–10
+  "qf-0":  { date: "Jul 9",  time: "18:00", venue: "MetLife Stadium · East Rutherford" },
+  "qf-1":  { date: "Jul 9",  time: "22:00", venue: "AT&T Stadium · Arlington" },
+  "qf-2":  { date: "Jul 10", time: "18:00", venue: "SoFi Stadium · Inglewood" },
+  "qf-3":  { date: "Jul 10", time: "22:00", venue: "Hard Rock Stadium · Miami" },
+  // SF — Jul 14–15
+  "sf-0":  { date: "Jul 14", time: "22:00", venue: "AT&T Stadium · Arlington" },
+  "sf-1":  { date: "Jul 15", time: "22:00", venue: "MetLife Stadium · East Rutherford" },
+  // Final — Jul 19
+  "final-0": { date: "Jul 19", time: "22:00", venue: "MetLife Stadium · East Rutherford" },
+};
+
 // ── Match labels for admin display ────────────────────────────────────────────
 export interface KnockoutMatchInfo {
   id: string;
@@ -53,13 +95,16 @@ export const R32_LABELS: KnockoutMatchInfo[] = [
 // ── Bracket team resolution ───────────────────────────────────────────────────
 
 type Pair = { home: TeamRow | null; away: TeamRow | null };
-type Scores = Record<string, { home: number; away: number }>;
+export type ScoreEntry = { home: number; away: number; pens?: "home" | "away" };
+type Scores = Record<string, ScoreEntry>;
 
-function matchWinner(pair: Pair, score: { home: number; away: number } | undefined): TeamRow | null {
+function matchWinner(pair: Pair, score: ScoreEntry | undefined): TeamRow | null {
   if (!pair.home || !pair.away || !score) return null;
   if (score.home > score.away) return pair.home;
   if (score.away > score.home) return pair.away;
-  return null; // still tied (admin should enter result including ET/pens)
+  if (score.pens === "home") return pair.home;
+  if (score.pens === "away") return pair.away;
+  return null; // still tied — no winner resolved yet
 }
 
 export interface BracketTeams {

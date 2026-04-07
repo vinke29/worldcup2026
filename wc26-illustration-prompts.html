@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WC2026 · Illustration Prompts · Matchday 1</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #0B1E0D;
+    color: #F0EDE6;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    padding: 48px 24px;
+    line-height: 1.5;
+  }
+
+  header {
+    max-width: 900px;
+    margin: 0 auto 48px;
+    border-bottom: 1px solid #2C4832;
+    padding-bottom: 32px;
+  }
+
+  header h1 {
+    font-size: 32px;
+    font-weight: 900;
+    letter-spacing: -0.5px;
+    margin-bottom: 8px;
+  }
+  header h1 span { color: #D7FF5A; }
+
+  .subtitle { color: #7A9B84; font-size: 15px; margin-bottom: 24px; }
+
+  .style-guide {
+    background: #1A2E1F;
+    border: 1px solid #2C4832;
+    border-radius: 16px;
+    padding: 20px 24px;
+    font-size: 13px;
+    color: #B3C9B7;
+  }
+  .style-guide strong { color: #D7FF5A; display: block; margin-bottom: 8px; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; }
+  .style-guide p { margin-bottom: 4px; }
+
+  .file-convention {
+    max-width: 900px;
+    margin: 0 auto 32px;
+    background: #1A2E1F;
+    border: 1px solid #2C4832;
+    border-radius: 12px;
+    padding: 16px 20px;
+    font-size: 13px;
+    color: #7A9B84;
+  }
+  .file-convention code {
+    background: #0F2411;
+    color: #D7FF5A;
+    font-family: monospace;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 12px;
+  }
+
+  .group-section {
+    max-width: 900px;
+    margin: 0 auto 40px;
+  }
+
+  .group-label {
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: #7A9B84;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .group-label::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: #1F3A24;
+  }
+
+  .match-card {
+    background: #1A2E1F;
+    border: 1px solid #2C4832;
+    border-radius: 16px;
+    margin-bottom: 12px;
+    overflow: hidden;
+  }
+
+  .match-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 20px;
+    border-bottom: 1px solid #1F3A24;
+  }
+  .match-teams {
+    font-size: 18px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: -0.3px;
+  }
+  .match-meta {
+    font-size: 11px;
+    color: #4A6B50;
+  }
+  .match-filename {
+    font-family: monospace;
+    font-size: 11px;
+    color: #D7FF5A;
+    background: #0F2411;
+    padding: 2px 8px;
+    border-radius: 4px;
+  }
+
+  .match-body { padding: 16px 20px; }
+
+  .prompt-label {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: #4A6B50;
+    margin-bottom: 8px;
+  }
+
+  .prompt-text {
+    font-size: 13.5px;
+    color: #B3C9B7;
+    line-height: 1.7;
+    background: #0F2411;
+    border: 1px solid #1F3A24;
+    border-radius: 10px;
+    padding: 14px 16px;
+    position: relative;
+    cursor: text;
+    white-space: pre-wrap;
+  }
+
+  .copy-btn {
+    display: block;
+    margin-top: 10px;
+    background: transparent;
+    border: 1px solid #2C4832;
+    color: #7A9B84;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 6px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: inherit;
+  }
+  .copy-btn:hover { border-color: #D7FF5A; color: #D7FF5A; }
+  .copy-btn.copied { border-color: #4ADE80; color: #4ADE80; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>WC2026 · Illustration Prompts<br><span>Matchday 1 · All 24 Games</span></h1>
+  <p class="subtitle">24 matches · June 11–17, 2026 · Risograph screenprint style</p>
+  <div class="style-guide">
+    <strong>Consistent style across all 24 illustrations</strong>
+    <p>· Background: deep forest green (#0B1E0D) — matches the app background exactly</p>
+    <p>· Style: risograph / silk-screen print — flat spot colors, visible halftone grain, slight ink misregistration</p>
+    <p>· Colors: 2–3 spot colors max per illustration, derived from each team's national palette</p>
+    <p>· Composition: two symbolic elements confronting each other, one per country — heraldic, not literal</p>
+    <p>· Format: horizontal, 3:2 ratio (e.g. 1500×1000px), no text</p>
+    <p>· Mood: bold, graphic, collector's item — like a vintage tournament poster</p>
+  </div>
+</header>
+
+<div class="file-convention">
+  <strong>File naming convention:</strong> save as <code>match-{group}-{home}-{away}.png</code> and drop in <code>/quiniela/public/</code><br>
+  Example: <code>match-a-mex-rsa.png</code> for Mexico vs South Africa (Group A)
+</div>
+
+<!-- GROUP A -->
+<div class="group-section">
+  <div class="group-label">Group A — Mexico · South Africa · South Korea · Czech Republic</div>
+
+  <div class="match-card">
+    <div class="match-header">
+      <div>
+        <div class="match-teams">🇲🇽 Mexico vs South Africa 🇿🇦</div>
+        <div class="match-meta">Jun 11 · 19:00 · Estadio Azteca, Mexico City</div>
+      </div>
+      <span class="match-filename">match-a-mex-rsa.png</span>
+    </div>
+    <div class="match-body">
+      <div class="prompt-label">Illustration prompt</div>
+      <div class="prompt-text" id="p-a-mex-rsa">Risograph screenprint illustration on deep forest green (#0B1E0D) background. Mexico vs South Africa. Two heraldic animals face off: on the left, the Mexican golden eagle — fierce, wings spread, clutching a serpent, Aztec sun geometry radiating behind it — rendered in burnt gold and jade green. On the right, a leaping springbok — South Africa's national antelope — proud, mid-leap, rendered in ochre yellow and warm cream with fine line detail. The two figures face each other across an invisible center axis, each commanding their half. Flat spot colors, visible halftone grain, slight ink misregistration. No text. Horizontal 3:2 format. Bold, graphic, vintage tournament poster energy.</div>
+      <button class="copy-btn" onclick="copyPrompt('p-a-mex-rsa', this)">Copy prompt</button>
+    </div>
+  </div>
+
+  <div class="match-card">
+    <div class="match-header">
+      <div>
+        <div class="match-teams">🇰🇷 South Korea vs Czech Republic 🇨🇿</div>
+        <div class="match-meta">Jun 11 · 22:00 · Estadio Akron, Guadalupe</div>
+      </div>
+      <span class="match-filename">match-a-kor-cze.png</span>
+    </div>
+    <div class="match-body">
+      <div class="prompt-label">Illustration prompt</div>
+      <div class="prompt-text" id="p-a-kor-cze">Risograph screenprint illustration on deep forest green (#0B1E0D) background. South Korea vs Czech Republic. Two heraldic beasts locked in confrontation: on the left, a white tiger (Baekho) — the mythic tiger of Korean culture, fierce and mystical, surrounded by flowing cloud motifs — rendered in icy white and crimson red. On the right, the Czech double-tailed lion — heraldic, crowned, rampant — rendered in silver-white and deep royal red. Both figures face each other in profile. Flat spot colors, visible halftone grain, slight ink misregistration. No text. Horizontal 3:2 format.</div>
+      <button class="copy-btn" onclick="copyPrompt('p-a-kor-cze', this)">Copy prompt</button>
+    </div>
+  </div>
+</div>
+
+<!-- GROUP B -->
+<div class="group-section">
+  <div class="group-label">Group B — Canada · Bosnia & Herzegovina · Qatar · Switzerland</div>
+
+  <div class="match-card">
+    <div class="match-header">
+      <div>
+        <div class="match-teams">🇨🇦 Canada vs Bosnia & Herzegovina 🇧🇦</div>
+        <div class="match-meta">Jun 12 · 18:00 · BMO Field, Toronto</div>
+      </div>
+      <span class="match-filename">match-b-can-bih.png</span>
+    </div>
+    <div class="match-body">
+      <div class="prompt-label">Illustration prompt</div>
+      <div class="prompt-text" id="p-b-can-bih">Risograph screenprint illustration on deep forest green (#0B1E0D) background. Canada vs Bosnia and Herzegovina. On the left, a polar bear — vast, powerful, standing on its hind legs — with a stylized maple leaf on its chest, rendered in icy white and crimson red. On the right, a Bosnian medieval lily (ljiljan fleur) — the symbol from their historic coat of arms — rendered as a towering, intricate gold emblem with a Bosnian shield beneath it. Confrontational composition, each element commanding its half. Flat spot colors, visible halftone grain. No text. Horizontal 3:2 format.</div>
+      <button class="copy-btn" onclick="copyPrompt('p-b-can-bih', this)">Copy prompt</button>
+    </div>
+  </div>
+
+  <div class="match-card">
+    <div class="match-header">
+      <div>
+        <div class="match-teams">🇶🇦 Qatar vs Switzerland 🇨🇭</div>
+        <div class="match-meta">Jun 13 · 21:00 · Levi's Stadium, San Francisco</div>
+      </div>
+      <span class="match-filename">match-b-qat-sui.png</span>
+    </div>
+    <div class="match-body">
+      <div class="prompt-label">Illustration prompt</div>
+      <div class="prompt-text" id="p-b-qat-sui">Risograph screenprint illustration on deep forest green (#0B1E0D) background. Qatar vs Switzerland. On the left, an Arabian oryx — Qatar's national animal — elegant, long-horned, in profile, rendered in maroon and cream with fine line detail. On the right, a Swiss edelweiss flower — alpine, geometric, iconic — with a bold white cross overlaid, rendered in crisp white and deep red. Desert meets mountain. Confrontational composition. Flat spot colors, visible halftone grain, slight ink misregistration. No text. Horizontal 3:2 format.</div>
+      <button class="copy-btn" onclick="copyPrompt('p-b-qat-sui', this)">Copy prompt</button>
+    </div>
+  </div>
+</div>
+
+<!-- GROUP C -->
+<div class="group-section">
+  <div class="group-label">Group C — Brazil · Morocco · Haiti · Scotland</div>
+
+  <div class="match-card">
+    <div class="match-header">
+      <div>
+        <div class="match-teams">🇧🇷 Brazil vs Morocco 🇲🇦</div>
+        <div class="match-meta">Jun 13 · 18:00 · MetLife Stadium, New York</div>
+      </div>
+      <span class="match-filename">match-c-bra-mar.png</span>
+    </div>
+    <div class="match-body">
+      <div class="prompt-label">Illustration prompt</div>
+      <div class="prompt-text" id="p-c-bra-mar">Risograph screenprint illustration on deep forest green (#0B1E0D) background. Brazil vs Morocco. On the left, a jaguar — Brazil's most powerful symbol — prowling forward, patterned coat rendered in vivid yellow-gold and emerald green, surrounded by tropical leaf silhouettes. On the right, a Barbary lion — the historic lion of North Africa — regal, mane full, rendered in warm saffron and deep crimson red, framed by intricate Moroccan geometric tilework (zellige). Two apex predators facing off. Flat spot colors, visible halftone grain. No text. Horizontal 3:2 format.</div>
+      <button class="copy-btn" onclick="copyPrompt('p-c-bra-mar', this)">Copy prompt</button>
+    </div>
+  </div>
+
+  <div class="match-card">
+    <div class="match-header">
+      <div>
+        <div class="match-teams">🇭🇹 Haiti vs Scotland 🏴󠁧󠁢󠁳󠁣󠁴󠁿</div>
+        <div class="match-meta">Jun 13 · 21:00 · Gillette Stadium, Boston</div>
+      </div>
+      <span class="match-filename">match-c-hai-sco.png</span>
+    </div>
+    <div class="match-body">
+      <div class="prompt-label">Illustration prompt</div>
+      <div class="prompt-text" id="p-c-hai-sco">Risograph screenprint illustration on deep forest green (#0B1E0D) background. Haiti vs Scotland. On the left, a Hispaniolan trogon — Haiti's national bird — vivid, exotic, wings spread, in crimson red, black, and warm white. Behind it, the silhouette of the Citadelle Laferrière, symbol of Haitian independence. On the right, a Scottish red stag — highland royalty — antlers vast, rendered in deep tartan blue and heather purple. A thistle crowns the composition. Unexpected clash of cultures, bold and graphic. Flat spot colors, visible halftone grain. No text. Horizontal 3:2 format.</div>
+      <button class="copy-btn" onclick="copyPrompt('p-c-hai-sco', this)">Copy prompt</button>
+    </div>
+  </div>
+</div>
+
+<!-- GROUP D -->
+<div class="group-section">
+  <div class="group-label">Group D — United States · Paraguay · Australia · Turkey</div>
+
+  <div class="match-card">
+    <div class="match-header">
+      <div>
+        <div class="match-teams">🇺🇸 United States vs Paraguay 🇵🇾</div>
+        <div class="match-meta">Jun 12 · 21:00 · SoFi Stadium, Los Angeles</div>
+      </div>
+      <span class="match-filename">match-d-usa-par.png</span>
+    </div>
+    <div class="match-body">
+      <div class="prompt-label">Illustration prompt</div>
+      <div class="prompt-text" id="p-d-usa-par">Risograph screenprint illustration on deep forest green (#0B1E0D) background. United States vs Paraguay. On the left, the American bald eagle — wings fully spread, talons forward, fierce — rendered in white and navy blue with red accents. Stars scattered in the background. On the right, Paraguay's double-headed lion from their coat of arms — heraldic, bold — rendered in warm red and golden yellow, flanked by the olive branch and sword. Two eagles of the Americas face off. Flat spot colors, visible halftone grain, slight ink misregistration. No text. Horizontal 3:2 format.</div>
+      <button class="copy-btn" onclick="copyPrompt('p-d-usa-par', this)">Copy prompt</button>
+    </div>
+  </div>
+
+  <div class="match-card">
+    <div class="match-header">
+      <div>
+        <div class="match-teams">🇦🇺 Australia vs Turkey 🇹🇷</div>
+        <div class="match-meta">Jun 13 · 18:00 · BC Place, Vancouver</div>
+      </div>
+      <span class="match-filename">match-d-aus-tur.png</span>
+    </div>
+    <div class="match-body">
+      <div class="prompt-label">Illustration prompt</div>
+      <div class="prompt-text" id="p-d-aus-tur">Risograph screenprint illustration on deep forest green (#0B1E0D) background. Australia vs Turkey. On the left, a kangaroo — mid-leap, powerful, with the Southern Cross constellation embedded in its silhouette — rendered in ochre gold and deep red. On the right, a crescent moon and star (Turkish symbols) intertwined with a grey wolf — the Bozkurt, mythic ancestor of the Turks — fierce, lean, howling, rendered in crimson red and silver-white. Southern hemisphere meets Anatolia. Flat spot colors, visible halftone grain. No text. Horizontal 3:2 format.</div>
+      <button class="copy-btn" onclick="copyPrompt('p-d-aus-tur', this)">Copy prompt</button>
+    </div>
+  </div>
+</div>
+
+<!-- GROUP E -->
+<div class="group-section">
+  <div class="group-label">Group E — Germany · Curaçao · Ivory Coast · Ecuador</div>
+
+  <div class="match-card">
+    <div class="match-header">
+      <div>
+        <div class="match-teams">🇩🇪 Germany vs Curaçao 🇨🇼</div>
+        <div class="match-meta">Jun 14 · 18:00 · NRG Stadium, Houston</div>
+      </div>
+      <span class="match-filename">match-e-ger-cur.png</span>
+    </div>
+    <div class="match-body">
+      <div class="prompt-label">Illustration prompt</div>
+      <div class="prompt-text" id="p-e-ger-cur">Risograph screenprint illustration on deep forest green (#0B1E0D) background. Germany vs Curaçao. On the left, the German imperial eagle — Bundesadler — bold, graphic, severe, wings spread, rendered in black and gold. On the right, a divi-divi tree — Curaçao's iconic wind-bent tree, always leaning west — rendered in vivid Caribbean blue and warm yellow, with a bright tropical iguana perched in its branches. Cold European power meets Caribbean color. Flat spot colors, visible halftone grain, slight ink misregistration. No text. Horizontal 3:2 format.</div>
+      <button class="copy-btn" onclick="copyPrompt('p-e-ger-cur', this)">Copy prompt</button>
+    </div>
+  </div>
+
+  <div class="match-card">
+    <div class="match-header">
+      <div>
+        <div class="match-teams">🇨🇮 Ivory Coast vs Ecuador 🇪🇨</div>
+        <div class="match-meta">Jun 14 · 21:00 · Lincoln Financial Field, Philadelphia</div>
+      </div>
+      <span class="match-filename">match-e-civ-ecu.png</span>
+    </div>
+    <div class="match-body">
+      <div class="prompt-label">Illustration prompt</div>
+      <div class="prompt-text" id="p-e-civ-ecu">Risograph screenprint illustration on deep forest green (#0B1E0D) background. Ivory Coast vs Ecuador. On the left, an African elephant — Ivory Coast's most iconic symbol — vast, ears spread, trunk raised, rendered in warm gray and deep orange. On the right, an Andean condor — Ecuador's national bird and symbol of the Andes — wings fully spread, soaring, rendered in black, white, and vivid Ecuadorian yellow. Africa vs South America. Flat spot colors, visible halftone grain. No text. Horizontal 3:2 format.</div>
+      <button class="copy-btn" onclick="copyPrompt('p-e-civ-ecu', this)">Copy prompt</button>
+    </div>
+  </div>
+</div>
+
+<!-- GROUP F -->
+<div class="group-section">
+  <div class="group-label">Group F — Netherlands · Japan · Sweden · Tunisia</div>
+
+  <div class="match-card">
+    <div class="match-header">
+      <div>
+        <div class="match-teams">🇳🇱 Netherlands vs Japan 🇯🇵</div>
+        <div class="match-meta">Jun 14 · 18:00 · AT&T Stadium, Dallas</div>
+      </div>
+      <span class="match-filename">match-f-ned-jpn.png</span>
+    </div>
+    <div class="match-body">
+      <div class="prompt-label">Illustration prompt</div>
+      <div class="prompt-text" id="p-f-ned-jpn">Risograph screenprint illustration on deep forest green (#0B1E0D) background. Netherlands vs Japan. On the left, the Dutch heraldic lion — crowned, rampant, proud — rendered in vivid orange and black, surrounded by stylized tulip motifs. On the right, a Japanese red-crowned crane — the symbol of longevity and grace — wings spread in a circular composition, rendered in white and deep crimson red, with a rising sun behind it. Western heraldry meets Eastern elegance. Flat spot colors, visible halftone grain, slight ink misregistration. No text. Horizontal 3:2 format.</div>
+      <button class="copy-btn" onclick="copyPrompt('p-f-ned-jpn', this)">Copy prompt</button>
+    </div>
+  </div>
+
+  <div class="match-card">
+    <div class="match-header">
+      <div>
+        <div class="match-teams">🇸🇪 Sweden vs Tunisia 🇹🇳</div>
+        <div class="match-meta">Jun 14 · 21:00 · Estadio BBVA, Guadalupe</div>
+      </div>
+      <span class="match-filename">match-f-swe-tun.png</span>
+    </div>
+    <div class="match-body">
+      <div class="prompt-label">Illustration prompt</div>
+      <div class="prompt-text" id="p-f-swe-tun">Risograph screenprint illustration on deep forest green (#0B1E0D) background. Sweden vs Tunisia. On the left, the Swedish three-crowned lion (Tre Kronor) — Nordic, regal, crowned three times — rendered in vivid yellow-gold and royal blue. On the right, a Tunisian olive tree — ancient, gnarled, heavy with olives, framing a crescent moon and star — rendered in warm olive-green and deep red. Scandinavia meets the Mediterranean. Flat spot colors, visible halftone grain. No text. Horizontal 3:2 format.</div>
+      <button class="copy-btn" onclick="copyPrompt('p-f-swe-tun', this)">Copy prompt</button>
+    </div>
+  </div>
+</div>
+
+<!-- GROUP G -->
+<div class="group-section">
+  <div class="group-label">Group G — Belgium · Egypt · Iran · New Zealand</div>
+
+  <div class="match-card">
+    <div class="match-header">
+      <div>
+        <div class="match-teams">🇮🇷 Iran vs New Zealand 🇳🇿</div>
+        <div class="match-meta">Jun 15 · 18:00 · SoFi Stadium, Los Angeles</div>
+      </div>
+      <span class="match-filename">match-g-irn-nzl.png</span>
+    </div>
+    <div class="match-body">
+      <div class="prompt-label">Illustration prompt</div>
+      <div class="prompt-text" id="p-g-irn-nzl">Risograph screenprint illustration on deep forest green (#0B1E0D) background. Iran vs New Zealand. On the left, the Persian lion and sun — the Shir-o-Khorshid, Iran's ancient royal symbol — a fierce lion in profile holding a sword, a radiant sun rising behind its back, rendered in crimson red and gold. On the right, a kiwi bird — New Zealand's beloved flightless symbol — surrounded by silver fern fronds in a Maori-inspired koru spiral pattern, rendered in silver-white and forest green. Ancient empire meets the end of the world. Flat spot colors, visible halftone grain. No text. Horizontal 3:2 format.</div>
+      <button class="copy-btn" onclick="copyPrompt('p-g-irn-nzl', this)">Copy prompt</button>
+    </div>
+  </div>
+
+  <div class="match-card">
+    <div class="match-header">
+      <div>
+        <div class="match-teams">🇧🇪 Belgium vs Egypt 🇪🇬</div>
+        <div class="match-meta">Jun 15 · 22:00 · Lumen Field, Seattle</div>
+      </div>
+      <span class="match-filename">match-g-bel-egy.png</span>
+    </div>
+    <div class="match-body">
+      <div class="prompt-label">Illustration prompt</div>
+      <div class="prompt-text" id="p-g-bel-egy">Risograph screenprint illustration on deep forest green (#0B1E0D) background. Belgium vs Egypt. On the left, the Belgian black lion — rampant, claws extended, fierce — rendered in jet black and vivid yellow, with fine red claw details. On the right, the falcon of Horus — Egypt's ancient symbol — wings spread flat in the classic Egyptian hieroglyphic posture, wearing a pharaonic double crown, rendered in gold and deep red with geometric Egyptian motifs beneath. Medieval Europe vs Ancient Egypt. Flat spot colors, visible halftone grain, slight ink misregistration. No text. Horizontal 3:2 format.</div>
+      <button class="copy-btn" onclick="copyPrompt('p-g-bel-egy', this)">Copy prompt</button>
+    </div>
+  </div>
+</div>
+
+<!-- GROUP H -->
+<div class="group-section">
+  <div class="group-label">Group H — Spain · Cape Verde · Saudi Arabia · Uruguay</div>
+
+  <div class="match-card">
+    <div class="match-header">
+      <div>
+        <div class="match-teams">🇸🇦 Saudi Arabia vs Uruguay 🇺🇾</div>
+        <div class="match-meta">Jun 15 · 18:00 · Hard Rock Stadium, Miami</div>
+      </div>
+      <span class="match-filename">match-h-ksa-uru.png</span>
+    </div>
+    <div class="match-body">
+      <div class="prompt-label">Illustration prompt</div>
+      <div class="prompt-text" id="p-h-ksa-uru">Risograph screenprint illustration on deep forest green (#0B1E0D) background. Saudi Arabia vs Uruguay. On the left, a Saker falcon — Saudi Arabia's Green Falcons — wings extended in dominant spread, rendered in forest green and cream with gold beak and talons. On the right, Uruguay's Sun of May (Sol de Mayo) — an anthropomorphic sun with a fierce face, 32 alternating rays, glowing with golden light and sky blue (celeste) radiating outward. Falcon vs the sun. Flat spot colors, visible halftone grain. No text. Horizontal 3:2 format.</div>
+      <button class="copy-btn" onclick="copyPrompt('p-h-ksa-uru', this)">Copy prompt</button>
+    </div>
+  </div>
+
+  <div class="match-card">
+    <div class="match-header">
+      <div>
+        <div class="match-teams">🇪🇸 Spain vs Cape Verde 🇨🇻</div>
+        <div class="match-meta">Jun 15 · 22:00 · Mercedes-Benz Stadium, Atlanta</div>
+      </div>
+      <span class="match-filename">match-h-esp-cpv.png</span>
+    </div>
+    <div class="match-body">
+      <div class="prompt-label">Illustration prompt</div>
+      <div class="prompt-text" id="p-h-esp-cpv">Risograph screenprint illustration on deep forest green (#0B1E0D) background. Spain vs Cape Verde. On the left, the Spanish black bull (El Toro Osborne) — iconic, monolithic, silhouetted, rendered in deep jet black with subtle red sun rays behind it. On the right, a Cape Verde purple heron — the islands' emblematic bird — elegant, long-necked, standing over Atlantic ocean waves with a palm tree silhouette behind it, rendered in vivid blue and warm yellow. European power vs island grace. Flat spot colors, visible halftone grain. No text. Horizontal 3:2 format.</div>
+      <button class="copy-btn" onclick="copyPrompt('p-h-esp-cpv', this)">Copy prompt</button>
+    </div>
+  </div>
+</div>
+
+<!-- GROUP I -->
+<div class="group-section">
+  <div class="group-label">Group I — France · Senegal · Iraq · Norway</div>
+
+  <div class="match-card">
+    <div class="match-header">
+      <div>
+        <div class="match-teams">🇫🇷 France vs Senegal 🇸🇳</div>
+        <div class="match-meta">Jun 16 · 18:00 · MetLife Stadium, New York</div>
+      </div>
+      <span class="match-filename">match-i-fra-sen.png</span>
+    </div>
+    <div class="match-body">
+      <div class="prompt-label">Illustration prompt</div>
+      <div class="prompt-text" id="p-i-fra-sen">Risograph screenprint illustration on deep forest green (#0B1E0D) background. France vs Senegal. On the left, the French Gallic rooster (Coq Gaulois) — proud, crowing, feathers ruffled, rendered in deep navy blue and vivid red with golden beak and comb. On the right, the Teranga lion — Senegal's national symbol, the Lion of Teranga — mane full, majestic, powerful, rendered in warm saffron yellow and deep green. Former colony meets former colonizer. Flat spot colors, visible halftone grain, slight ink misregistration. No text. Horizontal 3:2 format. High drama.</div>
+      <button class="copy-btn" onclick="copyPrompt('p-i-fra-sen', this)">Copy prompt</button>
+    </div>
+  </div>
+
+  <div class="match-card">
+    <div class="match-header">
+      <div>
+        <div class="match-teams">🇮🇶 Iraq vs Norway 🇳🇴</div>
+        <div class="match-meta">Jun 16 · 21:00 · Gillette Stadium, Boston</div>
+      </div>
+      <span class="match-filename">match-i-irq-nor.png</span>
+    </div>
+    <div class="match-body">
+      <div class="prompt-label">Illustration prompt</div>
+      <div class="prompt-text" id="p-i-irq-nor">Risograph screenprint illustration on deep forest green (#0B1E0D) background. Iraq vs Norway. On the left, the Mesopotamian eagle — Iraq's coat of arms eagle — ancient, stylized, rendered in black and vivid red with geometric cuneiform patterns radiating beneath it, evoking Babylon. On the right, a Viking longship — prow carved as a dragon's head, sail billowing — with Odin's raven perched at the mast, rendered in deep crimson and midnight blue with Nordic knotwork borders. Ancient civilization meets Norse warrior culture. Flat spot colors, visible halftone grain. No text. Horizontal 3:2 format.</div>
+      <button class="copy-btn" onclick="copyPrompt('p-i-irq-nor', this)">Copy prompt</button>
+    </div>
+  </div>
+</div>
+
+<!-- GROUP J -->
+<div class="group-section">
+  <div class="group-label">Group J — Argentina · Algeria · Austria · Jordan</div>
+
+  <div class="match-card">
+    <div class="match-header">
+      <div>
+        <div class="match-teams">🇦🇷 Argentina vs Algeria 🇩🇿</div>
+        <div class="match-meta">Jun 16 · 21:00 · Arrowhead Stadium, Kansas City</div>
+      </div>
+      <span class="match-filename">match-j-arg-alg.png</span>
+    </div>
+    <div class="match-body">
+      <div class="prompt-label">Illustration prompt</div>
+      <div class="prompt-text" id="p-j-arg-alg">Risograph screenprint illustration on deep forest green (#0B1E0D) background. Argentina vs Algeria. On the left, Argentina's Sun of May (Sol de Mayo) — the anthropomorphic sun, golden, 32 rays alternating straight and wavy, fierce dignified face, radiating sky blue (celeste) light outward. On the right, a Berber warrior — Algeria's ancient Amazigh culture — holding a crescent and star aloft, wearing traditional geometric Amazigh tattoos, rendered in deep green and white. The sun vs the warrior. Flat spot colors, visible halftone grain. No text. Horizontal 3:2 format.</div>
+      <button class="copy-btn" onclick="copyPrompt('p-j-arg-alg', this)">Copy prompt</button>
+    </div>
+  </div>
+
+  <div class="match-card">
+    <div class="match-header">
+      <div>
+        <div class="match-teams">🇦🇹 Austria vs Jordan 🇯🇴</div>
+        <div class="match-meta">Jun 16 · 21:00 · Levi's Stadium, San Francisco</div>
+      </div>
+      <span class="match-filename">match-j-aut-jor.png</span>
+    </div>
+    <div class="match-body">
+      <div class="prompt-label">Illustration prompt</div>
+      <div class="prompt-text" id="p-j-aut-jor">Risograph screenprint illustration on deep forest green (#0B1E0D) background. Austria vs Jordan. On the left, the Austrian imperial double-headed eagle — Habsburg heraldry, severe, two heads crowned, rendered in jet black and vivid red with gold crown detail. On the right, a Nabataean rose — Petra's iconic carved rose-red sandstone rock face — with a seven-pointed star (Jordan's coat of arms star) rising above it, rendered in warm rose-terracotta and rich black. Alpine empire meets ancient desert kingdom. Flat spot colors, visible halftone grain. No text. Horizontal 3:2 format.</div>
+      <button class="copy-btn" onclick="copyPrompt('p-j-aut-jor', this)">Copy prompt</button>
+    </div>
+  </div>
+</div>
+
+<!-- GROUP K -->
+<div class="group-section">
+  <div class="group-label">Group K — Portugal · DR Congo · Uzbekistan · Colombia</div>
+
+  <div class="match-card">
+    <div class="match-header">
+      <div>
+        <div class="match-teams">🇵🇹 Portugal vs DR Congo 🇨🇩</div>
+        <div class="match-meta">Jun 17 · 18:00 · NRG Stadium, Houston</div>
+      </div>
+      <span class="match-filename">match-k-por-cod.png</span>
+    </div>
+    <div class="match-body">
+      <div class="prompt-label">Illustration prompt</div>
+      <div class="prompt-text" id="p-k-por-cod">Risograph screenprint illustration on deep forest green (#0B1E0D) background. Portugal vs DR Congo. On the left, the Portuguese armillary sphere — the golden navigational globe from their flag and Age of Exploration — rendered in antique gold and deep red, with Vasco da Gama's caravel ship silhouetted behind it. On the right, an okapi — the extraordinary zebra-giraffe hybrid, native only to DR Congo's rainforest — rendered in warm chestnut and white stripes with deep Congo river blue. Explorer meets the hidden animal of the deep jungle. Flat spot colors, visible halftone grain. No text. Horizontal 3:2 format.</div>
+      <button class="copy-btn" onclick="copyPrompt('p-k-por-cod', this)">Copy prompt</button>
+    </div>
+  </div>
+
+  <div class="match-card">
+    <div class="match-header">
+      <div>
+        <div class="match-teams">🇺🇿 Uzbekistan vs Colombia 🇨🇴</div>
+        <div class="match-meta">Jun 17 · 21:00 · Estadio Azteca, Mexico City</div>
+      </div>
+      <span class="match-filename">match-k-uzb-col.png</span>
+    </div>
+    <div class="match-body">
+      <div class="prompt-label">Illustration prompt</div>
+      <div class="prompt-text" id="p-k-uzb-col">Risograph screenprint illustration on deep forest green (#0B1E0D) background. Uzbekistan vs Colombia. On the left, a Simurgh — the mythical Persian-Uzbek phoenix of the Silk Road — magnificent, feathers detailed, wings spread above a caravan silhouette, rendered in deep turquoise blue and warm gold. On the right, an Andean condor — Colombia's national bird — soaring over a stylized coffee plant and the Andes peaks, rendered in black, red, and vivid Colombian yellow. Silk Road meets the New World. Flat spot colors, visible halftone grain. No text. Horizontal 3:2 format.</div>
+      <button class="copy-btn" onclick="copyPrompt('p-k-uzb-col', this)">Copy prompt</button>
+    </div>
+  </div>
+</div>
+
+<!-- GROUP L -->
+<div class="group-section">
+  <div class="group-label">Group L — England · Croatia · Ghana · Panama</div>
+
+  <div class="match-card">
+    <div class="match-header">
+      <div>
+        <div class="match-teams">🏴󠁧󠁢󠁥󠁮󠁧󠁿 England vs Croatia 🇭🇷</div>
+        <div class="match-meta">Jun 17 · 21:00 · AT&T Stadium, Dallas</div>
+      </div>
+      <span class="match-filename">match-l-eng-cro.png</span>
+    </div>
+    <div class="match-body">
+      <div class="prompt-label">Illustration prompt</div>
+      <div class="prompt-text" id="p-l-eng-cro">Risograph screenprint illustration on deep forest green (#0B1E0D) background. England vs Croatia. On the left, the Three Lions of England (passant guardant) — three fierce heraldic lions on a red shield — rendered in bold crimson red and gold, proud and ancient. On the right, a Croatian knight — in chain mail, holding a shield of the red and white checkerboard (šahovnica) — rendered in white, deep red, and midnight blue. Medieval heraldry vs Adriatic warrior. A classic European clash. Flat spot colors, visible halftone grain, slight ink misregistration. No text. Horizontal 3:2 format.</div>
+      <button class="copy-btn" onclick="copyPrompt('p-l-eng-cro', this)">Copy prompt</button>
+    </div>
+  </div>
+
+  <div class="match-card">
+    <div class="match-header">
+      <div>
+        <div class="match-teams">🇬🇭 Ghana vs Panama 🇵🇦</div>
+        <div class="match-meta">Jun 17 · 21:00 · BMO Field, Toronto</div>
+      </div>
+      <span class="match-filename">match-l-gha-pan.png</span>
+    </div>
+    <div class="match-body">
+      <div class="prompt-label">Illustration prompt</div>
+      <div class="prompt-text" id="p-l-gha-pan">Risograph screenprint illustration on deep forest green (#0B1E0D) background. Ghana vs Panama. On the left, Ghana's Black Star — the pan-African star from their flag — large, bold, five-pointed, radiating gold light, surrounded by kente cloth geometric patterns in red, gold, and green, with an eagle below it. On the right, a harpy eagle — Panama's national bird, one of the world's most powerful raptors — wings spread, talons massive, rendered in black and cream white, above a stylized Panama Canal lock gate. Africa's black star meets Central America's apex predator. Flat spot colors, visible halftone grain. No text. Horizontal 3:2 format.</div>
+      <button class="copy-btn" onclick="copyPrompt('p-l-gha-pan', this)">Copy prompt</button>
+    </div>
+  </div>
+</div>
+
+<script>
+function copyPrompt(id, btn) {
+  const text = document.getElementById(id).innerText;
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.textContent = 'Copy prompt';
+      btn.classList.remove('copied');
+    }, 2000);
+  });
+}
+</script>
+</body>
+</html>

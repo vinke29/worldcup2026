@@ -14,6 +14,7 @@ import QualifiersView from "@/components/QualifiersView";
 import { MATCHES, PHASES, WHOLE_GROUP_PHASES, type Match, type Outcome, type PhaseId, type Member, type LeagueMode } from "@/lib/mock-data";
 import { computeStandings } from "@/lib/scoring";
 import { computePhaseStatuses } from "@/lib/bracket";
+import type { ScoreEntry } from "@/lib/bracket";
 import { savePrediction, saveScorePick } from "@/app/actions/predictions";
 import { logout } from "@/app/actions/auth";
 
@@ -22,7 +23,7 @@ interface LeagueClientProps {
   leagueName: string;
   currentUserId: string;
   initialPredictions: Record<string, Outcome>;
-  initialScorePicks: Record<string, { home: number; away: number }>;
+  initialScorePicks: Record<string, ScoreEntry>;
   members: Member[];
   actualScores?: Record<string, { home: number; away: number }>;
   mode?: LeagueMode;
@@ -86,7 +87,7 @@ export default function LeagueClient({
   );
   const [activeDay, setActiveDay] = useState<string>(defaultNav.day);
   const [predictions, setPredictions] = useState<Record<string, Outcome>>(initialPredictions);
-  const [scorePredictions, setScorePredictions] = useState<Record<string, { home: number; away: number }>>(initialScorePicks);
+  const [scorePredictions, setScorePredictions] = useState<Record<string, ScoreEntry>>(initialScorePicks);
   const [mobileView, setMobileView] = useState<"matches" | "standings" | "groups" | "qualifiers">("matches");
   const [mono, setMono] = useState(false);
   // Initialise synchronously to avoid a flash/jump on first render
@@ -250,10 +251,15 @@ export default function LeagueClient({
     }
   }
 
-  function handleScorePick(matchId: string, home: number, away: number) {
-    setScorePredictions((prev) => ({ ...prev, [matchId]: { home, away } }));
+  function handleScorePick(matchId: string, home: number, away: number, pens?: "home" | "away") {
+    setScorePredictions((prev) => {
+      const prev_ = prev[matchId];
+      const next = { home, away, ...(pens ? { pens } : prev_?.pens ? { pens: prev_.pens } : {}) };
+      return { ...prev, [matchId]: next };
+    });
     if (!isPreview) {
-      startTransition(() => { saveScorePick(matchId, home, away); });
+      const currentPens = pens ?? scorePredictions[matchId]?.pens;
+      startTransition(() => { saveScorePick(matchId, home, away, currentPens); });
     }
   }
 

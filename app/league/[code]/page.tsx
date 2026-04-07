@@ -69,7 +69,7 @@ export default async function LeaguePage({
       .select("user_id, match_id, outcome"),
     supabase
       .from("score_picks")
-      .select("user_id, match_id, home_score, away_score"),
+      .select("user_id, match_id, home_score, away_score, pens_winner"),
     getActualScores(),
   ]);
 
@@ -90,7 +90,11 @@ export default async function LeaguePage({
     }
     for (const sp of allScorePicks) {
       if (sp.user_id === row.user_id) {
-        picks[sp.match_id] = { home: sp.home_score, away: sp.away_score };
+        picks[sp.match_id] = {
+          home: sp.home_score,
+          away: sp.away_score,
+          ...(sp.pens_winner ? { pens: sp.pens_winner as "home" | "away" } : {}),
+        };
       }
     }
 

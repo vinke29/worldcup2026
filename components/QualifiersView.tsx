@@ -3,16 +3,17 @@
 import { useState, useMemo } from "react";
 import type { Match, LeagueMode } from "@/lib/mock-data";
 import { computeGroupTables, rankThirdPlaceTeams, type TeamRow } from "@/lib/group-standings";
-import { resolveBracketTeams, TOP_R32_IDS, BOT_R32_IDS, R16_IDS, QF_IDS, SF_IDS, FINAL_ID } from "@/lib/bracket";
+import { resolveBracketTeams, TOP_R32_IDS, BOT_R32_IDS, R16_IDS, QF_IDS, SF_IDS, FINAL_ID, KNOCKOUT_MATCH_META } from "@/lib/bracket";
+import type { ScoreEntry } from "@/lib/bracket";
 import FlagImage from "@/lib/flag-image";
 
 interface QualifiersViewProps {
   matches: Match[];
-  scorePicks: Record<string, { home: number; away: number }>;
-  actualScores: Record<string, { home: number; away: number }>;
+  scorePicks: Record<string, ScoreEntry>;
+  actualScores: Record<string, ScoreEntry>;
   mono: boolean;
   mode?: LeagueMode;
-  onScorePick?: (matchId: string, home: number, away: number) => void;
+  onScorePick?: (matchId: string, home: number, away: number, pens?: "home" | "away") => void;
 }
 
 // ── Layout constants ──────────────────────────────────────────────────────────
@@ -210,39 +211,60 @@ export default function QualifiersView({ matches, scorePicks, actualScores, mono
     [topR32Pairs, botR32Pairs, scorePicks]
   );
 
-  // Flat match lists for mobile picker view
-  const mobileMatches = useMemo(() => {
-    const r32 = [
+  // Match lists for mobile picker — grouped as pairs that feed the same next-round slot
+  type MobileMatch = { id: string; homeTeam: TeamRow | null; awayTeam: TeamRow | null; homeLabel: string; awayLabel: string };
+  type MobileGroup = { nextRoundLabel: string; matches: MobileMatch[] };
+
+  const mobileGroups = useMemo((): Record<MobileRound, MobileGroup[]> => {
+    const r32flat = [
       ...TOP_R32.map((m, i) => ({
-        id: m.id,
-        homeTeam: topR32Pairs[i].home,
-        awayTeam: topR32Pairs[i].away,
+        id: m.id, homeTeam: topR32Pairs[i].home, awayTeam: topR32Pairs[i].away,
         homeLabel: slotLabel(m.home, m.home.kind === "third" ? thirdGroupAssign[m.id] : undefined),
         awayLabel: slotLabel(m.away, m.away.kind === "third" ? thirdGroupAssign[m.id] : undefined),
       })),
       ...BOTTOM_R32.map((m, i) => ({
-        id: m.id,
-        homeTeam: botR32Pairs[i].home,
-        awayTeam: botR32Pairs[i].away,
+        id: m.id, homeTeam: botR32Pairs[i].home, awayTeam: botR32Pairs[i].away,
         homeLabel: slotLabel(m.home, m.home.kind === "third" ? thirdGroupAssign[m.id] : undefined),
         awayLabel: slotLabel(m.away, m.away.kind === "third" ? thirdGroupAssign[m.id] : undefined),
       })),
     ];
-    const r16 = [
+    // Pair R32 matches by R16 destination (every 2 consecutive share an R16 slot)
+    const r32: MobileGroup[] = Array.from({ length: 8 }, (_, i) => ({
+      nextRoundLabel: `→ R16 Match ${i + 1}`,
+      matches: [r32flat[i * 2], r32flat[i * 2 + 1]],
+    }));
+
+    const r16flat: MobileMatch[] = [
       ...predictedBracketTeams.r16Top.map((p, i) => ({ id: R16_IDS[i],   homeTeam: p.home, awayTeam: p.away, homeLabel: "", awayLabel: "" })),
       ...predictedBracketTeams.r16Bot.map((p, i) => ({ id: R16_IDS[4+i], homeTeam: p.home, awayTeam: p.away, homeLabel: "", awayLabel: "" })),
     ];
-    const qf = [
+    const r16: MobileGroup[] = Array.from({ length: 4 }, (_, i) => ({
+      nextRoundLabel: `→ QF Match ${i + 1}`,
+      matches: [r16flat[i * 2], r16flat[i * 2 + 1]],
+    }));
+
+    const qfflat: MobileMatch[] = [
       ...predictedBracketTeams.qfTop.map((p, i) => ({ id: QF_IDS[i],   homeTeam: p.home, awayTeam: p.away, homeLabel: "", awayLabel: "" })),
       ...predictedBracketTeams.qfBot.map((p, i) => ({ id: QF_IDS[2+i], homeTeam: p.home, awayTeam: p.away, homeLabel: "", awayLabel: "" })),
     ];
-    const sf = [
-      { id: SF_IDS[0], homeTeam: predictedBracketTeams.sfTop.home, awayTeam: predictedBracketTeams.sfTop.away, homeLabel: "", awayLabel: "" },
-      { id: SF_IDS[1], homeTeam: predictedBracketTeams.sfBot.home, awayTeam: predictedBracketTeams.sfBot.away, homeLabel: "", awayLabel: "" },
-    ];
-    const final = [
-      { id: FINAL_ID, homeTeam: predictedBracketTeams.final.home, awayTeam: predictedBracketTeams.final.away, homeLabel: "", awayLabel: "" },
-    ];
+    const qf: MobileGroup[] = Array.from({ length: 2 }, (_, i) => ({
+      nextRoundLabel: `→ Semi-final ${i + 1}`,
+      matches: [qfflat[i * 2], qfflat[i * 2 + 1]],
+    }));
+
+    const sf: MobileGroup[] = [{
+      nextRoundLabel: "→ Final",
+      matches: [
+        { id: SF_IDS[0], homeTeam: predictedBracketTeams.sfTop.home, awayTeam: predictedBracketTeams.sfTop.away, homeLabel: "", awayLabel: "" },
+        { id: SF_IDS[1], homeTeam: predictedBracketTeams.sfBot.home, awayTeam: predictedBracketTeams.sfBot.away, homeLabel: "", awayLabel: "" },
+      ],
+    }];
+
+    const final: MobileGroup[] = [{
+      nextRoundLabel: "",
+      matches: [{ id: FINAL_ID, homeTeam: predictedBracketTeams.final.home, awayTeam: predictedBracketTeams.final.away, homeLabel: "", awayLabel: "" }],
+    }];
+
     return { r32, r16, qf, sf, final };
   }, [topR32Pairs, botR32Pairs, predictedBracketTeams, thirdGroupAssign]);
 
@@ -340,14 +362,42 @@ export default function QualifiersView({ matches, scorePicks, actualScores, mono
             })}
           </div>
 
-          {/* Match cards */}
-          <div className="flex flex-col gap-3 mb-6">
-            {mobileMatches[mobileRound].map((m) => (
-              <MobileMatchCard key={m.id} id={m.id}
-                homeTeam={m.homeTeam} awayTeam={m.awayTeam}
-                homeLabel={m.homeLabel} awayLabel={m.awayLabel}
-                scorePicks={scorePicks} onScorePick={onScorePick!} t={t}
-              />
+          {/* Match cards — grouped by next-round pairing */}
+          <div className="flex flex-col gap-5 mb-6">
+            {mobileGroups[mobileRound].map((group, gi) => (
+              <div key={gi}>
+                <div className="flex flex-col gap-2">
+                  {group.matches.map((m, mi) => (
+                    <div key={m.id}>
+                      <MobileMatchCard
+                        id={m.id} homeTeam={m.homeTeam} awayTeam={m.awayTeam}
+                        homeLabel={m.homeLabel} awayLabel={m.awayLabel}
+                        scorePicks={scorePicks} onScorePick={onScorePick!} t={t}
+                      />
+                      {/* Connector between the two matches in a pair */}
+                      {mi === 0 && group.matches.length > 1 && (
+                        <div className="flex items-center gap-2 py-1 px-1">
+                          <div style={{ flex: 1, height: 1, backgroundColor: t.border }} />
+                          <span style={{ fontSize: 9, color: t.textMuted, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", flexShrink: 0 }}>
+                            winners meet
+                          </span>
+                          <div style={{ flex: 1, height: 1, backgroundColor: t.border }} />
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                {/* Group label showing where winners advance */}
+                {group.nextRoundLabel && (
+                  <div className="flex items-center gap-2 mt-2">
+                    <div style={{ flex: 1, height: 1, backgroundColor: t.border }} />
+                    <span style={{ fontSize: 9, color: t.textMuted, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em" }}>
+                      {group.nextRoundLabel}
+                    </span>
+                    <div style={{ flex: 1, height: 1, backgroundColor: t.border }} />
+                  </div>
+                )}
+              </div>
             ))}
           </div>
         </div>
@@ -552,66 +602,108 @@ function MobileMatchCard({
   awayTeam: TeamRow | null;
   homeLabel: string;
   awayLabel: string;
-  scorePicks: Record<string, { home: number; away: number }>;
-  onScorePick: (matchId: string, home: number, away: number) => void;
+  scorePicks: Record<string, ScoreEntry>;
+  onScorePick: (matchId: string, home: number, away: number, pens?: "home" | "away") => void;
   t: Record<string, string>;
 }) {
   const homeScore = scorePicks[id]?.home ?? 0;
   const awayScore = scorePicks[id]?.away ?? 0;
+  const pens      = scorePicks[id]?.pens;
+  const tied      = homeScore === awayScore;
+  const meta      = KNOCKOUT_MATCH_META[id];
+
+  function TeamRow_({ team, label, score, onMinus, onPlus }: {
+    team: TeamRow | null; label: string;
+    score: number; onMinus: () => void; onPlus: () => void;
+  }) {
+    return (
+      <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "13px 14px" }}>
+        {label && <span style={{ fontSize: 9, color: t.textMuted, fontWeight: 900, width: 22, flexShrink: 0 }}>{label}</span>}
+        {team ? (
+          <>
+            <FlagImage emoji={team.flag} size={20} team={team.team} />
+            <span style={{ flex: 1, fontSize: 14, fontWeight: 600, color: t.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              {team.team}
+            </span>
+          </>
+        ) : (
+          <span style={{ flex: 1, fontSize: 14, color: t.textMuted, fontStyle: "italic" }}>TBD</span>
+        )}
+        <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
+          <button onClick={onMinus}
+            style={{ width: 36, height: 36, borderRadius: 8, border: `1px solid ${t.border}`, background: "transparent", color: t.text, fontSize: 20, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            −
+          </button>
+          <span style={{ fontSize: 20, fontWeight: 900, color: t.text, minWidth: 22, textAlign: "center" }}>{score}</span>
+          <button onClick={onPlus}
+            style={{ width: 36, height: 36, borderRadius: 8, border: "none", background: t.accent, color: t.accentText, fontSize: 20, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            +
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ border: `1px solid ${t.border}`, borderRadius: 12, overflow: "hidden", backgroundColor: t.card }}>
-      {/* Home row */}
-      <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 14px" }}>
-        {homeLabel && <span style={{ fontSize: 9, color: t.textMuted, fontWeight: 900, width: 22, flexShrink: 0 }}>{homeLabel}</span>}
-        {homeTeam ? (
-          <>
-            <FlagImage emoji={homeTeam.flag} size={20} team={homeTeam.team} />
-            <span style={{ flex: 1, fontSize: 14, fontWeight: 600, color: t.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-              {homeTeam.team}
-            </span>
-          </>
-        ) : (
-          <span style={{ flex: 1, fontSize: 14, color: t.textMuted, fontStyle: "italic" }}>TBD</span>
-        )}
-        <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
-          <button
-            onClick={() => onScorePick(id, Math.max(0, homeScore - 1), awayScore)}
-            style={{ width: 36, height: 36, borderRadius: 8, border: `1px solid ${t.border}`, background: "transparent", color: t.text, fontSize: 20, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", lineHeight: 1 }}
-          >−</button>
-          <span style={{ fontSize: 20, fontWeight: 900, color: t.text, minWidth: 22, textAlign: "center" }}>{homeScore}</span>
-          <button
-            onClick={() => onScorePick(id, homeScore + 1, awayScore)}
-            style={{ width: 36, height: 36, borderRadius: 8, border: "none", background: t.accent, color: t.accentText, fontSize: 20, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", lineHeight: 1 }}
-          >+</button>
+      {/* Date + venue header */}
+      {meta && (
+        <div style={{ padding: "7px 14px 6px", borderBottom: `1px solid ${t.border}`, display: "flex", alignItems: "center", gap: 6 }}>
+          <span style={{ fontSize: 11, fontWeight: 700, color: t.textSec }}>{meta.date}</span>
+          <span style={{ fontSize: 11, color: t.border }}>·</span>
+          <span style={{ fontSize: 10, color: t.textMuted, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{meta.venue}</span>
+          <span style={{ fontSize: 10, color: t.textMuted, flexShrink: 0 }}>{meta.time}</span>
         </div>
-      </div>
+      )}
+
+      <TeamRow_
+        team={homeTeam} label={homeLabel} score={homeScore}
+        onMinus={() => onScorePick(id, Math.max(0, homeScore - 1), awayScore)}
+        onPlus={() => onScorePick(id, homeScore + 1, awayScore)}
+      />
       <div style={{ height: 1, backgroundColor: t.border }} />
-      {/* Away row */}
-      <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 14px" }}>
-        {awayLabel && <span style={{ fontSize: 9, color: t.textMuted, fontWeight: 900, width: 22, flexShrink: 0 }}>{awayLabel}</span>}
-        {awayTeam ? (
-          <>
-            <FlagImage emoji={awayTeam.flag} size={20} team={awayTeam.team} />
-            <span style={{ flex: 1, fontSize: 14, fontWeight: 600, color: t.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-              {awayTeam.team}
-            </span>
-          </>
-        ) : (
-          <span style={{ flex: 1, fontSize: 14, color: t.textMuted, fontStyle: "italic" }}>TBD</span>
-        )}
-        <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
-          <button
-            onClick={() => onScorePick(id, homeScore, Math.max(0, awayScore - 1))}
-            style={{ width: 36, height: 36, borderRadius: 8, border: `1px solid ${t.border}`, background: "transparent", color: t.text, fontSize: 20, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", lineHeight: 1 }}
-          >−</button>
-          <span style={{ fontSize: 20, fontWeight: 900, color: t.text, minWidth: 22, textAlign: "center" }}>{awayScore}</span>
-          <button
-            onClick={() => onScorePick(id, homeScore, awayScore + 1)}
-            style={{ width: 36, height: 36, borderRadius: 8, border: "none", background: t.accent, color: t.accentText, fontSize: 20, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", lineHeight: 1 }}
-          >+</button>
+      <TeamRow_
+        team={awayTeam} label={awayLabel} score={awayScore}
+        onMinus={() => onScorePick(id, homeScore, Math.max(0, awayScore - 1))}
+        onPlus={() => onScorePick(id, homeScore, awayScore + 1)}
+      />
+
+      {/* Penalty winner — shown when scores are tied */}
+      {tied && (homeTeam || awayTeam) && (
+        <div style={{ borderTop: `1px solid ${t.border}`, padding: "10px 14px" }}>
+          <p style={{ fontSize: 10, color: t.textMuted, marginBottom: 8, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em" }}>
+            Tied — who wins on penalties?
+          </p>
+          <div style={{ display: "flex", gap: 8 }}>
+            {[
+              { side: "home" as const, team: homeTeam, label: homeLabel || homeTeam?.team || "Home" },
+              { side: "away" as const, team: awayTeam, label: awayLabel || awayTeam?.team || "Away" },
+            ].map(({ side, team, label }) => {
+              const selected = pens === side;
+              return (
+                <button
+                  key={side}
+                  onClick={() => onScorePick(id, homeScore, awayScore, selected ? undefined : side)}
+                  style={{
+                    flex: 1, padding: "8px 10px", borderRadius: 8,
+                    border: `1px solid ${selected ? t.accent : t.border}`,
+                    background: selected ? t.accent : "transparent",
+                    color: selected ? t.accentText : t.textSec,
+                    fontSize: 12, fontWeight: 700, cursor: "pointer",
+                    display: "flex", alignItems: "center", gap: 6,
+                  }}
+                >
+                  {team && <FlagImage emoji={team.flag} size={14} team={team.team} />}
+                  <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {team?.team ?? label}
+                  </span>
+                  {selected && <span style={{ marginLeft: "auto", flexShrink: 0 }}>✓</span>}
+                </button>
+              );
+            })}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
