@@ -190,7 +190,7 @@ function CompareCard({
                     opacity: !correct && actualIdx >= 0 ? 0.6 : 1,
                   }}
                 >
-                  {predRow.team.split(" ").slice(-1)[0]}
+                  {predRow.team}
                 </span>
                 {/* Delta arrow */}
                 {delta !== null && delta !== 0 && (
@@ -216,7 +216,7 @@ function CompareCard({
                       className="text-xs font-semibold truncate flex-1"
                       style={{ color: actualRow.team === predRow.team ? t.accent : t.text }}
                     >
-                      {actualRow.team.split(" ").slice(-1)[0]}
+                      {actualRow.team}
                     </span>
                     <span className="text-xs font-black tabular-nums flex-shrink-0" style={{ color: t.textMuted }}>
                       {actualRow.pts}p

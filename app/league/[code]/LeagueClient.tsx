@@ -190,11 +190,16 @@ export default function LeagueClient({
 
   const groupNames = useMemo(() => Object.keys(matchesByGroup).sort(), [matchesByGroup]);
 
-  const dayPredicted = visibleMatches.filter((m) => predictions[m.id]).length;
-  const phasePredicted = phaseMatches.filter((m) => predictions[m.id]).length;
+  // In entire_tournament mode, a match counts as picked if it has either an outcome
+  // prediction OR a score pick (0-0 is a valid prediction, so we track any interaction)
+  const isPicked = (matchId: string) =>
+    !!predictions[matchId] || (mode === "entire_tournament" && scorePredictions[matchId] !== undefined);
+
+  const dayPredicted = visibleMatches.filter((m) => isPicked(m.id)).length;
+  const phasePredicted = phaseMatches.filter((m) => isPicked(m.id)).length;
 
   const totalGroupMatches = useMemo(() => matches.filter(m => m.phase.startsWith("group")).length, [matches]);
-  const totalGroupPredicted = useMemo(() => matches.filter(m => m.phase.startsWith("group") && predictions[m.id]).length, [matches, predictions]);
+  const totalGroupPredicted = useMemo(() => matches.filter(m => m.phase.startsWith("group") && isPicked(m.id)).length, [matches, predictions, scorePredictions]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const nextDay = useMemo(() => {
     if (mode === "entire_tournament") return null; // no day navigation in this mode
@@ -258,7 +263,7 @@ export default function LeagueClient({
   }
 
   function scrollToFirstUnpicked() {
-    const firstUnpicked = visibleMatches.find((m) => !predictions[m.id]);
+    const firstUnpicked = visibleMatches.find((m) => !isPicked(m.id));
     if (firstUnpicked) {
       document.getElementById(`match-${firstUnpicked.id}`)?.scrollIntoView({
         behavior: "smooth",

@@ -503,13 +503,13 @@ function PodTeamRow({ team, label, actualTeam, score, onScore, t }: {
             color: correct ? "#4ADE80" : wrong ? "#F87171" : t.text,
             flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
             textDecoration: wrong ? "line-through" : "none", opacity: wrong ? 0.7 : 1 }}>
-            {team.team.split(" ").slice(-1)[0]}
+            {team.team}
           </span>
           {correct && !onScore && <span style={{ fontSize: 9, color: "#4ADE80", flexShrink: 0 }}>✓</span>}
           {wrong && actualTeam && !onScore && (
-            <span style={{ fontSize: 8, color: "#F87171", flexShrink: 0, maxWidth: 32,
+            <span style={{ fontSize: 8, color: "#F87171", flexShrink: 0, maxWidth: 36,
               overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-              {actualTeam.team.split(" ").slice(-1)[0]}
+              {actualTeam.team}
             </span>
           )}
           {onScore !== undefined && score !== undefined && (
