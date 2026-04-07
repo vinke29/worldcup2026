@@ -39,8 +39,8 @@ export default function OnboardingModal({ leagueName, currentUserId, onComplete 
         <div className="w-full max-w-lg px-6 pb-12 flex flex-col gap-5">
           <div>
             <span
-              className="text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full border"
-              style={{ color: secondary, borderColor: border }}
+              className="text-xs font-black uppercase tracking-widest px-3 py-1.5 rounded-full border"
+              style={{ color: accent, borderColor: "rgba(215,255,90,0.4)", backgroundColor: "rgba(215,255,90,0.1)" }}
             >
               {leagueName}
             </span>

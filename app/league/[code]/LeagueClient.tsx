@@ -89,17 +89,14 @@ export default function LeagueClient({
   const [scorePredictions, setScorePredictions] = useState<Record<string, { home: number; away: number }>>(initialScorePicks);
   const [mobileView, setMobileView] = useState<"matches" | "standings" | "groups" | "qualifiers">("matches");
   const [mono, setMono] = useState(false);
-  const [showOnboarding, setShowOnboarding] = useState(false);
+  // Initialise synchronously to avoid a flash/jump on first render
+  const [showOnboarding, setShowOnboarding] = useState(() => {
+    if (typeof window === "undefined") return false;
+    const hasPredictions = Object.keys(initialPredictions).length > 0;
+    return !hasPredictions && !localStorage.getItem(`quiniela_onboarded_${currentUserId}`);
+  });
   const [dismissedDays, setDismissedDays] = useState<Set<string>>(new Set());
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
-
-  useEffect(() => {
-    // Show onboarding for new users (no picks yet) or preview visitors who haven't seen it
-    const hasPredictions = Object.keys(initialPredictions).length > 0;
-    if (!hasPredictions && !localStorage.getItem(`quiniela_onboarded_${currentUserId}`)) {
-      setShowOnboarding(true);
-    }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Merge actual scores from DB into the static MATCHES array
   const matches: Match[] = useMemo(
@@ -116,12 +113,9 @@ export default function LeagueClient({
     if (mode === "entire_tournament") {
       // Group A–L phases are always open; KO phases open when ready, completed when done
       const groupPhases = WHOLE_GROUP_PHASES.map(p => ({ ...p, status: "open" as const }));
-      const koPhases = PHASES.filter(p => !p.id.startsWith("group")).map(p => {
-        const computed = statuses[p.id as PhaseId] ?? p.status;
-        const status: "open" | "locked" | "completed" = computed === "completed" ? "completed" : "open";
-        return { ...p, status };
-      });
-      return [...groupPhases, ...koPhases];
+      // Collapse all KO rounds into one "Playoffs" tab — the bracket handles the internal rounds
+      const playoffsPhase = { id: "r32" as PhaseId, label: "Playoffs", shortLabel: "Playoffs", deadline: "", status: "open" as const, matchCount: 31 };
+      return [...groupPhases, playoffsPhase];
     }
     return PHASES.map(p => ({ ...p, status: statuses[p.id as PhaseId] ?? p.status }));
   }, [actualScores, mode]);
@@ -166,11 +160,16 @@ export default function LeagueClient({
 
   const handlePhaseChange = (phase: PhaseId) => {
     setActivePhase(phase);
-    const first = matches.find((m) => m.phase === phase);
-    if (first) setActiveDay(first.date);
-    // In entire_tournament mode, knockout phases have no match cards — go straight to Qualifiers
-    if (mode === "entire_tournament" && !phase.startsWith("group")) {
-      setMobileView("qualifiers");
+    if (mode === "entire_tournament") {
+      // Group tab → show matches. Playoffs tab → show bracket.
+      if (phase.startsWith("group-") && !phase.includes("md")) {
+        setMobileView("matches");
+      } else {
+        setMobileView("qualifiers");
+      }
+    } else {
+      const first = matches.find((m) => m.phase === phase);
+      if (first) setActiveDay(first.date);
     }
   };
 
@@ -198,9 +197,10 @@ export default function LeagueClient({
   const totalGroupPredicted = useMemo(() => matches.filter(m => m.phase.startsWith("group") && predictions[m.id]).length, [matches, predictions]);
 
   const nextDay = useMemo(() => {
+    if (mode === "entire_tournament") return null; // no day navigation in this mode
     const idx = days.findIndex(d => d.date === activeDay);
     return idx >= 0 && idx < days.length - 1 ? days[idx + 1] : null;
-  }, [days, activeDay]);
+  }, [days, activeDay, mode]);
 
   // Which phases have matches today (for entire_tournament mode dot indicators)
   const todayPhases = useMemo(() => {
