@@ -61,22 +61,28 @@ export async function signup(
       ? (words[0][0] + words[words.length - 1][0]).toUpperCase()
       : name.slice(0, 2).toUpperCase();
 
+  // Parse setup info so we can store it in user metadata and read it back in the callback.
+  // We can't put it in emailRedirectTo (Supabase PKCE validates the redirect URI strictly).
+  const setupQuery = (formData.get("setupQuery") as string | null) ?? "";
+  const sp = new URLSearchParams(setupQuery);
+
   // Pass name + avatar as user metadata — a DB trigger picks this up and
   // creates the profiles row (security definer, so it bypasses RLS).
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
-
-  // Embed setupQuery into the callback URL so it survives the email confirmation round-trip
-  const setupQuery = (formData.get("setupQuery") as string | null) ?? "";
-  const callbackUrl = setupQuery
-    ? `${siteUrl}/auth/callback?setup=${encodeURIComponent(setupQuery)}`
-    : `${siteUrl}/auth/callback`;
-
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
-      data: { name, avatar },
-      emailRedirectTo: callbackUrl,
+      data: {
+        name,
+        avatar,
+        // Stash setup params so the callback can auto-create/join the league
+        pending_intent:       sp.get("intent")      ?? "create",
+        pending_league_name:  sp.get("leagueName")  ?? "",
+        pending_league_mode:  sp.get("mode")        ?? "entire_tournament",
+        pending_join_code:    sp.get("code")        ?? "",
+      },
+      emailRedirectTo: `${siteUrl}/auth/callback`,
     },
   });
   if (error) return error.message;
