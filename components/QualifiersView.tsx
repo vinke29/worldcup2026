@@ -146,12 +146,27 @@ function buildFinalConnectors(colX: number[], finalX: number, podW: number): str
 
 type MobileRound = "r32" | "r16" | "qf" | "sf" | "final";
 
+const ROUND_PICK_IDS: Record<MobileRound, string[]> = {
+  r32:   [...TOP_R32_IDS, ...BOT_R32_IDS],
+  r16:   R16_IDS,
+  qf:    QF_IDS,
+  sf:    SF_IDS,
+  final: [FINAL_ID],
+};
+const NEXT_ROUND: Record<MobileRound, MobileRound | null> = {
+  r32: "r16", r16: "qf", qf: "sf", sf: "final", final: null,
+};
+const ROUND_LABEL: Record<MobileRound, string> = {
+  r32: "R32", r16: "R16", qf: "QF", sf: "Semi-finals", final: "Final",
+};
+
 // ── Main component ────────────────────────────────────────────────────────────
 export default function QualifiersView({ matches, scorePicks, actualScores, mono, mode = "phase_by_phase", onScorePick }: QualifiersViewProps) {
   const hasActual = useMemo(() => matches.some(m => m.homeScore !== null), [matches]);
   const defaultView = hasActual ? "compare" : "predicted";
   const [view, setView] = useState<"predicted" | "actual" | "compare">(defaultView);
   const [mobileRound, setMobileRound] = useState<MobileRound>("r32");
+  const [dismissedRounds, setDismissedRounds] = useState<Set<MobileRound>>(new Set());
   const t = useTheme(mono);
 
   // In entire_tournament mode with onScorePick, show score pickers and use wider pods
@@ -312,8 +327,50 @@ export default function QualifiersView({ matches, scorePicks, actualScores, mono
   // Which bracket to use for R16+ rendering
   const activeBracket = view === "actual" ? bracketTeams : (showPickers ? predictedBracketTeams : null);
 
+  // Round completion banner
+  const nextRound = NEXT_ROUND[mobileRound];
+  const allPickedForRound = showPickers && ROUND_PICK_IDS[mobileRound].every(id => scorePicks[id] !== undefined);
+  const roundBannerVisible = allPickedForRound && nextRound !== null && !dismissedRounds.has(mobileRound);
+
   return (
     <div>
+      {/* Round completion banner — mobile only, entire_tournament mode */}
+      {showPickers && nextRound && (
+        <div
+          className="fixed top-14 inset-x-0 z-[60] flex justify-center px-4 pt-2 pointer-events-none md:hidden"
+          style={{
+            transform: roundBannerVisible ? "translateY(0)" : "translateY(calc(-100% - 72px))",
+            transition: "transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)",
+          }}
+        >
+          <button
+            onClick={() => {
+              setDismissedRounds(prev => new Set([...prev, mobileRound]));
+              setMobileRound(nextRound);
+            }}
+            className="pointer-events-auto w-full max-w-lg flex items-center justify-between px-5 py-4 rounded-2xl cursor-pointer"
+            style={{
+              backgroundColor: mono ? "#1A1208" : "#D7FF5A",
+              border: "none",
+              boxShadow: mono ? "0 8px 32px rgba(0,0,0,0.3)" : "0 8px 32px rgba(215,255,90,0.35)",
+            }}
+          >
+            <div className="flex items-center gap-3">
+              <span className="text-base" style={{ color: mono ? "#D7FF5A" : "#0B1E0D" }}>✓</span>
+              <div className="text-left">
+                <p className="text-sm font-black" style={{ color: mono ? "#F7F4EE" : "#0B1E0D" }}>
+                  {ROUND_LABEL[mobileRound]} complete
+                </p>
+                <p className="text-xs font-medium" style={{ color: mono ? "rgba(247,244,238,0.6)" : "rgba(11,30,13,0.6)" }}>
+                  Next up: {ROUND_LABEL[nextRound]} · {ROUND_PICK_IDS[nextRound].length} {ROUND_PICK_IDS[nextRound].length === 1 ? "match" : "matches"}
+                </p>
+              </div>
+            </div>
+            <span className="text-sm font-bold" style={{ color: mono ? "#F7F4EE" : "#0B1E0D" }}>→</span>
+          </button>
+        </div>
+      )}
+
       {/* Toggle — only shown when actual results exist */}
       {hasActual && (
         <div className="flex items-center gap-2 mb-5">
