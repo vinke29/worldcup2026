@@ -143,11 +143,14 @@ function buildFinalConnectors(colX: number[], finalX: number, podW: number): str
   ];
 }
 
+type MobileRound = "r32" | "r16" | "qf" | "sf" | "final";
+
 // ── Main component ────────────────────────────────────────────────────────────
 export default function QualifiersView({ matches, scorePicks, actualScores, mono, mode = "phase_by_phase", onScorePick }: QualifiersViewProps) {
   const hasActual = useMemo(() => matches.some(m => m.homeScore !== null), [matches]);
   const defaultView = hasActual ? "compare" : "predicted";
   const [view, setView] = useState<"predicted" | "actual" | "compare">(defaultView);
+  const [mobileRound, setMobileRound] = useState<MobileRound>("r32");
   const t = useTheme(mono);
 
   // In entire_tournament mode with onScorePick, show score pickers and use wider pods
@@ -206,6 +209,42 @@ export default function QualifiersView({ matches, scorePicks, actualScores, mono
     () => resolveBracketTeams(topR32Pairs, botR32Pairs, scorePicks),
     [topR32Pairs, botR32Pairs, scorePicks]
   );
+
+  // Flat match lists for mobile picker view
+  const mobileMatches = useMemo(() => {
+    const r32 = [
+      ...TOP_R32.map((m, i) => ({
+        id: m.id,
+        homeTeam: topR32Pairs[i].home,
+        awayTeam: topR32Pairs[i].away,
+        homeLabel: slotLabel(m.home, m.home.kind === "third" ? thirdGroupAssign[m.id] : undefined),
+        awayLabel: slotLabel(m.away, m.away.kind === "third" ? thirdGroupAssign[m.id] : undefined),
+      })),
+      ...BOTTOM_R32.map((m, i) => ({
+        id: m.id,
+        homeTeam: botR32Pairs[i].home,
+        awayTeam: botR32Pairs[i].away,
+        homeLabel: slotLabel(m.home, m.home.kind === "third" ? thirdGroupAssign[m.id] : undefined),
+        awayLabel: slotLabel(m.away, m.away.kind === "third" ? thirdGroupAssign[m.id] : undefined),
+      })),
+    ];
+    const r16 = [
+      ...predictedBracketTeams.r16Top.map((p, i) => ({ id: R16_IDS[i],   homeTeam: p.home, awayTeam: p.away, homeLabel: "", awayLabel: "" })),
+      ...predictedBracketTeams.r16Bot.map((p, i) => ({ id: R16_IDS[4+i], homeTeam: p.home, awayTeam: p.away, homeLabel: "", awayLabel: "" })),
+    ];
+    const qf = [
+      ...predictedBracketTeams.qfTop.map((p, i) => ({ id: QF_IDS[i],   homeTeam: p.home, awayTeam: p.away, homeLabel: "", awayLabel: "" })),
+      ...predictedBracketTeams.qfBot.map((p, i) => ({ id: QF_IDS[2+i], homeTeam: p.home, awayTeam: p.away, homeLabel: "", awayLabel: "" })),
+    ];
+    const sf = [
+      { id: SF_IDS[0], homeTeam: predictedBracketTeams.sfTop.home, awayTeam: predictedBracketTeams.sfTop.away, homeLabel: "", awayLabel: "" },
+      { id: SF_IDS[1], homeTeam: predictedBracketTeams.sfBot.home, awayTeam: predictedBracketTeams.sfBot.away, homeLabel: "", awayLabel: "" },
+    ];
+    const final = [
+      { id: FINAL_ID, homeTeam: predictedBracketTeams.final.home, awayTeam: predictedBracketTeams.final.away, homeLabel: "", awayLabel: "" },
+    ];
+    return { r32, r16, qf, sf, final };
+  }, [topR32Pairs, botR32Pairs, predictedBracketTeams, thirdGroupAssign]);
 
   // For compare: actual R32 teams overlaid on predicted bracket
   const actualThirdMap = useMemo(() => {
@@ -279,7 +318,43 @@ export default function QualifiersView({ matches, scorePicks, actualScores, mono
         </div>
       )}
 
-      {/* Round labels */}
+      {/* Mobile picker — vertical list, visible only on small screens */}
+      {showPickers && (
+        <div className="block md:hidden">
+          {/* Round tabs */}
+          <div className="flex gap-2 mb-4 overflow-x-auto pb-1">
+            {(["r32","r16","qf","sf","final"] as MobileRound[]).map((id) => {
+              const label = id === "final" ? "Final" : id.toUpperCase();
+              const active = mobileRound === id;
+              return (
+                <button key={id} onClick={() => setMobileRound(id)}
+                  className="text-xs font-black uppercase tracking-widest px-3 py-1.5 rounded-lg cursor-pointer whitespace-nowrap transition-all"
+                  style={{
+                    border: `1px solid ${active ? t.accent : t.border}`,
+                    backgroundColor: active ? t.accent : "transparent",
+                    color: active ? t.accentText : t.textSec,
+                  }}>
+                  {label}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Match cards */}
+          <div className="flex flex-col gap-3 mb-6">
+            {mobileMatches[mobileRound].map((m) => (
+              <MobileMatchCard key={m.id} id={m.id}
+                homeTeam={m.homeTeam} awayTeam={m.awayTeam}
+                homeLabel={m.homeLabel} awayLabel={m.awayLabel}
+                scorePicks={scorePicks} onScorePick={onScorePick!} t={t}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Round labels — desktop only when pickers active */}
+      <div className={showPickers ? "hidden md:block" : ""}>
       <div style={{ position: "relative", height: 20, marginBottom: 6, width: totalWidth }}>
         {(["R32","R16","QF","SF"] as const).map((lbl, r) => (
           <span key={lbl} style={{
@@ -402,10 +477,11 @@ export default function QualifiersView({ matches, scorePicks, actualScores, mono
           }
         </div>
       </div>
+      </div>{/* end desktop-only wrapper */}
 
       <p className="text-[10px] mt-2" style={{ color: t.textMuted }}>
         3rd-place: best 8 of 12 advance (Pts → GD → GF). Slot assignment follows FIFA Annex C.
-        {showPickers ? " Pick scores in each pod — winners advance automatically." : view === "compare" ? " Strikethroughs show where actual qualifiers differ from your picks." : " R16 onwards unlocks as matches are played."}
+        {showPickers ? " Pick scores round by round — winners advance automatically." : view === "compare" ? " Strikethroughs show where actual qualifiers differ from your picks." : " R16 onwards unlocks as matches are played."}
       </p>
     </div>
   );
@@ -463,6 +539,79 @@ function TbdPod({ x, y, podW, t }: { x: number; y: number; podW: number; t: Reco
       <TbdRow t={t} />
       <div style={{ height: 1, backgroundColor: t.border, flexShrink: 0 }} />
       <TbdRow t={t} />
+    </div>
+  );
+}
+
+// ── Mobile match card ─────────────────────────────────────────────────────────
+function MobileMatchCard({
+  id, homeTeam, awayTeam, homeLabel, awayLabel, scorePicks, onScorePick, t,
+}: {
+  id: string;
+  homeTeam: TeamRow | null;
+  awayTeam: TeamRow | null;
+  homeLabel: string;
+  awayLabel: string;
+  scorePicks: Record<string, { home: number; away: number }>;
+  onScorePick: (matchId: string, home: number, away: number) => void;
+  t: Record<string, string>;
+}) {
+  const homeScore = scorePicks[id]?.home ?? 0;
+  const awayScore = scorePicks[id]?.away ?? 0;
+
+  return (
+    <div style={{ border: `1px solid ${t.border}`, borderRadius: 12, overflow: "hidden", backgroundColor: t.card }}>
+      {/* Home row */}
+      <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 14px" }}>
+        {homeLabel && <span style={{ fontSize: 9, color: t.textMuted, fontWeight: 900, width: 22, flexShrink: 0 }}>{homeLabel}</span>}
+        {homeTeam ? (
+          <>
+            <FlagImage emoji={homeTeam.flag} size={20} team={homeTeam.team} />
+            <span style={{ flex: 1, fontSize: 14, fontWeight: 600, color: t.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              {homeTeam.team}
+            </span>
+          </>
+        ) : (
+          <span style={{ flex: 1, fontSize: 14, color: t.textMuted, fontStyle: "italic" }}>TBD</span>
+        )}
+        <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
+          <button
+            onClick={() => onScorePick(id, Math.max(0, homeScore - 1), awayScore)}
+            style={{ width: 36, height: 36, borderRadius: 8, border: `1px solid ${t.border}`, background: "transparent", color: t.text, fontSize: 20, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", lineHeight: 1 }}
+          >−</button>
+          <span style={{ fontSize: 20, fontWeight: 900, color: t.text, minWidth: 22, textAlign: "center" }}>{homeScore}</span>
+          <button
+            onClick={() => onScorePick(id, homeScore + 1, awayScore)}
+            style={{ width: 36, height: 36, borderRadius: 8, border: "none", background: t.accent, color: t.accentText, fontSize: 20, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", lineHeight: 1 }}
+          >+</button>
+        </div>
+      </div>
+      <div style={{ height: 1, backgroundColor: t.border }} />
+      {/* Away row */}
+      <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 14px" }}>
+        {awayLabel && <span style={{ fontSize: 9, color: t.textMuted, fontWeight: 900, width: 22, flexShrink: 0 }}>{awayLabel}</span>}
+        {awayTeam ? (
+          <>
+            <FlagImage emoji={awayTeam.flag} size={20} team={awayTeam.team} />
+            <span style={{ flex: 1, fontSize: 14, fontWeight: 600, color: t.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              {awayTeam.team}
+            </span>
+          </>
+        ) : (
+          <span style={{ flex: 1, fontSize: 14, color: t.textMuted, fontStyle: "italic" }}>TBD</span>
+        )}
+        <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
+          <button
+            onClick={() => onScorePick(id, homeScore, Math.max(0, awayScore - 1))}
+            style={{ width: 36, height: 36, borderRadius: 8, border: `1px solid ${t.border}`, background: "transparent", color: t.text, fontSize: 20, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", lineHeight: 1 }}
+          >−</button>
+          <span style={{ fontSize: 20, fontWeight: 900, color: t.text, minWidth: 22, textAlign: "center" }}>{awayScore}</span>
+          <button
+            onClick={() => onScorePick(id, homeScore, awayScore + 1)}
+            style={{ width: 36, height: 36, borderRadius: 8, border: "none", background: t.accent, color: t.accentText, fontSize: 20, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", lineHeight: 1 }}
+          >+</button>
+        </div>
+      </div>
     </div>
   );
 }
