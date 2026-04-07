@@ -278,14 +278,14 @@ export default function MatchCard({
 
       {/* Teams row */}
       <div className="px-4 pt-4 pb-3">
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2.5 min-w-0 flex-1">
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex items-start gap-2.5 min-w-0 flex-1">
             {match.illustration && <FlagImage emoji={match.homeFlag} size={28} team={match.homeTeam} />}
-            <span className="font-black text-lg sm:text-xl uppercase tracking-tight leading-none truncate" style={{ color: isMono ? "#1A1208" : "#F0EDE6" }}>
+            <span className="font-black text-lg sm:text-xl uppercase tracking-tight leading-tight" style={{ color: isMono ? "#1A1208" : "#F0EDE6" }}>
               {match.homeTeam}
             </span>
           </div>
-          <div className="flex-shrink-0 px-2">
+          <div className="flex-shrink-0 px-2 pt-1">
             {isFinished ? (
               <span className="text-2xl font-black tabular-nums" style={{ color: isMono ? "#1A1208" : "#F0EDE6" }}>
                 {match.homeScore}–{match.awayScore}
@@ -294,8 +294,8 @@ export default function MatchCard({
               <span className="text-[10px] font-black tracking-widest" style={{ color: isMono ? "#C8C0B0" : "#2C4832" }}>VS</span>
             )}
           </div>
-          <div className="flex items-center gap-2.5 min-w-0 flex-1 justify-end">
-            <span className="font-black text-lg sm:text-xl uppercase tracking-tight leading-none truncate text-right" style={{ color: isMono ? "#1A1208" : "#F0EDE6" }}>
+          <div className="flex items-start gap-2.5 min-w-0 flex-1 justify-end">
+            <span className="font-black text-lg sm:text-xl uppercase tracking-tight leading-tight text-right" style={{ color: isMono ? "#1A1208" : "#F0EDE6" }}>
               {match.awayTeam}
             </span>
             {match.illustration && <FlagImage emoji={match.awayFlag} size={28} team={match.awayTeam} />}
