@@ -85,6 +85,7 @@ export default function LeagueClient({
   const [mobileView, setMobileView] = useState<"matches" | "standings" | "groups" | "qualifiers">("matches");
   const [mono, setMono] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [dismissedDays, setDismissedDays] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     // Show onboarding for new users (no picks yet) or preview visitors who haven't seen it
@@ -169,7 +170,7 @@ export default function LeagueClient({
     return idx >= 0 && idx < days.length - 1 ? days[idx + 1] : null;
   }, [days, activeDay]);
 
-  const nextDayBannerVisible = isGroupPhase && !!nextDay && visibleMatches.length > 0 && mobileView === "matches" && dayPredicted === visibleMatches.length;
+  const nextDayBannerVisible = isGroupPhase && !!nextDay && visibleMatches.length > 0 && mobileView === "matches" && dayPredicted === visibleMatches.length && !dismissedDays.has(activeDay);
 
   const dayFirstKickoff = useMemo(() => {
     if (visibleMatches.length === 0) return null;
@@ -474,7 +475,10 @@ export default function LeagueClient({
           }}
         >
           <button
-            onClick={() => setActiveDay(nextDay.date)}
+            onClick={() => {
+              setDismissedDays(prev => new Set([...prev, activeDay]));
+              setActiveDay(nextDay.date);
+            }}
             className="pointer-events-auto w-full max-w-lg flex items-center justify-between px-5 py-4 rounded-2xl cursor-pointer"
             style={{
               backgroundColor: mono ? "#EDE8E0" : "#1A2E1F",
