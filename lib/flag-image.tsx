@@ -27,9 +27,12 @@ export default function FlagImage({
 }) {
   const code = emojiToCode(emoji);
   if (!code) return <span style={{ fontSize: size * 0.8 }}>{emoji}</span>;
+  // flagcdn.com only serves specific widths; pick the next valid one above display size
+  const CDN_WIDTHS = [20, 40, 80, 160, 320];
+  const cdnW = CDN_WIDTHS.find((w) => w >= size * 2) ?? 320;
   return (
     <img
-      src={`https://flagcdn.com/w${size * 2}/${code}.png`}
+      src={`https://flagcdn.com/w${cdnW}/${code}.png`}
       width={size}
       height={Math.round(size * 0.75)}
       alt={team ?? ""}
