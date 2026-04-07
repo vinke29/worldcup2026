@@ -51,18 +51,11 @@ export default async function LeaguePage({
 
   if (!league) redirect("/auth/setup");
 
-  // Fetch current user's profile
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("name, avatar")
-    .eq("id", user.id)
-    .maybeSingle();
-
-  // Fetch all league members + their profiles, predictions, score picks, and actual scores in parallel
-  const [memberRowsResult, predictionsResult, scorePicksResult, actualScores] = await Promise.all([
+  // Fetch league members, predictions, score picks, actual scores, and current user profile in parallel
+  const [memberIdsResult, predictionsResult, scorePicksResult, actualScores, profileResult] = await Promise.all([
     supabase
       .from("league_members")
-      .select("user_id, profiles!left(name, avatar)")
+      .select("user_id")
       .eq("league_id", league.id),
     supabase
       .from("predictions")
@@ -71,25 +64,45 @@ export default async function LeaguePage({
       .from("score_picks")
       .select("user_id, match_id, home_score, away_score, pens_winner"),
     getActualScores(),
+    supabase
+      .from("profiles")
+      .select("id, name, avatar")
+      .eq("id", user.id)
+      .maybeSingle(),
   ]);
 
-  const memberRows = memberRowsResult.data ?? [];
-  const memberIds  = memberRows.map((r) => r.user_id);
+  // Ensure current user is always in the member list (safety fallback if join/insert lagged)
+  const memberIdsRaw = (memberIdsResult.data ?? []).map((r) => r.user_id);
+  const memberIds = memberIdsRaw.includes(user.id)
+    ? memberIdsRaw
+    : [...memberIdsRaw, user.id];
+
+  // Fetch all profiles for league members in one query
+  const { data: profileRows } = await supabase
+    .from("profiles")
+    .select("id, name, avatar")
+    .in("id", memberIds);
+
+  const profileMap = new Map((profileRows ?? []).map((p) => [p.id, p]));
+  // Ensure current user's profile is always available
+  if (profileResult.data) {
+    profileMap.set(user.id, profileResult.data);
+  }
 
   // Filter predictions/picks to league members
   const allPredictions = (predictionsResult.data ?? []).filter(p => memberIds.includes(p.user_id));
   const allScorePicks  = (scorePicksResult.data  ?? []).filter(p => memberIds.includes(p.user_id));
 
   // Build Member[] objects for the leaderboard
-  const members: Member[] = memberRows.map((row) => {
+  const members: Member[] = memberIds.map((userId) => {
     const preds: Record<string, Outcome> = {};
     const picks: Record<string, { home: number; away: number }> = {};
 
     for (const p of allPredictions) {
-      if (p.user_id === row.user_id) preds[p.match_id] = p.outcome as Outcome;
+      if (p.user_id === userId) preds[p.match_id] = p.outcome as Outcome;
     }
     for (const sp of allScorePicks) {
-      if (sp.user_id === row.user_id) {
+      if (sp.user_id === userId) {
         picks[sp.match_id] = {
           home: sp.home_score,
           away: sp.away_score,
@@ -98,11 +111,11 @@ export default async function LeaguePage({
       }
     }
 
-    const p = Array.isArray(row.profiles) ? row.profiles[0] : row.profiles;
+    const profile = profileMap.get(userId);
     return {
-      id: row.user_id,
-      name: p?.name ?? "Unknown",
-      avatar: p?.avatar ?? "?",
+      id: userId,
+      name: profile?.name ?? "Unknown",
+      avatar: profile?.avatar ?? "?",
       points: 0,
       correct: 0,
       exact: 0,
@@ -114,10 +127,6 @@ export default async function LeaguePage({
   });
 
   const myMember = members.find((m) => m.id === user.id);
-
-  // suppress unused warning
-  void profile;
-
   const leagueMode = (league.mode ?? "phase_by_phase") as LeagueMode;
 
   return (
