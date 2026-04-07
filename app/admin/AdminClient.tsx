@@ -11,7 +11,7 @@ import {
 interface AdminClientProps {
   matches: Match[];
   phases: Phase[];
-  initialScores: Record<string, { home: number; away: number }>;
+  initialScores: Record<string, { home: number; away: number; pens?: "home" | "away" }>;
 }
 
 // Knockout match definitions for admin display
@@ -95,6 +95,11 @@ export default function AdminClient({ matches, phases, initialScores }: AdminCli
     for (const id of Object.keys(initialScores)) s[id] = true;
     return s;
   });
+  const [pensWinners, setPensWinners] = useState<Record<string, "home" | "away" | null>>(() => {
+    const p: Record<string, "home" | "away" | null> = {};
+    for (const [id, s] of Object.entries(initialScores)) p[id] = s.pens ?? null;
+    return p;
+  });
   const [, startTransition] = useTransition();
 
   const isGroupPhase = activePhase.startsWith("group");
@@ -135,10 +140,16 @@ export default function AdminClient({ matches, phases, initialScores }: AdminCli
     }));
   }
 
+  function setPensWinner(matchId: string, winner: "home" | "away" | null) {
+    setSaved(prev => ({ ...prev, [matchId]: false }));
+    setPensWinners(prev => ({ ...prev, [matchId]: winner }));
+  }
+
   function handleSave(matchId: string) {
     const s = scores[matchId];
+    const pens = pensWinners[matchId] ?? undefined;
     startTransition(async () => {
-      await saveScore(matchId, s.home, s.away);
+      await saveScore(matchId, s.home, s.away, pens);
       setSaved(prev => ({ ...prev, [matchId]: true }));
     });
   }
@@ -264,9 +275,11 @@ export default function AdminClient({ matches, phases, initialScores }: AdminCli
                 key={m.id}
                 info={m}
                 score={scores[m.id] ?? { home: 0, away: 0 }}
+                pensWinner={pensWinners[m.id] ?? null}
                 isSaved={!!saved[m.id]}
                 onChangeHome={val => setScore(m.id, "home", val)}
                 onChangeAway={val => setScore(m.id, "away", val)}
+                onPensWinner={winner => setPensWinner(m.id, winner)}
                 onSave={() => handleSave(m.id)}
               />
             ))}
@@ -284,47 +297,83 @@ export default function AdminClient({ matches, phases, initialScores }: AdminCli
 
 // ── Knockout score row ────────────────────────────────────────────────────────
 function KnockoutScoreRow({
-  info, score, isSaved, onChangeHome, onChangeAway, onSave,
+  info, score, pensWinner, isSaved, onChangeHome, onChangeAway, onPensWinner, onSave,
 }: {
   info: KnockoutMatchInfo;
   score: { home: number; away: number };
+  pensWinner: "home" | "away" | null;
   isSaved: boolean;
   onChangeHome: (v: number) => void;
   onChangeAway: (v: number) => void;
+  onPensWinner: (winner: "home" | "away" | null) => void;
   onSave: () => void;
 }) {
+  const tied = score.home === score.away;
+
   return (
     <div
-      className="flex items-center gap-3 px-4 py-3 rounded-xl border"
-      style={{
-        backgroundColor: T.card,
-        borderColor: isSaved ? "rgba(215,255,90,0.3)" : T.border,
-      }}
+      className="rounded-xl border overflow-hidden"
+      style={{ backgroundColor: T.card, borderColor: isSaved ? "rgba(215,255,90,0.3)" : T.border }}
     >
-      <span className="flex-1 text-xs font-bold truncate text-right" style={{ color: T.textSec }}>
-        {info.homeLabel}
-      </span>
-      <div className="flex items-center gap-1.5 flex-shrink-0">
-        <ScoreInput value={score.home} onChange={onChangeHome} />
-        <span className="text-xs font-black" style={{ color: T.textMuted }}>—</span>
-        <ScoreInput value={score.away} onChange={onChangeAway} />
+      {/* Score row */}
+      <div className="flex items-center gap-3 px-4 py-3">
+        <span className="flex-1 text-xs font-bold truncate text-right" style={{ color: T.textSec }}>
+          {info.homeLabel}
+        </span>
+        <div className="flex items-center gap-1.5 flex-shrink-0">
+          <ScoreInput value={score.home} onChange={onChangeHome} />
+          <span className="text-xs font-black" style={{ color: T.textMuted }}>—</span>
+          <ScoreInput value={score.away} onChange={onChangeAway} />
+        </div>
+        <span className="flex-1 text-xs font-bold truncate" style={{ color: T.textSec }}>
+          {info.awayLabel}
+        </span>
+        <button
+          onClick={onSave}
+          disabled={isSaved}
+          className="flex-shrink-0 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer disabled:cursor-default"
+          style={{
+            backgroundColor: isSaved ? "transparent" : T.accent,
+            color: isSaved ? T.accent : T.accentTx,
+            border: `1px solid ${isSaved ? "rgba(215,255,90,0.4)" : T.accent}`,
+            opacity: isSaved ? 0.7 : 1,
+          }}
+        >
+          {isSaved ? "✓" : "Set"}
+        </button>
       </div>
-      <span className="flex-1 text-xs font-bold truncate" style={{ color: T.textSec }}>
-        {info.awayLabel}
-      </span>
-      <button
-        onClick={onSave}
-        disabled={isSaved}
-        className="flex-shrink-0 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer disabled:cursor-default"
-        style={{
-          backgroundColor: isSaved ? "transparent" : T.accent,
-          color: isSaved ? T.accent : T.accentTx,
-          border: `1px solid ${isSaved ? "rgba(215,255,90,0.4)" : T.accent}`,
-          opacity: isSaved ? 0.7 : 1,
-        }}
-      >
-        {isSaved ? "✓" : "Set"}
-      </button>
+
+      {/* Penalty winner — only shown when tied */}
+      {tied && (
+        <div
+          className="flex items-center gap-3 px-4 py-2.5 border-t"
+          style={{ borderColor: T.border }}
+        >
+          <span className="text-[10px] font-black uppercase tracking-widest flex-shrink-0" style={{ color: T.textMuted }}>
+            Pens
+          </span>
+          <div className="flex gap-2 flex-1">
+            {(["home", "away"] as const).map(side => {
+              const label = side === "home" ? info.homeLabel : info.awayLabel;
+              const active = pensWinner === side;
+              return (
+                <button
+                  key={side}
+                  onClick={() => onPensWinner(active ? null : side)}
+                  className="flex-1 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest cursor-pointer transition-all"
+                  style={{
+                    backgroundColor: active ? T.accent : "transparent",
+                    color: active ? T.accentTx : T.textSec,
+                    border: `1px solid ${active ? T.accent : T.border}`,
+                  }}
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
