@@ -164,6 +164,11 @@ export default function LeagueClient({
   const dayPredicted = visibleMatches.filter((m) => predictions[m.id]).length;
   const phasePredicted = phaseMatches.filter((m) => predictions[m.id]).length;
 
+  const nextDay = useMemo(() => {
+    const idx = days.findIndex(d => d.date === activeDay);
+    return idx >= 0 && idx < days.length - 1 ? days[idx + 1] : null;
+  }, [days, activeDay]);
+
   const dayFirstKickoff = useMemo(() => {
     if (visibleMatches.length === 0) return null;
     return visibleMatches.reduce<Date | null>((earliest, m) => {
@@ -388,6 +393,29 @@ export default function LeagueClient({
                   </div>
                 ))}
               </div>
+            )}
+
+            {/* Next-day prompt — appears when all picks for the day are done */}
+            {isGroupPhase && nextDay && visibleMatches.length > 0 && dayPredicted === visibleMatches.length && (
+              <button
+                onClick={() => setActiveDay(nextDay.date)}
+                className="mt-6 w-full flex items-center justify-between px-5 py-4 rounded-2xl cursor-pointer transition-all hover:opacity-80 active:scale-[0.99]"
+                style={{
+                  backgroundColor: mono ? "rgba(26,18,8,0.06)" : "rgba(215,255,90,0.07)",
+                  border: `1px solid ${mono ? "rgba(26,18,8,0.15)" : "rgba(215,255,90,0.2)"}`,
+                }}
+              >
+                <div className="flex items-center gap-3">
+                  <span className="text-base" style={{ color: t.accent }}>✓</span>
+                  <div className="text-left">
+                    <p className="text-sm font-black" style={{ color: t.textPrimary }}>All done for today</p>
+                    <p className="text-xs" style={{ color: t.textSec }}>
+                      Next up: {nextDay.date} · {nextDay.matchCount} {nextDay.matchCount === 1 ? "match" : "matches"}
+                    </p>
+                  </div>
+                </div>
+                <span className="text-sm font-bold" style={{ color: t.accent }}>→</span>
+              </button>
             )}
           </div>
 
