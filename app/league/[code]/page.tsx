@@ -13,8 +13,14 @@ export default async function LeaguePage({
 }) {
   const { code } = await params;
 
-  // ── Preview mode — no auth required ─────────────────────────────────────────
-  if (code === PREVIEW_CODE) {
+  // ── Auth check first — authenticated users always get real data ─────────────
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  // ── Preview mode — unauthenticated visitors only ──────────────────────────────
+  if (!user && code === PREVIEW_CODE) {
     const actualScores = await getActualScores();
     return (
       <LeagueClient
@@ -29,12 +35,6 @@ export default async function LeaguePage({
       />
     );
   }
-
-  // ── Authenticated routes ─────────────────────────────────────────────────────
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
 
   if (!user) {
     redirect(`/auth/login?next=/league/${code}`);
@@ -99,7 +99,9 @@ export default async function LeaguePage({
       avatar: p?.avatar ?? "?",
       points: 0,
       correct: 0,
+      exact: 0,
       total: 0,
+      picked: 0,
       predictions: preds,
       scorePicks: picks,
     };

@@ -38,7 +38,7 @@ export interface Match {
 
 export interface Member {
   id: string; name: string; avatar: string;
-  points: number; correct: number; total: number;
+  points: number; correct: number; exact: number; total: number; picked: number;
   predictions: Record<string, Outcome>;
   scorePicks?: Record<string, { home: number; away: number }>;
 }
@@ -205,20 +205,20 @@ export const MOCK_LEAGUE: League = {
   code: "BANDA26",
   members: [
     // Ignacio (u1): predictions come from live state in the page — seeded there
-    { id:"u1", name:"Ignacio",   avatar:"IG", points:0, correct:0, total:0, predictions:{} },
+    { id:"u1", name:"Ignacio",   avatar:"IG", points:0, correct:0, exact:0, total:0, picked:0, predictions:{} },
     // Rodrigo: a1-1 home ✓, a1-2 home ✗, j1-1 home ✓ exact, i1-1 home ✓
-    { id:"u2", name:"Rodrigo",   avatar:"RO", points:0, correct:0, total:0,
+    { id:"u2", name:"Rodrigo",   avatar:"RO", points:0, correct:0, exact:0, total:0, picked:0,
       predictions:{ "a1-1":"home", "a1-2":"home", "j1-1":"home", "i1-1":"home" },
       scorePicks:{ "j1-1":{ home:3, away:0 } } },
     // Camila: a1-1 draw ✗, a1-2 draw ✓, j1-1 home ✓, i1-1 away ✗
-    { id:"u3", name:"Camila",    avatar:"CA", points:0, correct:0, total:0,
+    { id:"u3", name:"Camila",    avatar:"CA", points:0, correct:0, exact:0, total:0, picked:0,
       predictions:{ "a1-1":"draw", "a1-2":"draw", "j1-1":"home", "i1-1":"away" } },
     // Matías: a1-1 away ✗, a1-2 draw ✓ exact, j1-1 home ✓, i1-1 home ✓ exact
-    { id:"u4", name:"Matías",    avatar:"MA", points:0, correct:0, total:0,
+    { id:"u4", name:"Matías",    avatar:"MA", points:0, correct:0, exact:0, total:0, picked:0,
       predictions:{ "a1-1":"away", "a1-2":"draw", "j1-1":"home", "i1-1":"home" },
       scorePicks:{ "a1-2":{ home:1, away:1 }, "i1-1":{ home:2, away:1 } } },
     // Valentina: a1-1 home ✓, a1-2 away ✗, j1-1 draw ✗, i1-1 home ✓
-    { id:"u5", name:"Valentina", avatar:"VA", points:0, correct:0, total:0,
+    { id:"u5", name:"Valentina", avatar:"VA", points:0, correct:0, exact:0, total:0, picked:0,
       predictions:{ "a1-1":"home", "a1-2":"away", "j1-1":"draw", "i1-1":"home" } },
   ],
 };

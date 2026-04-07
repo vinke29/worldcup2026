@@ -53,17 +53,22 @@ export function computeStandings(
     const predictions = isCurrentUser ? livePredictions : member.predictions;
     const scorePicks   = isCurrentUser ? liveScorePicks  : (member.scorePicks ?? {});
 
-    let points = 0, correct = 0, total = 0;
+    let points = 0, correct = 0, exact = 0, total = 0;
+    const picked = Object.keys(predictions).length;
 
     for (const match of finished) {
       const pred = predictions[match.id];
       if (!pred) continue;
       total++;
-      const pts = pointsForPick(match, pred, scorePicks[match.id]);
-      if (pts > 0) correct++;
+      const sp = scorePicks[match.id];
+      const pts = pointsForPick(match, pred, sp);
+      if (pts > 0) {
+        correct++;
+        if (sp && sp.home === match.homeScore && sp.away === match.awayScore) exact++;
+      }
       points += pts;
     }
 
-    return { ...member, points, correct, total };
+    return { ...member, points, correct, exact, total, picked };
   });
 }

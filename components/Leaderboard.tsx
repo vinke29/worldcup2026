@@ -4,23 +4,109 @@ interface LeaderboardProps {
   members: Member[];
   currentUserId?: string;
   mono?: boolean;
+  variant?: "compact" | "full";
 }
 
-export default function Leaderboard({ members, currentUserId, mono = false }: LeaderboardProps) {
+export default function Leaderboard({ members, currentUserId, mono = false, variant = "compact" }: LeaderboardProps) {
   const sorted = [...members].sort((a, b) => b.points - a.points);
 
+  const t = mono
+    ? { card: "#F7F4EE", border: "#DDD9D0", borderInner: "#E8E4DC", text: "#1A1208", textSec: "#6B5E4E", textMuted: "#A09080", accent: "#1A1208", accentBg: "rgba(26,18,8,0.05)", youBg: "rgba(26,18,8,0.05)", avatar: "#E0DAD0", avatarText: "#6B5E4E" }
+    : { card: "#1A2E1F", border: "#2C4832", borderInner: "#1F3A24", text: "#F0EDE6", textSec: "#7A9B84", textMuted: "#4A6B50", accent: "#D7FF5A", accentBg: "rgba(215,255,90,0.05)", youBg: "rgba(215,255,90,0.05)", avatar: "#1F3A24", avatarText: "#7A9B84" };
+
+  if (variant === "full") {
+    return (
+      <div className="rounded-2xl overflow-hidden border" style={{ backgroundColor: t.card, borderColor: t.border }}>
+        {/* Header */}
+        <div className="flex items-center gap-3 px-5 py-4" style={{ borderBottom: `1px solid ${t.borderInner}` }}>
+          <span className="flex-1 text-[10px] font-black uppercase tracking-widest" style={{ color: t.textMuted }}>Player</span>
+          <span className="w-14 text-right text-[10px] font-black uppercase tracking-widest" style={{ color: t.textMuted }}>Pts</span>
+          <span className="w-16 text-right text-[10px] font-black uppercase tracking-widest hidden sm:block" style={{ color: t.textMuted }}>Correct</span>
+          <span className="w-14 text-right text-[10px] font-black uppercase tracking-widest hidden sm:block" style={{ color: t.textMuted }}>Exact</span>
+          <span className="w-16 text-right text-[10px] font-black uppercase tracking-widest hidden sm:block" style={{ color: t.textMuted }}>Picks</span>
+        </div>
+
+        {sorted.map((member, i) => {
+          const isYou = member.id === currentUserId;
+          const medal = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : null;
+
+          return (
+            <div
+              key={member.id}
+              className="flex items-center gap-3 px-5 py-3.5"
+              style={{
+                borderBottom: i < sorted.length - 1 ? `1px solid ${t.borderInner}` : "none",
+                backgroundColor: isYou ? t.youBg : "transparent",
+              }}
+            >
+              {/* Rank */}
+              <div className="w-5 flex-shrink-0 text-center">
+                {medal
+                  ? <span className="text-base">{medal}</span>
+                  : <span className="text-xs font-bold" style={{ color: t.textMuted }}>{i + 1}</span>}
+              </div>
+
+              {/* Avatar */}
+              <div
+                className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-black flex-shrink-0"
+                style={{
+                  backgroundColor: isYou ? t.accent : t.avatar,
+                  color: isYou ? (mono ? "#F7F4EE" : "#0B1E0D") : t.avatarText,
+                }}
+              >
+                {member.avatar}
+              </div>
+
+              {/* Name */}
+              <div className="flex-1 min-w-0">
+                <span className="text-sm font-semibold truncate block" style={{ color: isYou ? t.accent : t.text }}>
+                  {member.name}
+                  {isYou && (
+                    <span className="ml-1.5 text-[9px] font-black uppercase tracking-wider" style={{ color: mono ? t.textSec : t.accent }}>you</span>
+                  )}
+                </span>
+              </div>
+
+              {/* Pts */}
+              <div className="w-14 text-right">
+                <span className="text-base font-black tabular-nums" style={{ color: isYou ? t.accent : t.text }}>{member.points}</span>
+                <span className="text-[10px] ml-0.5" style={{ color: t.textMuted }}>pts</span>
+              </div>
+
+              {/* Correct */}
+              <div className="w-16 text-right hidden sm:block">
+                <span className="text-sm font-bold tabular-nums" style={{ color: member.correct > 0 ? (mono ? "#1A1208" : "#4ADE80") : t.textMuted }}>
+                  {member.correct}
+                </span>
+                {member.total > 0 && (
+                  <span className="text-[10px]" style={{ color: t.textMuted }}>/{member.total}</span>
+                )}
+              </div>
+
+              {/* Exact */}
+              <div className="w-14 text-right hidden sm:block">
+                <span className="text-sm font-bold tabular-nums" style={{ color: member.exact > 0 ? (mono ? "#1A1208" : "#D7FF5A") : t.textMuted }}>
+                  {member.exact}
+                </span>
+              </div>
+
+              {/* Picks made */}
+              <div className="w-16 text-right hidden sm:block">
+                <span className="text-sm tabular-nums" style={{ color: t.textSec }}>{member.picked}</span>
+                <span className="text-[10px]" style={{ color: t.textMuted }}>/104</span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+
+  // ── Compact variant (original sidebar style) ──────────────────────────────────
   return (
-    <div
-      className="rounded-2xl overflow-hidden border"
-      style={{
-        backgroundColor: mono ? "#F7F4EE" : "#1A2E1F",
-        borderColor: mono ? "#DDD9D0" : "#2C4832",
-      }}
-    >
-      <div className="px-4 py-3" style={{ borderBottom: `1px solid ${mono ? "#E5E1D8" : "#243D29"}` }}>
-        <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: mono ? "#8A7A6A" : "#7A9B84" }}>
-          Standings
-        </span>
+    <div className="rounded-2xl overflow-hidden border" style={{ backgroundColor: t.card, borderColor: t.border }}>
+      <div className="px-4 py-3" style={{ borderBottom: `1px solid ${t.borderInner}` }}>
+        <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: t.textSec }}>Standings</span>
       </div>
 
       <div>
@@ -33,55 +119,33 @@ export default function Leaderboard({ members, currentUserId, mono = false }: Le
               key={member.id}
               className="flex items-center gap-3 px-4 py-3"
               style={{
-                borderBottom: i < sorted.length - 1 ? `1px solid ${mono ? "#E8E4DC" : "#1F3A24"}` : "none",
-                backgroundColor: isYou
-                  ? mono ? "rgba(26,18,8,0.05)" : "rgba(215,255,90,0.05)"
-                  : "transparent",
+                borderBottom: i < sorted.length - 1 ? `1px solid ${t.borderInner}` : "none",
+                backgroundColor: isYou ? t.youBg : "transparent",
               }}
             >
               <div className="w-5 flex-shrink-0 text-center">
-                {medal ? (
-                  <span className="text-sm">{medal}</span>
-                ) : (
-                  <span className="text-xs font-bold" style={{ color: mono ? "#A09080" : "#4A6B50" }}>{i + 1}</span>
-                )}
+                {medal
+                  ? <span className="text-sm">{medal}</span>
+                  : <span className="text-xs font-bold" style={{ color: t.textMuted }}>{i + 1}</span>}
               </div>
 
               <div
                 className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-black flex-shrink-0"
-                style={{
-                  backgroundColor: isYou ? (mono ? "#1A1208" : "#D7FF5A") : (mono ? "#E0DAD0" : "#1F3A24"),
-                  color: isYou ? (mono ? "#F7F4EE" : "#0B1E0D") : (mono ? "#6B5E4E" : "#7A9B84"),
-                }}
+                style={{ backgroundColor: isYou ? t.accent : t.avatar, color: isYou ? (mono ? "#F7F4EE" : "#0B1E0D") : t.avatarText }}
               >
                 {member.avatar}
               </div>
 
               <div className="flex-1 min-w-0">
-                <span
-                  className="text-sm font-semibold truncate block"
-                  style={{ color: isYou ? (mono ? "#1A1208" : "#D7FF5A") : (mono ? "#1A1208" : "#F0EDE6") }}
-                >
+                <span className="text-sm font-semibold truncate block" style={{ color: isYou ? t.accent : t.text }}>
                   {member.name}
-                  {isYou && (
-                    <span
-                      className="ml-1.5 text-[9px] font-black uppercase tracking-wider"
-                      style={{ color: mono ? "#8A7A6A" : "#D7FF5A" }}
-                    >
-                      you
-                    </span>
-                  )}
+                  {isYou && <span className="ml-1.5 text-[9px] font-black uppercase tracking-wider" style={{ color: t.accent }}>you</span>}
                 </span>
               </div>
 
               <div className="flex items-baseline gap-0.5">
-                <span
-                  className="text-sm font-black tabular-nums"
-                  style={{ color: mono ? "#1A1208" : (isYou ? "#D7FF5A" : "#F0EDE6") }}
-                >
-                  {member.points}
-                </span>
-                <span className="text-[10px]" style={{ color: mono ? "#8A7A6A" : "#7A9B84" }}>pts</span>
+                <span className="text-sm font-black tabular-nums" style={{ color: isYou ? t.accent : t.text }}>{member.points}</span>
+                <span className="text-[10px]" style={{ color: t.textMuted }}>pts</span>
               </div>
             </div>
           );

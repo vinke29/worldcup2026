@@ -399,55 +399,59 @@ export default function LeagueClient({
 
           </div>
 
-          {/* Sidebar — always visible on desktop, tab-driven on mobile */}
-          <div className={`sm:w-64 w-full flex-shrink-0 sm:sticky sm:top-36 space-y-3 ${mobileView !== "standings" ? "hidden" : ""}`}>
+        </div>
+
+        {/* Standings view — full width */}
+        {mobileView === "standings" && (
+          <div className="space-y-4">
             <Leaderboard
               members={computeStandings(matches, members, currentUserId, predictions, scorePredictions)}
               currentUserId={currentUserId}
               mono={mono}
+              variant="full"
             />
 
-            <div className="rounded-2xl border p-4 space-y-3" style={{ backgroundColor: t.cardBg, borderColor: t.border }}>
-              <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: t.textSec }}>Invite friends</p>
-              <div className="rounded-xl px-4 py-3 text-center" style={{ backgroundColor: t.cardBgDeep }}>
-                <span className="font-mono font-black tracking-[0.2em] text-lg" style={{ color: t.accent }}>
-                  {code}
-                </span>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="rounded-2xl border p-4 space-y-3" style={{ backgroundColor: t.cardBg, borderColor: t.border }}>
+                <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: t.textSec }}>Invite friends</p>
+                <div className="rounded-xl px-4 py-3 text-center" style={{ backgroundColor: t.cardBgDeep }}>
+                  <span className="font-mono font-black tracking-[0.2em] text-lg" style={{ color: t.accent }}>{code}</span>
+                </div>
+                <button
+                  onClick={() => {
+                    const url = `${window.location.origin}/auth/setup?intent=join&code=${code}`;
+                    if (navigator.share) {
+                      navigator.share({ title: "Join my Quiniela", text: `Join my World Cup 2026 prediction league! Use code ${code} or tap the link.`, url });
+                    } else {
+                      navigator.clipboard.writeText(url);
+                    }
+                  }}
+                  className="w-full py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all hover:opacity-80 cursor-pointer"
+                  style={{ backgroundColor: t.accent, color: t.accentText, border: "none" }}
+                >
+                  Share invite link
+                </button>
               </div>
-              <button
-                onClick={() => {
-                  const url = `${window.location.origin}/auth/setup?intent=join&code=${code}`;
-                  if (navigator.share) {
-                    navigator.share({ title: "Join my Quiniela", text: `Join my World Cup 2026 prediction league! Use code ${code} or tap the link.`, url });
-                  } else {
-                    navigator.clipboard.writeText(url);
-                  }
-                }}
-                className="w-full py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all hover:opacity-80 cursor-pointer"
-                style={{ backgroundColor: t.accent, color: t.accentText, border: "none" }}
-              >
-                Share invite link
-              </button>
-            </div>
 
-            <div className="rounded-2xl border p-4" style={{ backgroundColor: t.cardBg, borderColor: t.border }}>
-              <p className="text-[10px] font-bold uppercase tracking-widest mb-3" style={{ color: t.textSec }}>Points</p>
-              <div className="space-y-2">
-                {[
-                  { label: "Correct result · Group", pts: "1 pt" },
-                  { label: "Exact score · Group", pts: "3 pts" },
-                  { label: "Correct result · R32–Final", pts: "2–10 pts" },
-                  { label: "Exact score · R32–Final", pts: "5–15 pts" },
-                ].map(({ label, pts }) => (
-                  <div key={label} className="flex justify-between items-center gap-2">
-                    <span className="text-xs" style={{ color: t.textBody }}>{label}</span>
-                    <span className="text-xs font-black whitespace-nowrap" style={{ color: t.accent }}>{pts}</span>
-                  </div>
-                ))}
+              <div className="rounded-2xl border p-4" style={{ backgroundColor: t.cardBg, borderColor: t.border }}>
+                <p className="text-[10px] font-bold uppercase tracking-widest mb-3" style={{ color: t.textSec }}>Points guide</p>
+                <div className="space-y-2">
+                  {[
+                    { label: "Correct result · Group", pts: "1 pt" },
+                    { label: "Exact score · Group", pts: "3 pts" },
+                    { label: "Correct result · R32–Final", pts: "2–10 pts" },
+                    { label: "Exact score · R32–Final", pts: "5–15 pts" },
+                  ].map(({ label, pts }) => (
+                    <div key={label} className="flex justify-between items-center gap-2">
+                      <span className="text-xs" style={{ color: t.textBody }}>{label}</span>
+                      <span className="text-xs font-black whitespace-nowrap" style={{ color: t.accent }}>{pts}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Groups view */}
         {mobileView === "groups" && (
