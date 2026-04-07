@@ -169,8 +169,10 @@ export default function QualifiersView({ matches, scorePicks, actualScores, mono
   const [dismissedRounds, setDismissedRounds] = useState<Set<MobileRound>>(new Set());
   const t = useTheme(mono);
 
-  // In entire_tournament mode with onScorePick, show score pickers and use wider pods
-  const showPickers = mode === "entire_tournament" && !!onScorePick;
+  // In entire_tournament mode, show mobile list (read-only or interactive)
+  const showMobileList = mode === "entire_tournament";
+  // Only show +/- pickers when an onScorePick handler is provided
+  const showPickers = showMobileList && !!onScorePick;
 
   // Dynamic layout based on whether pickers are shown
   const POD_W    = showPickers ? 168 : 132;
@@ -397,8 +399,8 @@ export default function QualifiersView({ matches, scorePicks, actualScores, mono
         </div>
       )}
 
-      {/* Mobile picker — vertical list, visible only on small screens */}
-      {showPickers && (
+      {/* Mobile list — vertical, visible only on small screens in entire_tournament mode */}
+      {showMobileList && (
         <div className="block md:hidden">
           {/* Round tabs */}
           <div className="flex gap-2 mb-4 overflow-x-auto pb-1">
@@ -429,7 +431,7 @@ export default function QualifiersView({ matches, scorePicks, actualScores, mono
                       <MobileMatchCard
                         id={m.id} homeTeam={m.homeTeam} awayTeam={m.awayTeam}
                         homeLabel={m.homeLabel} awayLabel={m.awayLabel}
-                        scorePicks={scorePicks} onScorePick={onScorePick!} t={t}
+                        scorePicks={scorePicks} onScorePick={onScorePick} t={t}
                       />
                       {/* Connector between the two matches in a pair */}
                       {mi === 0 && group.matches.length > 1 && (
@@ -460,8 +462,8 @@ export default function QualifiersView({ matches, scorePicks, actualScores, mono
         </div>
       )}
 
-      {/* Round labels — desktop only when pickers active */}
-      <div className={showPickers ? "hidden md:block" : ""}>
+      {/* Round labels + bracket — desktop only in entire_tournament mode */}
+      <div className={showMobileList ? "hidden md:block" : ""}>
       <div style={{ position: "relative", height: 20, marginBottom: 6, width: totalWidth }}>
         {(["R32","R16","QF","SF"] as const).map((lbl, r) => (
           <span key={lbl} style={{
@@ -660,7 +662,7 @@ function MobileMatchCard({
   homeLabel: string;
   awayLabel: string;
   scorePicks: Record<string, ScoreEntry>;
-  onScorePick: (matchId: string, home: number, away: number, pens?: "home" | "away") => void;
+  onScorePick?: (matchId: string, home: number, away: number, pens?: "home" | "away") => void;
   t: Record<string, string>;
 }) {
   const homeScore = scorePicks[id]?.home ?? 0;
@@ -678,9 +680,11 @@ function MobileMatchCard({
     return () => clearTimeout(timer);
   }, [homeScore, awayScore, pens]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const interactive = !!onScorePick;
+
   function TeamRow_({ team, label, score, onMinus, onPlus }: {
     team: TeamRow | null; label: string;
-    score: number; onMinus: () => void; onPlus: () => void;
+    score: number; onMinus?: () => void; onPlus?: () => void;
   }) {
     return (
       <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "13px 14px" }}>
@@ -695,17 +699,23 @@ function MobileMatchCard({
         ) : (
           <span style={{ flex: 1, fontSize: 14, color: t.textMuted, fontStyle: "italic" }}>TBD</span>
         )}
-        <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
-          <button onClick={onMinus}
-            style={{ width: 36, height: 36, borderRadius: 8, border: `1px solid ${t.border}`, background: "transparent", color: t.text, fontSize: 20, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            −
-          </button>
-          <span style={{ fontSize: 20, fontWeight: 900, color: t.text, minWidth: 22, textAlign: "center" }}>{score}</span>
-          <button onClick={onPlus}
-            style={{ width: 36, height: 36, borderRadius: 8, border: "none", background: t.accent, color: t.accentText, fontSize: 20, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            +
-          </button>
-        </div>
+        {interactive ? (
+          <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
+            <button onClick={onMinus}
+              style={{ width: 36, height: 36, borderRadius: 8, border: `1px solid ${t.border}`, background: "transparent", color: t.text, fontSize: 20, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              −
+            </button>
+            <span style={{ fontSize: 20, fontWeight: 900, color: t.text, minWidth: 22, textAlign: "center" }}>{score}</span>
+            <button onClick={onPlus}
+              style={{ width: 36, height: 36, borderRadius: 8, border: "none", background: t.accent, color: t.accentText, fontSize: 20, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              +
+            </button>
+          </div>
+        ) : (
+          <span style={{ fontSize: 22, fontWeight: 900, color: hasPick ? t.text : t.textMuted, minWidth: 22, textAlign: "center", flexShrink: 0 }}>
+            {hasPick ? score : "—"}
+          </span>
+        )}
       </div>
     );
   }
@@ -718,36 +728,34 @@ function MobileMatchCard({
           <span style={{ fontSize: 11, fontWeight: 700, color: t.textSec }}>{meta.date}</span>
           <span style={{ fontSize: 11, color: t.border }}>·</span>
           <span style={{ fontSize: 10, color: t.textMuted, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{meta.venue}</span>
-          <span
-            className="transition-all duration-300"
-            style={{
-              fontSize: 10, fontWeight: 700, flexShrink: 0,
-              color: "#4ADE80",
-              opacity: hasPick ? (saved ? 1 : 0.4) : 0,
-            }}
-          >
-            ✓ Saved
-          </span>
+          {interactive && (
+            <span
+              className="transition-all duration-300"
+              style={{ fontSize: 10, fontWeight: 700, flexShrink: 0, color: "#4ADE80", opacity: hasPick ? (saved ? 1 : 0.4) : 0 }}
+            >
+              ✓ Saved
+            </span>
+          )}
         </div>
       )}
 
       <TeamRow_
         team={homeTeam} label={homeLabel} score={homeScore}
-        onMinus={() => onScorePick(id, Math.max(0, homeScore - 1), awayScore)}
-        onPlus={() => onScorePick(id, homeScore + 1, awayScore)}
+        onMinus={() => onScorePick!(id, Math.max(0, homeScore - 1), awayScore)}
+        onPlus={() => onScorePick!(id, homeScore + 1, awayScore)}
       />
       <div style={{ height: 1, backgroundColor: t.border }} />
       <TeamRow_
         team={awayTeam} label={awayLabel} score={awayScore}
-        onMinus={() => onScorePick(id, homeScore, Math.max(0, awayScore - 1))}
-        onPlus={() => onScorePick(id, homeScore, awayScore + 1)}
+        onMinus={() => onScorePick!(id, homeScore, Math.max(0, awayScore - 1))}
+        onPlus={() => onScorePick!(id, homeScore, awayScore + 1)}
       />
 
       {/* Penalty winner — shown when scores are tied */}
-      {tied && (homeTeam || awayTeam) && (
+      {tied && (homeTeam || awayTeam) && (hasPick || interactive) && (
         <div style={{ borderTop: `1px solid ${t.border}`, padding: "10px 14px" }}>
           <p style={{ fontSize: 10, color: t.textMuted, marginBottom: 8, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em" }}>
-            Tied — who wins on penalties?
+            {interactive ? "Tied — who wins on penalties?" : pens ? "Won on penalties" : "Tied — no pens pick"}
           </p>
           <div style={{ display: "flex", gap: 8 }}>
             {[
@@ -755,17 +763,20 @@ function MobileMatchCard({
               { side: "away" as const, team: awayTeam, label: awayLabel || awayTeam?.team || "Away" },
             ].map(({ side, team, label }) => {
               const selected = pens === side;
+              const dimmed = !interactive && !selected;
               return (
                 <button
                   key={side}
-                  onClick={() => onScorePick(id, homeScore, awayScore, selected ? undefined : side)}
+                  onClick={interactive ? () => onScorePick!(id, homeScore, awayScore, selected ? undefined : side) : undefined}
                   style={{
                     flex: 1, padding: "8px 10px", borderRadius: 8,
                     border: `1px solid ${selected ? t.accent : t.border}`,
                     background: selected ? t.accent : "transparent",
                     color: selected ? t.accentText : t.textSec,
-                    fontSize: 12, fontWeight: 700, cursor: "pointer",
+                    fontSize: 12, fontWeight: 700,
+                    cursor: interactive ? "pointer" : "default",
                     display: "flex", alignItems: "center", gap: 6,
+                    opacity: dimmed ? 0.35 : 1,
                   }}
                 >
                   {team && <FlagImage emoji={team.flag} size={14} team={team.team} />}

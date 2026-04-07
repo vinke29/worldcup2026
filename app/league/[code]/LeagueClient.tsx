@@ -501,7 +501,7 @@ export default function LeagueClient({
         {mobileView === "standings" && (
           <div className="space-y-4">
             <Leaderboard
-              members={computeStandings(matches, members, currentUserId, predictions, scorePredictions)}
+              members={computeStandings(matches, members, currentUserId, predictions, scorePredictions, actualScores)}
               currentUserId={currentUserId}
               mono={mono}
               variant="full"

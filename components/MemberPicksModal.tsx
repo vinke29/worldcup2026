@@ -2,13 +2,14 @@
 
 import { useState, useEffect } from "react";
 import type { Member, Match, LeagueMode } from "@/lib/mock-data";
+import type { ScoreEntry } from "@/lib/bracket";
 import GroupsView from "@/components/GroupsView";
 import QualifiersView from "@/components/QualifiersView";
 
 interface MemberPicksModalProps {
   member: Member;
   matches: Match[];
-  actualScores: Record<string, { home: number; away: number }>;
+  actualScores: Record<string, ScoreEntry>;
   mono: boolean;
   mode: LeagueMode;
   onClose: () => void;

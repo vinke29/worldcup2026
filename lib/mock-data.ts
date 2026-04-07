@@ -42,7 +42,7 @@ export interface Member {
   id: string; name: string; avatar: string;
   points: number; correct: number; exact: number; total: number; picked: number;
   predictions: Record<string, Outcome>;
-  scorePicks?: Record<string, { home: number; away: number }>;
+  scorePicks?: Record<string, import("./bracket").ScoreEntry>;
 }
 
 export type LeagueMode = "phase_by_phase" | "entire_tournament";
