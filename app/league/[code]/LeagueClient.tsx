@@ -194,13 +194,7 @@ export default function LeagueClient({
     }
   }
 
-  function handleOnboardingComplete(matchId?: string, outcome?: Outcome, scoreHome?: number, scoreAway?: number) {
-    if (matchId && outcome) {
-      handlePredict(matchId, outcome);
-      if (scoreHome !== undefined && scoreAway !== undefined) {
-        handleScorePick(matchId, scoreHome, scoreAway);
-      }
-    }
+  function handleOnboardingComplete() {
     setShowOnboarding(false);
     window.scrollTo({ top: 0, behavior: "instant" });
   }
@@ -231,15 +225,11 @@ export default function LeagueClient({
     progressBg:   mono ? "#DDD9D0" : "#1F3A24",
   };
 
-  const firstOpenMatch = matches.find((m) => m.phase === "group-md1");
-
   return (
     <div className="min-h-screen" style={{ backgroundColor: t.pageBg }}>
-      {showOnboarding && firstOpenMatch && (
+      {showOnboarding && (
         <OnboardingModal
           leagueName={leagueName}
-          firstMatch={firstOpenMatch}
-          mono={mono}
           currentUserId={currentUserId}
           onComplete={handleOnboardingComplete}
         />
