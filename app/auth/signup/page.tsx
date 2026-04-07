@@ -15,9 +15,11 @@ function SignupForm() {
   const intent = searchParams.get("intent");
   const code = searchParams.get("code");
   const leagueName = searchParams.get("leagueName");
+  const mode = searchParams.get("mode");
   if (intent) setupParams.set("intent", intent);
   if (code) setupParams.set("code", code);
   if (leagueName) setupParams.set("leagueName", leagueName);
+  if (mode) setupParams.set("mode", mode);
   const setupQuery = setupParams.toString();
 
   return (

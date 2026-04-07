@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import type { Match } from "@/lib/mock-data";
+import type { Match, LeagueMode } from "@/lib/mock-data";
 import { computeGroupTables, rankThirdPlaceTeams, type TeamRow } from "@/lib/group-standings";
 import { resolveBracketTeams, TOP_R32_IDS, BOT_R32_IDS } from "@/lib/bracket";
 import FlagImage from "@/lib/flag-image";
@@ -11,6 +11,7 @@ interface QualifiersViewProps {
   scorePicks: Record<string, { home: number; away: number }>;
   actualScores: Record<string, { home: number; away: number }>;
   mono: boolean;
+  mode?: LeagueMode;
 }
 
 // ── Layout constants ──────────────────────────────────────────────────────────
@@ -161,14 +162,16 @@ function buildFinalConnectors(): string[] {
 }
 
 // ── Main component ────────────────────────────────────────────────────────────
-export default function QualifiersView({ matches, scorePicks, actualScores, mono }: QualifiersViewProps) {
-  const [view, setView] = useState<"predicted" | "actual">("predicted");
+export default function QualifiersView({ matches, scorePicks, actualScores, mono, mode = "phase_by_phase" }: QualifiersViewProps) {
+  const hasActual = useMemo(() => matches.some(m => m.homeScore !== null), [matches]);
+  const defaultView = (mode === "entire_tournament" && hasActual) ? "compare" : "predicted";
+  const [view, setView] = useState<"predicted" | "actual" | "compare">(defaultView);
   const t = useTheme(mono);
 
-  const hasActual       = useMemo(() => matches.some(m => m.homeScore !== null), [matches]);
   const predictedTables = useMemo(() => computeGroupTables(matches, scorePicks, false), [matches, scorePicks]);
   const actualTables    = useMemo(() => computeGroupTables(matches, scorePicks, true), [matches]);
-  const tables = view === "predicted" ? predictedTables : actualTables;
+  // "compare" uses predicted tables as the base bracket (user's picks), overlaid with actual results
+  const tables = view === "actual" ? actualTables : predictedTables;
 
   const thirdMap = useMemo(() => {
     const ranked  = rankThirdPlaceTeams(tables);
@@ -213,6 +216,40 @@ export default function QualifiersView({ matches, scorePicks, actualScores, mono
     [topR32Pairs, botR32Pairs, actualScores]
   );
 
+  // For compare view: resolve actual R32 teams so we can overlay on predicted bracket
+  const actualThirdMap = useMemo(() => {
+    const ranked  = rankThirdPlaceTeams(actualTables);
+    const top8    = ranked.slice(0, 8);
+    const byGroup: Record<string, TeamRow> = {};
+    for (const { group, row } of ranked) byGroup[group] = row;
+    const qualGroups  = top8.map(t => t.group);
+    const groupAssign = assignThirdPlaceGroups(qualGroups);
+    const result: Record<string, TeamRow | null> = {};
+    for (const { matchId } of THIRD_SLOTS) {
+      const g = groupAssign[matchId];
+      result[matchId] = g ? (byGroup[g] ?? null) : null;
+    }
+    return result;
+  }, [actualTables]);
+
+  // Map from match_id → actual teams in that R32 slot
+  const actualR32ByMatchId = useMemo(() => {
+    const map: Record<string, { home: TeamRow | null; away: TeamRow | null }> = {};
+    for (const m of TOP_R32) {
+      map[m.id] = {
+        home: resolveTeam(m.home, actualTables, m.id, actualThirdMap),
+        away: resolveTeam(m.away, actualTables, m.id, actualThirdMap),
+      };
+    }
+    for (const m of BOTTOM_R32) {
+      map[m.id] = {
+        home: resolveTeam(m.home, actualTables, m.id, actualThirdMap),
+        away: resolveTeam(m.away, actualTables, m.id, actualThirdMap),
+      };
+    }
+    return map;
+  }, [actualTables, actualThirdMap]);
+
   // Build all connector paths
   const connectorPaths = [
     ...halfConnectors(0, 0), ...halfConnectors(0, 1), ...halfConnectors(0, 2),
@@ -225,14 +262,17 @@ export default function QualifiersView({ matches, scorePicks, actualScores, mono
   return (
     <div>
       {/* Toggle */}
-      <div className="flex items-center gap-3 mb-5">
-        {(["predicted", "actual"] as const).map((v) => {
-          const active   = view === v;
-          const disabled = v === "actual" && !hasActual;
+      <div className="flex items-center gap-2 mb-5">
+        {([
+          { id: "predicted" as const, label: "My Picks", disabled: false },
+          { id: "actual" as const, label: "Actual", disabled: !hasActual },
+          { id: "compare" as const, label: "Compare", disabled: !hasActual },
+        ]).map(({ id, label, disabled }) => {
+          const active = view === id;
           return (
             <button
-              key={v}
-              onClick={() => !disabled && setView(v)}
+              key={id}
+              onClick={() => !disabled && setView(id)}
               disabled={disabled}
               className="text-xs font-bold uppercase tracking-widest px-3 py-1.5 rounded-lg transition-all"
               style={{
@@ -243,13 +283,13 @@ export default function QualifiersView({ matches, scorePicks, actualScores, mono
                 opacity: disabled ? 0.4 : 1,
               }}
             >
-              {v === "predicted" ? "My Picks" : "Actual"}
+              {label}
             </button>
           );
         })}
         {!hasActual && (
           <span className="text-[11px]" style={{ color: t.textMuted }}>
-            Actual unlocks once results are in
+            Actual &amp; Compare unlock once results are in
           </span>
         )}
       </div>
@@ -304,6 +344,9 @@ export default function QualifiersView({ matches, scorePicks, actualScores, mono
               awayTeam={resolveTeam(m.away, tables, m.id, thirdMap)}
               homeLabel={slotLabel(m.home, m.home.kind === "third" ? thirdGroupAssign[m.id] : undefined)}
               awayLabel={slotLabel(m.away, m.away.kind === "third" ? thirdGroupAssign[m.id] : undefined)}
+              actualHome={view === "compare" ? actualR32ByMatchId[m.id]?.home : undefined}
+              actualAway={view === "compare" ? actualR32ByMatchId[m.id]?.away : undefined}
+              compare={view === "compare"}
               t={t}
             />
           ))}
@@ -342,6 +385,9 @@ export default function QualifiersView({ matches, scorePicks, actualScores, mono
               awayTeam={resolveTeam(m.away, tables, m.id, thirdMap)}
               homeLabel={slotLabel(m.home, m.home.kind === "third" ? thirdGroupAssign[m.id] : undefined)}
               awayLabel={slotLabel(m.away, m.away.kind === "third" ? thirdGroupAssign[m.id] : undefined)}
+              actualHome={view === "compare" ? actualR32ByMatchId[m.id]?.home : undefined}
+              actualAway={view === "compare" ? actualR32ByMatchId[m.id]?.away : undefined}
+              compare={view === "compare"}
               t={t}
             />
           ))}
@@ -382,7 +428,7 @@ export default function QualifiersView({ matches, scorePicks, actualScores, mono
 
       <p className="text-[10px] mt-2" style={{ color: t.textMuted }}>
         3rd-place: best 8 of 12 advance (Pts → GD → GF). Slot assignment follows FIFA Annex C.
-        R16 onwards unlocks as matches are played.
+        {view === "compare" ? " Compare shows your predicted R32 slots vs actual group qualifiers." : " R16 onwards unlocks as matches are played."}
       </p>
     </div>
   );
@@ -395,11 +441,14 @@ interface PodProps {
   awayTeam?: TeamRow | null;
   homeLabel?: string;
   awayLabel?: string;
+  actualHome?: TeamRow | null;
+  actualAway?: TeamRow | null;
+  compare?: boolean;
   isFinal?: boolean;
   t: Record<string, string>;
 }
 
-function MatchPod({ x, y, homeTeam, awayTeam, homeLabel, awayLabel, isFinal, t }: PodProps) {
+function MatchPod({ x, y, homeTeam, awayTeam, homeLabel, awayLabel, actualHome, actualAway, compare, isFinal, t }: PodProps) {
   return (
     <div style={{
       position: "absolute", left: x, top: y, width: POD_W, height: POD_H,
@@ -407,9 +456,9 @@ function MatchPod({ x, y, homeTeam, awayTeam, homeLabel, awayLabel, isFinal, t }
       backgroundColor: isFinal ? t.finalBg : t.card,
       overflow: "hidden", display: "flex", flexDirection: "column",
     }}>
-      <TeamRow team={homeTeam ?? null} label={homeLabel ?? "TBD"} t={t} />
+      <TeamRow team={homeTeam ?? null} label={homeLabel ?? "TBD"} actualTeam={compare ? actualHome : undefined} t={t} />
       <div style={{ height: 1, backgroundColor: t.border, flexShrink: 0 }} />
-      <TeamRow team={awayTeam ?? null} label={awayLabel ?? "TBD"} t={t} />
+      <TeamRow team={awayTeam ?? null} label={awayLabel ?? "TBD"} actualTeam={compare ? actualAway : undefined} t={t} />
     </div>
   );
 }
@@ -436,9 +485,14 @@ function TbdRow({ t }: { t: Record<string, string> }) {
   );
 }
 
-function TeamRow({ team, label, t }: { team: TeamRow | null; label: string; t: Record<string, string> }) {
+function TeamRow({ team, label, actualTeam, t }: { team: TeamRow | null; label: string; actualTeam?: TeamRow | null; t: Record<string, string> }) {
+  const hasActual = actualTeam !== undefined;
+  const correct   = hasActual && team && actualTeam && team.team === actualTeam.team;
+  const wrong     = hasActual && team && actualTeam && team.team !== actualTeam.team;
+
   return (
-    <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 4, paddingInline: 6, minWidth: 0 }}>
+    <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 4, paddingInline: 6, minWidth: 0,
+      backgroundColor: correct ? "rgba(74,222,128,0.06)" : wrong ? "rgba(248,113,113,0.06)" : "transparent" }}>
       <span style={{ fontSize: 8, color: t.textMuted, fontWeight: 900, letterSpacing: "0.05em",
         flexShrink: 0, width: 20, textAlign: "left" }}>
         {label}
@@ -446,11 +500,18 @@ function TeamRow({ team, label, t }: { team: TeamRow | null; label: string; t: R
       {team ? (
         <>
           <FlagImage emoji={team.flag} size={14} team={team.team} />
-          <span style={{ fontSize: 10, fontWeight: 700, color: t.text, flex: 1,
-            overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+          <span style={{ fontSize: 10, fontWeight: 700, color: correct ? "#4ADE80" : wrong ? "#F87171" : t.text, flex: 1,
+            overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+            textDecoration: wrong ? "line-through" : "none", opacity: wrong ? 0.7 : 1 }}>
             {team.team.split(" ").slice(-1)[0]}
           </span>
-          <span style={{ fontSize: 9, color: t.textMuted, flexShrink: 0 }}>{team.pts}p</span>
+          {correct && <span style={{ fontSize: 9, color: "#4ADE80", flexShrink: 0 }}>✓</span>}
+          {wrong && actualTeam && (
+            <span style={{ fontSize: 8, color: "#F87171", flexShrink: 0, maxWidth: 36,
+              overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              {actualTeam.team.split(" ").slice(-1)[0]}
+            </span>
+          )}
         </>
       ) : (
         <span style={{ fontSize: 10, color: t.textMuted, fontStyle: "italic" }}>TBD</span>

@@ -10,7 +10,7 @@ import Leaderboard from "@/components/Leaderboard";
 import OnboardingModal from "@/components/OnboardingModal";
 import GroupsView from "@/components/GroupsView";
 import QualifiersView from "@/components/QualifiersView";
-import { MATCHES, PHASES, type Match, type Outcome, type PhaseId, type Member } from "@/lib/mock-data";
+import { MATCHES, PHASES, type Match, type Outcome, type PhaseId, type Member, type LeagueMode } from "@/lib/mock-data";
 import { computeStandings } from "@/lib/scoring";
 import { computePhaseStatuses } from "@/lib/bracket";
 import { savePrediction, saveScorePick } from "@/app/actions/predictions";
@@ -24,6 +24,7 @@ interface LeagueClientProps {
   initialScorePicks: Record<string, { home: number; away: number }>;
   members: Member[];
   actualScores?: Record<string, { home: number; away: number }>;
+  mode?: LeagueMode;
   isPreview?: boolean;
 }
 
@@ -64,6 +65,7 @@ export default function LeagueClient({
   initialScorePicks,
   members,
   actualScores = {},
+  mode = "phase_by_phase",
   isPreview = false,
 }: LeagueClientProps) {
   const [, startTransition] = useTransition();
@@ -106,9 +108,19 @@ export default function LeagueClient({
 
   // Dynamically compute which phases are open/locked/completed based on actual scores
   const phases = useMemo(() => {
+    if (mode === "entire_tournament") {
+      // All phases always open in entire_tournament mode — picks locked only when matches start
+      const statuses = computePhaseStatuses(MATCHES, actualScores);
+      return PHASES.map(p => {
+        const computed = statuses[p.id as PhaseId] ?? p.status;
+        // Keep "completed" if a round is fully scored; otherwise force "open"
+        const status: "open" | "locked" | "completed" = computed === "completed" ? "completed" : "open";
+        return { ...p, status };
+      });
+    }
     const statuses = computePhaseStatuses(MATCHES, actualScores);
     return PHASES.map(p => ({ ...p, status: statuses[p.id as PhaseId] ?? p.status }));
-  }, [actualScores]);
+  }, [actualScores, mode]);
 
   const currentPhase = phases.find((p) => p.id === activePhase)!;
   const isGroupPhase = activePhase.startsWith("group");
@@ -425,14 +437,28 @@ export default function LeagueClient({
               </div>
 
               <div className="rounded-2xl border p-4" style={{ backgroundColor: t.cardBg, borderColor: t.border }}>
-                <p className="text-[10px] font-bold uppercase tracking-widest mb-3" style={{ color: t.textSec }}>Points guide</p>
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: t.textSec }}>Points guide</p>
+                  <span
+                    className="text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full"
+                    style={{ backgroundColor: mode === "entire_tournament" ? (mono ? "rgba(26,18,8,0.1)" : "rgba(215,255,90,0.12)") : "transparent", color: t.accent, border: `1px solid ${mono ? "rgba(26,18,8,0.2)" : "rgba(215,255,90,0.3)"}` }}
+                  >
+                    {mode === "entire_tournament" ? "Full bracket" : "Phase by phase"}
+                  </span>
+                </div>
                 <div className="space-y-2">
-                  {[
+                  {(mode === "entire_tournament" ? [
+                    { label: "Correct result · Group", pts: "1 pt" },
+                    { label: "Exact score · Group", pts: "3 pts" },
+                    { label: "Team reached round · Knockout", pts: "2 pts" },
+                    { label: "Team won the round · Knockout", pts: "5 pts" },
+                    { label: "Exact score · Knockout", pts: "10 pts" },
+                  ] : [
                     { label: "Correct result · Group", pts: "1 pt" },
                     { label: "Exact score · Group", pts: "3 pts" },
                     { label: "Correct result · R32–Final", pts: "2–10 pts" },
                     { label: "Exact score · R32–Final", pts: "5–15 pts" },
-                  ].map(({ label, pts }) => (
+                  ]).map(({ label, pts }) => (
                     <div key={label} className="flex justify-between items-center gap-2">
                       <span className="text-xs" style={{ color: t.textBody }}>{label}</span>
                       <span className="text-xs font-black whitespace-nowrap" style={{ color: t.accent }}>{pts}</span>
@@ -446,12 +472,12 @@ export default function LeagueClient({
 
         {/* Groups view */}
         {mobileView === "groups" && (
-          <GroupsView matches={matches} scorePicks={scorePredictions} mono={mono} />
+          <GroupsView matches={matches} scorePicks={scorePredictions} mono={mono} mode={mode} />
         )}
 
         {/* Qualifiers view */}
         {mobileView === "qualifiers" && (
-          <QualifiersView matches={matches} scorePicks={scorePredictions} actualScores={actualScores} mono={mono} />
+          <QualifiersView matches={matches} scorePicks={scorePredictions} actualScores={actualScores} mono={mono} mode={mode} />
         )}
       </div>
 

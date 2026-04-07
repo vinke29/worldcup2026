@@ -43,8 +43,10 @@ export interface Member {
   scorePicks?: Record<string, { home: number; away: number }>;
 }
 
+export type LeagueMode = "phase_by_phase" | "entire_tournament";
+
 export interface League {
-  id: string; name: string; code: string; members: Member[];
+  id: string; name: string; code: string; mode: LeagueMode; members: Member[];
 }
 
 export const PHASES: Phase[] = [
@@ -203,6 +205,7 @@ export const MOCK_LEAGUE: League = {
   id: "abc123",
   name: "La Banda del Martes",
   code: "BANDA26",
+  mode: "phase_by_phase",
   members: [
     // Ignacio (u1): predictions come from live state in the page — seeded there
     { id:"u1", name:"Ignacio",   avatar:"IG", points:0, correct:0, exact:0, total:0, picked:0, predictions:{} },

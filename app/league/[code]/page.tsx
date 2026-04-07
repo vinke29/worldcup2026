@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { MOCK_LEAGUE, type Outcome, type Member } from "@/lib/mock-data";
 import { getActualScores } from "@/app/actions/scores";
 import LeagueClient from "./LeagueClient";
+import type { LeagueMode } from "@/lib/mock-data";
 
 const PREVIEW_CODE = "BANDA26";
 
@@ -31,6 +32,7 @@ export default async function LeaguePage({
         initialScorePicks={{}}
         members={MOCK_LEAGUE.members}
         actualScores={actualScores}
+        mode="phase_by_phase"
         isPreview
       />
     );
@@ -43,7 +45,7 @@ export default async function LeaguePage({
   // Fetch the league by code
   const { data: league } = await supabase
     .from("leagues")
-    .select("id, name, code")
+    .select("id, name, code, mode")
     .eq("code", code)
     .maybeSingle();
 
@@ -112,6 +114,8 @@ export default async function LeaguePage({
   // suppress unused warning
   void profile;
 
+  const leagueMode = (league.mode ?? "phase_by_phase") as LeagueMode;
+
   return (
     <LeagueClient
       code={code}
@@ -121,6 +125,7 @@ export default async function LeaguePage({
       initialScorePicks={myMember?.scorePicks ?? {}}
       members={members}
       actualScores={actualScores}
+      mode={leagueMode}
     />
   );
 }

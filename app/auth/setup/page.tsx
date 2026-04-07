@@ -11,6 +11,7 @@ function SetupForm() {
   const intent = searchParams.get("intent");
   const prefillCode = searchParams.get("code") ?? "";
   const prefillLeagueName = searchParams.get("leagueName") ?? "";
+  const prefillMode = searchParams.get("mode") ?? "phase_by_phase";
   const [tab, setTab] = useState<"create" | "join">(intent === "join" ? "join" : "create");
   const [createError, createAction, createPending] = useActionState(createLeague, null);
   const [joinError, joinAction, joinPending] = useActionState(joinLeague, null);
@@ -76,6 +77,7 @@ function SetupForm() {
                   </div>
                 )}
                 <form action={createAction} className="space-y-4">
+                  <input type="hidden" name="mode" value={prefillMode} />
                   <SetupField label="League name">
                     <input
                       type="text"

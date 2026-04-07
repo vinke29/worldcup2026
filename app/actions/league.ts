@@ -23,6 +23,10 @@ export async function createLeague(
   const name = (formData.get("leagueName") as string).trim();
   if (!name) return "League name is required.";
 
+  const mode = (formData.get("mode") as string | null) ?? "phase_by_phase";
+  const validModes = ["phase_by_phase", "entire_tournament"];
+  const safeMode = validModes.includes(mode) ? mode : "phase_by_phase";
+
   // Ensure the generated code is unique
   let code = generateCode();
   for (let i = 0; i < 5; i++) {
@@ -37,7 +41,7 @@ export async function createLeague(
 
   const { data: league, error } = await supabase
     .from("leagues")
-    .insert({ name, code, created_by: user.id })
+    .insert({ name, code, created_by: user.id, mode: safeMode })
     .select("id, code")
     .single();
 

@@ -14,6 +14,7 @@ export default function Home() {
   const [name, setName] = useState("");
   const [leagueName, setLeagueName] = useState("");
   const [joinCode, setJoinCode] = useState("");
+  const [leagueMode, setLeagueMode] = useState<"phase_by_phase" | "entire_tournament">("phase_by_phase");
   const [mono, setMono] = useState(false);
   const formRef = useRef<HTMLDivElement>(null);
 
@@ -22,6 +23,7 @@ export default function Home() {
     const params = new URLSearchParams();
     if (name.trim()) params.set("name", name.trim());
     if (leagueName.trim()) params.set("leagueName", leagueName.trim());
+    params.set("mode", leagueMode);
     router.push(`/auth/signup?${params}`);
   }
 
@@ -344,6 +346,33 @@ export default function Home() {
                       placeholder="La Banda del Martes" required
                     />
                   </Field>
+                  {/* Mode picker */}
+                  <div className="space-y-1.5">
+                    <label className="block text-[10px] font-bold uppercase tracking-widest" style={{ color: t.textMuted }}>Format</label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {([
+                        { value: "phase_by_phase", label: "Phase by phase", sub: "Unlock each round after the last ends" },
+                        { value: "entire_tournament", label: "Full bracket", sub: "Pick every round before it starts" },
+                      ] as const).map(({ value, label, sub }) => {
+                        const active = leagueMode === value;
+                        return (
+                          <button
+                            key={value}
+                            type="button"
+                            onClick={() => setLeagueMode(value)}
+                            className="text-left px-3 py-3 rounded-xl border transition-all cursor-pointer"
+                            style={{
+                              backgroundColor: active ? (mono ? "rgba(26,18,8,0.08)" : "rgba(215,255,90,0.08)") : t.inputBg,
+                              borderColor: active ? t.accent : t.border,
+                            }}
+                          >
+                            <p className="text-xs font-black mb-0.5" style={{ color: active ? t.accent : t.textPrimary }}>{label}</p>
+                            <p className="text-[10px] leading-snug" style={{ color: t.textMuted }}>{sub}</p>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
                   <Btn mono={mono} accent={t.accent} accentText={t.accentText}>Create league →</Btn>
                 </form>
               ) : (

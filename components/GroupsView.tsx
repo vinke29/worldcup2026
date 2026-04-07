@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import type { Match } from "@/lib/mock-data";
+import type { Match, LeagueMode } from "@/lib/mock-data";
 import { computeGroupTables, countCorrectPositions, hasAnyActualResults, type TeamRow } from "@/lib/group-standings";
 import FlagImage from "@/lib/flag-image";
 
@@ -9,14 +9,16 @@ interface GroupsViewProps {
   matches: Match[];
   scorePicks: Record<string, { home: number; away: number }>;
   mono: boolean;
+  mode?: LeagueMode;
 }
 
 const GROUP_LETTERS = ["A","B","C","D","E","F","G","H","I","J","K","L"];
 
-export default function GroupsView({ matches, scorePicks, mono }: GroupsViewProps) {
-  const [view, setView] = useState<"predicted" | "actual">("predicted");
-
+export default function GroupsView({ matches, scorePicks, mono, mode = "phase_by_phase" }: GroupsViewProps) {
   const hasActual = useMemo(() => hasAnyActualResults(matches), [matches]);
+  // Default to "compare" if actual results are in and we're in entire_tournament mode
+  const defaultView = (mode === "entire_tournament" && hasActual) ? "compare" : "predicted";
+  const [view, setView] = useState<"predicted" | "actual" | "compare">(defaultView);
 
   const predictedTables = useMemo(
     () => computeGroupTables(matches, scorePicks, false),
@@ -32,19 +34,24 @@ export default function GroupsView({ matches, scorePicks, mono }: GroupsViewProp
     ? { bg: "#F5F0E8", card: "#EDE8DE", border: "#DDD9D0", text: "#1A1208", textSec: "#6B5E4E", textMuted: "#A89E8E", accent: "#1A1208", accentText: "#F7F4EE", qualify: "rgba(26,18,8,0.08)", qualifyBorder: "#C8C0B0" }
     : { bg: "#0B1E0D", card: "#1A2E1F", border: "#2C4832", text: "#F0EDE6", textSec: "#B3C9B7", textMuted: "#7A9B84", accent: "#D7FF5A", accentText: "#0B1E0D", qualify: "rgba(215,255,90,0.07)", qualifyBorder: "rgba(215,255,90,0.25)" };
 
-  const activeTables = view === "predicted" ? predictedTables : actualTables;
+  const activeTables = view === "actual" ? actualTables : predictedTables;
+
+  const tabs = [
+    { id: "predicted" as const, label: "My picks" },
+    { id: "actual" as const, label: "Actual", disabled: !hasActual },
+    { id: "compare" as const, label: "Compare", disabled: !hasActual },
+  ];
 
   return (
     <div>
       {/* View toggle */}
-      <div className="flex items-center gap-3 mb-5">
-        {(["predicted", "actual"] as const).map((v) => {
-          const active = view === v;
-          const disabled = v === "actual" && !hasActual;
+      <div className="flex items-center gap-2 mb-5">
+        {tabs.map(({ id, label, disabled }) => {
+          const active = view === id;
           return (
             <button
-              key={v}
-              onClick={() => !disabled && setView(v)}
+              key={id}
+              onClick={() => !disabled && setView(id)}
               disabled={disabled}
               className="text-xs font-bold uppercase tracking-widest px-3 py-1.5 rounded-lg transition-all"
               style={{
@@ -55,12 +62,12 @@ export default function GroupsView({ matches, scorePicks, mono }: GroupsViewProp
                 opacity: disabled ? 0.4 : 1,
               }}
             >
-              {v === "predicted" ? "My Picks" : "Actual"}
+              {label}
             </button>
           );
         })}
-        {view === "actual" && !hasActual && (
-          <span className="text-[11px]" style={{ color: t.textMuted }}>No results yet</span>
+        {!hasActual && (
+          <span className="text-[11px]" style={{ color: t.textMuted }}>Actual &amp; Compare unlock once results are in</span>
         )}
       </div>
 
@@ -74,6 +81,20 @@ export default function GroupsView({ matches, scorePicks, mono }: GroupsViewProp
           const predicted = predictedTables[groupKey] ?? [];
           const actual = actualTables[groupKey] ?? [];
           const correct = hasActual ? countCorrectPositions(predicted, actual) : null;
+
+          if (view === "compare" && hasActual) {
+            return (
+              <CompareCard
+                key={groupKey}
+                letter={letter}
+                predicted={predicted}
+                actual={actual}
+                correct={correct}
+                mono={mono}
+                t={t}
+              />
+            );
+          }
 
           return (
             <GroupCard
@@ -93,6 +114,135 @@ export default function GroupsView({ matches, scorePicks, mono }: GroupsViewProp
   );
 }
 
+// ── Compare card: predicted vs actual side by side ────────────────────────────
+
+function CompareCard({
+  letter, predicted, actual, correct, mono, t,
+}: {
+  letter: string;
+  predicted: TeamRow[];
+  actual: TeamRow[];
+  correct: number | null;
+  mono: boolean;
+  t: Record<string, string>;
+}) {
+  // Build a lookup: team → actual rank
+  const actualRankByTeam: Record<string, number> = {};
+  actual.forEach((row, i) => { actualRankByTeam[row.team] = i + 1; });
+
+  return (
+    <div
+      className="rounded-2xl overflow-hidden border"
+      style={{ backgroundColor: t.card, borderColor: t.border }}
+    >
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 py-3 border-b" style={{ borderColor: t.border }}>
+        <span className="text-xs font-black uppercase tracking-widest" style={{ color: t.textMuted }}>
+          Group {letter}
+        </span>
+        {correct !== null && (
+          <span
+            className="text-[10px] font-bold px-2 py-0.5 rounded-full"
+            style={{
+              backgroundColor: correct === 4 ? (mono ? "rgba(26,18,8,0.12)" : "rgba(215,255,90,0.12)") : "transparent",
+              color: correct === 4 ? t.accent : correct >= 2 ? t.textSec : t.textMuted,
+              border: `1px solid ${correct >= 2 ? t.border : "transparent"}`,
+            }}
+          >
+            {correct}/4 correct
+          </span>
+        )}
+      </div>
+
+      {/* Column headers */}
+      <div className="grid grid-cols-2 gap-0 border-b" style={{ borderColor: t.border }}>
+        <div className="px-4 py-1.5 text-[9px] font-black uppercase tracking-widest" style={{ color: t.textMuted }}>
+          Predicted
+        </div>
+        <div className="px-4 py-1.5 text-[9px] font-black uppercase tracking-widest border-l" style={{ color: t.textMuted, borderColor: t.border }}>
+          Actual
+        </div>
+      </div>
+
+      {/* Rows — predicted on left, actual on right */}
+      <div>
+        {predicted.map((predRow, predIdx) => {
+          const actualIdx = actualRankByTeam[predRow.team] != null ? actualRankByTeam[predRow.team] - 1 : -1;
+          const actualRow = actual[predIdx]; // team in actual at same rank position
+          const predQualifies  = predIdx < 2;
+          const actualQualifies = actualIdx >= 0 && actualIdx < 2;
+          const correct = actualIdx === predIdx;
+          const delta = actualIdx >= 0 ? predIdx - actualIdx : null; // positive = improved, negative = dropped
+
+          return (
+            <div
+              key={predRow.team}
+              className="grid grid-cols-2 gap-0"
+              style={{ borderBottom: predIdx < predicted.length - 1 ? `1px solid ${t.border}` : "none" }}
+            >
+              {/* Predicted position */}
+              <div
+                className="flex items-center gap-2 px-3 py-2.5"
+                style={{ backgroundColor: predQualifies ? t.qualify : "transparent" }}
+              >
+                <span className="text-xs font-black w-4 text-center flex-shrink-0" style={{ color: predQualifies ? t.accent : t.textMuted }}>
+                  {predIdx + 1}
+                </span>
+                <FlagImage emoji={predRow.flag} size={14} team={predRow.team} />
+                <span
+                  className="text-xs font-semibold truncate flex-1"
+                  style={{
+                    color: correct ? t.accent : t.textSec,
+                    textDecoration: !correct && actualIdx >= 0 ? "line-through" : "none",
+                    opacity: !correct && actualIdx >= 0 ? 0.6 : 1,
+                  }}
+                >
+                  {predRow.team.split(" ").slice(-1)[0]}
+                </span>
+                {/* Delta arrow */}
+                {delta !== null && delta !== 0 && (
+                  <span className="text-[10px] flex-shrink-0" style={{ color: delta > 0 ? (mono ? "#1A1208" : "#4ADE80") : "#F87171" }}>
+                    {delta > 0 ? "↑" : "↓"}
+                  </span>
+                )}
+                {correct && <span className="text-[10px] flex-shrink-0" style={{ color: t.accent }}>✓</span>}
+              </div>
+
+              {/* Actual position (team at same rank slot) */}
+              <div
+                className="flex items-center gap-2 px-3 py-2.5 border-l"
+                style={{ backgroundColor: actualQualifies && actualRow?.team === predRow.team ? t.qualify : "transparent", borderColor: t.border }}
+              >
+                <span className="text-xs font-black w-4 text-center flex-shrink-0" style={{ color: actualRow && predIdx < 2 ? t.accent : t.textMuted }}>
+                  {predIdx + 1}
+                </span>
+                {actualRow ? (
+                  <>
+                    <FlagImage emoji={actualRow.flag} size={14} team={actualRow.team} />
+                    <span
+                      className="text-xs font-semibold truncate flex-1"
+                      style={{ color: actualRow.team === predRow.team ? t.accent : t.text }}
+                    >
+                      {actualRow.team.split(" ").slice(-1)[0]}
+                    </span>
+                    <span className="text-xs font-black tabular-nums flex-shrink-0" style={{ color: t.textMuted }}>
+                      {actualRow.pts}p
+                    </span>
+                  </>
+                ) : (
+                  <span className="text-xs italic" style={{ color: t.textMuted }}>TBD</span>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ── Standard group card ───────────────────────────────────────────────────────
+
 function GroupCard({
   letter, rows, correct, hasActual, view, mono, t,
 }: {
@@ -100,7 +250,7 @@ function GroupCard({
   rows: TeamRow[];
   correct: number | null;
   hasActual: boolean;
-  view: "predicted" | "actual";
+  view: "predicted" | "actual" | "compare";
   mono: boolean;
   t: Record<string, string>;
 }) {
