@@ -35,7 +35,10 @@ export async function GET(request: NextRequest) {
         }
       }
 
-      return NextResponse.redirect(new URL("/auth/setup", origin));
+      // Forward setupQuery that was embedded in the callback URL at signup time
+      const setup = searchParams.get("setup");
+      const setupDest = setup ? `/auth/setup?${setup}` : "/auth/setup";
+      return NextResponse.redirect(new URL(setupDest, origin));
     }
   }
 

@@ -64,21 +64,26 @@ export async function signup(
   // Pass name + avatar as user metadata — a DB trigger picks this up and
   // creates the profiles row (security definer, so it bypasses RLS).
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+
+  // Embed setupQuery into the callback URL so it survives the email confirmation round-trip
+  const setupQuery = (formData.get("setupQuery") as string | null) ?? "";
+  const callbackUrl = setupQuery
+    ? `${siteUrl}/auth/callback?setup=${encodeURIComponent(setupQuery)}`
+    : `${siteUrl}/auth/callback`;
+
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
       data: { name, avatar },
-      emailRedirectTo: `${siteUrl}/auth/callback`,
+      emailRedirectTo: callbackUrl,
     },
   });
   if (error) return error.message;
   if (!data.user) return "Signup failed — please try again.";
 
-  // No session yet → Supabase sent a confirmation email
-  const setupQuery = (formData.get("setupQuery") as string | null) ?? "";
-
   if (!data.session) {
+    // No session yet — Supabase sent a confirmation email
     redirect(`/auth/confirm?email=${encodeURIComponent(email)}`);
   }
 
