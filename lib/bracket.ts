@@ -130,7 +130,7 @@ function allHaveScores(ids: string[], actualScores: Scores): boolean {
 export function computePhaseStatuses(
   groupMatches: Match[],
   actualScores: Scores,
-): Record<PhaseId, "open" | "locked" | "completed"> {
+): Partial<Record<PhaseId, "open" | "locked" | "completed">> {
   const groupMd1Ids = groupMatches.filter(m => m.phase === "group-md1").map(m => m.id);
   const groupMd2Ids = groupMatches.filter(m => m.phase === "group-md2").map(m => m.id);
   const groupMd3Ids = groupMatches.filter(m => m.phase === "group-md3").map(m => m.id);

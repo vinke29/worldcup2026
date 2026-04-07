@@ -11,7 +11,7 @@ import OnboardingModal from "@/components/OnboardingModal";
 import MemberPicksModal from "@/components/MemberPicksModal";
 import GroupsView from "@/components/GroupsView";
 import QualifiersView from "@/components/QualifiersView";
-import { MATCHES, PHASES, type Match, type Outcome, type PhaseId, type Member, type LeagueMode } from "@/lib/mock-data";
+import { MATCHES, PHASES, WHOLE_GROUP_PHASES, type Match, type Outcome, type PhaseId, type Member, type LeagueMode } from "@/lib/mock-data";
 import { computeStandings } from "@/lib/scoring";
 import { computePhaseStatuses } from "@/lib/bracket";
 import { savePrediction, saveScorePick } from "@/app/actions/predictions";
@@ -81,7 +81,9 @@ export default function LeagueClient({
   }, [router]);
 
   const defaultNav = getDefaultNav();
-  const [activePhase, setActivePhase] = useState<PhaseId>(defaultNav.phase);
+  const [activePhase, setActivePhase] = useState<PhaseId>(
+    mode === "entire_tournament" ? "group-a" : defaultNav.phase
+  );
   const [activeDay, setActiveDay] = useState<string>(defaultNav.day);
   const [predictions, setPredictions] = useState<Record<string, Outcome>>(initialPredictions);
   const [scorePredictions, setScorePredictions] = useState<Record<string, { home: number; away: number }>>(initialScorePicks);
@@ -110,17 +112,17 @@ export default function LeagueClient({
 
   // Dynamically compute which phases are open/locked/completed based on actual scores
   const phases = useMemo(() => {
+    const statuses = computePhaseStatuses(MATCHES, actualScores);
     if (mode === "entire_tournament") {
-      // All phases always open in entire_tournament mode — picks locked only when matches start
-      const statuses = computePhaseStatuses(MATCHES, actualScores);
-      return PHASES.map(p => {
+      // Group A–L phases are always open; KO phases open when ready, completed when done
+      const groupPhases = WHOLE_GROUP_PHASES.map(p => ({ ...p, status: "open" as const }));
+      const koPhases = PHASES.filter(p => !p.id.startsWith("group")).map(p => {
         const computed = statuses[p.id as PhaseId] ?? p.status;
-        // Keep "completed" if a round is fully scored; otherwise force "open"
         const status: "open" | "locked" | "completed" = computed === "completed" ? "completed" : "open";
         return { ...p, status };
       });
+      return [...groupPhases, ...koPhases];
     }
-    const statuses = computePhaseStatuses(MATCHES, actualScores);
     return PHASES.map(p => ({ ...p, status: statuses[p.id as PhaseId] ?? p.status }));
   }, [actualScores, mode]);
 
@@ -128,9 +130,17 @@ export default function LeagueClient({
   const isGroupPhase = activePhase.startsWith("group");
   const isLocked = currentPhase.status === "locked";
 
+  // For group-a…group-l virtual phases, filter by group name instead of phase ID
+  const isVirtualGroupPhase = isGroupPhase && mode === "entire_tournament";
+  const activeGroupName = isVirtualGroupPhase
+    ? `Group ${activePhase.slice(-1).toUpperCase()}`
+    : null;
+
   const phaseMatches = useMemo(
-    () => matches.filter((m) => m.phase === activePhase),
-    [matches, activePhase]
+    () => isVirtualGroupPhase && activeGroupName
+      ? matches.filter(m => m.group === activeGroupName)
+      : matches.filter(m => m.phase === activePhase),
+    [matches, activePhase, isVirtualGroupPhase, activeGroupName]
   );
 
   const days = useMemo((): Day[] => {
@@ -165,11 +175,10 @@ export default function LeagueClient({
   };
 
   const visibleMatches = useMemo(() => {
-    // entire_tournament: show all group matches at once (no day filter)
-    if (isGroupPhase && mode === "entire_tournament") return phaseMatches;
+    if (isVirtualGroupPhase) return phaseMatches; // all 6 group matches, no day filter
     if (isGroupPhase) return phaseMatches.filter((m) => m.date === activeDay);
     return phaseMatches;
-  }, [phaseMatches, isGroupPhase, activeDay, mode]);
+  }, [phaseMatches, isGroupPhase, isVirtualGroupPhase, activeDay]);
 
   const matchesByGroup = useMemo(() => {
     const groups: Record<string, typeof visibleMatches> = {};
@@ -199,15 +208,21 @@ export default function LeagueClient({
     const s = new Set<string>();
     for (const m of matches) {
       const dayStart = parseDateStr(m.date).getTime();
-      if (now >= dayStart && now < dayStart + 24 * 60 * 60 * 1000) s.add(m.phase);
+      if (now >= dayStart && now < dayStart + 24 * 60 * 60 * 1000) {
+        if (mode === "entire_tournament" && m.group) {
+          s.add(`group-${m.group.split(" ")[1].toLowerCase()}`);
+        } else {
+          s.add(m.phase);
+        }
+      }
     }
     return s;
-  }, [matches]);
+  }, [matches, mode]);
 
   // Next group phase (for entire_tournament "group complete" banner)
   const nextGroupPhase = useMemo(() => {
     if (!isGroupPhase || mode !== "entire_tournament") return null;
-    const groupPhases = phases.filter(p => p.id.startsWith("group"));
+    const groupPhases = phases.filter(p => !p.id.includes("md") && p.id.startsWith("group-"));
     const idx = groupPhases.findIndex(p => p.id === activePhase);
     return idx >= 0 && idx < groupPhases.length - 1 ? groupPhases[idx + 1] : null;
   }, [phases, activePhase, isGroupPhase, mode]);
@@ -545,7 +560,7 @@ export default function LeagueClient({
 
         {/* Qualifiers view */}
         {mobileView === "qualifiers" && (
-          <QualifiersView matches={matches} scorePicks={scorePredictions} actualScores={actualScores} mono={mono} mode={mode} />
+          <QualifiersView matches={matches} scorePicks={scorePredictions} actualScores={actualScores} mono={mono} mode={mode} onScorePick={!isPreview ? handleScorePick : undefined} />
         )}
       </div>
 

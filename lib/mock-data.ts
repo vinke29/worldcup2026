@@ -2,6 +2,8 @@ export type Outcome = "home" | "draw" | "away";
 
 export type PhaseId =
   | "group-md1" | "group-md2" | "group-md3"
+  | "group-a" | "group-b" | "group-c" | "group-d" | "group-e" | "group-f"
+  | "group-g" | "group-h" | "group-i" | "group-j" | "group-k" | "group-l"
   | "r32" | "r16" | "qf" | "sf" | "final";
 
 export interface Phase {
@@ -58,6 +60,22 @@ export const PHASES: Phase[] = [
   { id: "qf",        label: "Quarter-finals",     shortLabel: "QF",   deadline: "Jul 9 · 12:00",  status: "locked", matchCount: 4  },
   { id: "sf",        label: "Semi-finals",        shortLabel: "SF",   deadline: "Jul 13 · 12:00", status: "locked", matchCount: 2  },
   { id: "final",     label: "Final",              shortLabel: "Final",deadline: "Jul 18 · 12:00", status: "locked", matchCount: 1  },
+];
+
+/** Per-group phases used in entire_tournament mode (Group A … L, then KO rounds) */
+export const WHOLE_GROUP_PHASES: Phase[] = [
+  { id: "group-a", label: "Group A", shortLabel: "A", deadline: "Jun 25", status: "open", matchCount: 6 },
+  { id: "group-b", label: "Group B", shortLabel: "B", deadline: "Jun 25", status: "open", matchCount: 6 },
+  { id: "group-c", label: "Group C", shortLabel: "C", deadline: "Jun 25", status: "open", matchCount: 6 },
+  { id: "group-d", label: "Group D", shortLabel: "D", deadline: "Jun 25", status: "open", matchCount: 6 },
+  { id: "group-e", label: "Group E", shortLabel: "E", deadline: "Jun 25", status: "open", matchCount: 6 },
+  { id: "group-f", label: "Group F", shortLabel: "F", deadline: "Jun 25", status: "open", matchCount: 6 },
+  { id: "group-g", label: "Group G", shortLabel: "G", deadline: "Jun 25", status: "open", matchCount: 6 },
+  { id: "group-h", label: "Group H", shortLabel: "H", deadline: "Jun 25", status: "open", matchCount: 6 },
+  { id: "group-i", label: "Group I", shortLabel: "I", deadline: "Jun 25", status: "open", matchCount: 6 },
+  { id: "group-j", label: "Group J", shortLabel: "J", deadline: "Jun 25", status: "open", matchCount: 6 },
+  { id: "group-k", label: "Group K", shortLabel: "K", deadline: "Jun 25", status: "open", matchCount: 6 },
+  { id: "group-l", label: "Group L", shortLabel: "L", deadline: "Jun 25", status: "open", matchCount: 6 },
 ];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
