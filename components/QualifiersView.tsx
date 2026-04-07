@@ -771,8 +771,8 @@ function MobileMatchCard({
                   style={{
                     flex: 1, padding: "8px 10px", borderRadius: 8,
                     border: `1px solid ${selected ? t.accent : t.border}`,
-                    background: selected ? t.accent : "transparent",
-                    color: selected ? t.accentText : t.textSec,
+                    background: "transparent",
+                    color: selected ? t.accent : t.textSec,
                     fontSize: 12, fontWeight: 700,
                     cursor: interactive ? "pointer" : "default",
                     display: "flex", alignItems: "center", gap: 6,

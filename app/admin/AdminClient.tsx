@@ -362,8 +362,8 @@ function KnockoutScoreRow({
                   onClick={() => onPensWinner(active ? null : side)}
                   className="flex-1 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest cursor-pointer transition-all"
                   style={{
-                    backgroundColor: active ? T.accent : "transparent",
-                    color: active ? T.accentTx : T.textSec,
+                    backgroundColor: "transparent",
+                    color: active ? T.accent : T.textSec,
                     border: `1px solid ${active ? T.accent : T.border}`,
                   }}
                 >
