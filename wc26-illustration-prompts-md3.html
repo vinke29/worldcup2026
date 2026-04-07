@@ -20,7 +20,7 @@
     padding-bottom: 32px;
   }
   header h1 { font-size: 32px; font-weight: 900; letter-spacing: -0.5px; margin-bottom: 8px; }
-  header h1 span { color: #7EB8F7; }
+  header h1 span { color: #D4A843; }
   .subtitle { color: #7A9B84; font-size: 15px; margin-bottom: 24px; }
   .style-guide {
     background: #1A2E1F;
@@ -30,7 +30,7 @@
     font-size: 13px;
     color: #B3C9B7;
   }
-  .style-guide strong { color: #7EB8F7; display: block; margin-bottom: 8px; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; }
+  .style-guide strong { color: #D4A843; display: block; margin-bottom: 8px; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; }
   .style-guide p { margin-bottom: 4px; }
   .file-convention {
     max-width: 900px;
@@ -44,7 +44,7 @@
   }
   .file-convention code {
     background: #0F2411;
-    color: #7EB8F7;
+    color: #D4A843;
     font-family: monospace;
     padding: 2px 6px;
     border-radius: 4px;
@@ -68,7 +68,7 @@
   .match-teams { font-size: 18px; font-weight: 900; text-transform: uppercase; letter-spacing: -0.3px; }
   .match-meta { font-size: 11px; color: #4A6B50; }
   .match-filename {
-    font-family: monospace; font-size: 11px; color: #7EB8F7;
+    font-family: monospace; font-size: 11px; color: #D4A843;
     background: #0F2411; padding: 2px 8px; border-radius: 4px;
   }
   .match-body { padding: 16px 20px; }
@@ -89,7 +89,7 @@
     letter-spacing: 0.08em; padding: 6px 14px; border-radius: 8px;
     cursor: pointer; transition: all 0.15s; font-family: inherit;
   }
-  .copy-btn:hover { border-color: #7EB8F7; color: #7EB8F7; }
+  .copy-btn:hover { border-color: #D4A843; color: #D4A843; }
   .copy-btn.copied { border-color: #4ADE80; color: #4ADE80; }
 </style>
 </head>
@@ -97,17 +97,16 @@
 
 <header>
   <h1>WC2026 · Illustration Prompts<br><span>Matchday 3 · All 24 Games</span></h1>
-  <p class="subtitle">24 matches · June 24–27, 2026 · Vintage travel poster / WPA style</p>
+  <p class="subtitle">24 matches · June 24–27, 2026 · Woodblock / linocut print style — warm olive variant</p>
   <div class="style-guide">
-    <strong>Consistent style across all 24 illustrations — DIFFERENT from Matchday 1 &amp; 2</strong>
-    <p>· Background: deep forest green (#0B1E0D) — matches the app background exactly</p>
-    <p>· Style: vintage 1950s travel poster / WPA poster — bold geometric flat shapes, clean hard edges, diagonal compositions, art deco sensibility</p>
-    <p>· NO texture, NO grain, NO halftone dots, NO carved lines — smooth flat color fills only</p>
-    <p>· Colors: 2–3 vivid bold spot colors per illustration, drawn from each team's national palette</p>
-    <p>· Composition: two national symbols, stylized into clean geometric forms, strong visual hierarchy — each commanding their half in a diagonal or mirrored arrangement</p>
+    <strong>Consistent style across all 24 illustrations — warm background variant of Matchday 2</strong>
+    <p>· Background: warm dark olive-green (#1C3010) — slightly warmer and lighter than MD1/MD2's cool forest green (#0B1E0D), creates a distinct "final chapter" feel while staying in the same family</p>
+    <p>· Style: woodblock print / linocut — identical technique to MD2: bold carved strokes, rough-hewn texture, visible wood grain and gouge marks, heavy black outlines, dense ink coverage</p>
+    <p>· Colors: 2–3 earthy spot colors per illustration, drawn from each team's national palette (same palette logic as MD2)</p>
+    <p>· Composition: two national symbols confronting each other, one per country, each commanding their half</p>
     <p>· Format: horizontal, 3:2 ratio (e.g. 1500×1000px), no text</p>
-    <p>· Mood: optimistic and graphic — like a vintage airline poster, national parks WPA print, or 1950s Olympic Games program cover</p>
-    <p>· Key contrast vs MD1 (halftone grain) and MD2 (woodblock texture): MD3 is clean, smooth, and geometric — zero texture</p>
+    <p>· Mood: raw and dramatic — same vintage Japanese woodblock / 1960s protest print energy as MD2</p>
+    <p>· Key contrast vs MD2: only the background shifts from cool forest green to warm olive-green — everything else is identical, making the three matchdays feel like a coherent series</p>
   </div>
 </header>
 
@@ -130,7 +129,7 @@
     </div>
     <div class="match-body">
       <div class="prompt-label">Illustration prompt</div>
-      <div class="prompt-text" id="p-a-cze-mex">Vintage 1950s travel poster / WPA poster illustration on deep forest green (#0B1E0D) background. Czech Republic vs Mexico. On the left, the Czech double-tailed lion — simplified into bold geometric flat shapes, rampant posture, rendered in deep crimson and white, clean hard edges. On the right, a Mexican golden eagle — stylized into a flat art deco silhouette, wings spread, rendered in vivid gold and warm orange. Diagonal composition, each symbol commanding their half. Zero texture, zero grain, smooth flat color fills, bold graphic forms. No text. Horizontal 3:2 format. Clean and bold like a 1950s Olympic Games program cover.</div>
+      <div class="prompt-text" id="p-a-cze-mex">Woodblock / linocut print illustration on warm dark olive-green (#1C3010) background. Czech Republic vs Mexico. On the left, the Czech double-tailed heraldic lion — rampant, crowned — carved in bold relief with dense gouge marks and crosshatching, rendered in deep crimson and raw cream with heavy black outlines. On the right, the Mexican Aztec eagle — wings spread, fierce — framed by a carved sunburst of radiating rays with geometric Aztec border patterning, rendered in burnt gold and deep amber with carved feather detail. Both symbols face each other across the composition center. Bold carved woodblock strokes, visible wood grain, rough-hewn texture, heavy ink coverage. 2–3 spot colors max. No text. Horizontal 3:2 format. Raw and powerful, like a vintage Japanese woodblock print.</div>
       <button class="copy-btn" onclick="copyPrompt('p-a-cze-mex', this)">Copy prompt</button>
     </div>
   </div>
@@ -145,7 +144,7 @@
     </div>
     <div class="match-body">
       <div class="prompt-label">Illustration prompt</div>
-      <div class="prompt-text" id="p-a-rsa-kor">Vintage 1950s travel poster / WPA poster illustration on deep forest green (#0B1E0D) background. South Africa vs South Korea. On the left, a springbok — simplified into a clean geometric silhouette, mid-leap, rendered in warm gold and ochre with bold flat shapes. On the right, a Korean white tiger (Baekho) — stylized into a flat art deco form, rendered in pure white and crimson red, clean hard edges with no texture. Mirrored composition across the horizontal center. Zero texture, zero grain, smooth flat color fills. No text. Horizontal 3:2 format. Bold and graphic like a vintage airline poster.</div>
+      <div class="prompt-text" id="p-a-rsa-kor">Woodblock / linocut print illustration on warm dark olive-green (#1C3010) background. South Africa vs South Korea. On the left, a leaping springbok — South Africa's national antelope — powerful, mid-stride, carved with rough-hewn fur texture and parallel gouge lines along its body, rendered in warm ochre and burnt sienna with heavy black outlines. On the right, the Korean white tiger (Baekho) — mythical, roaring — surrounded by flowing carved cloud motifs, rendered in icy white and deep crimson with bold gouge marks creating dense fur texture. Both figures face each other confrontationally across the composition center. Bold carved woodblock strokes, visible wood grain, heavy ink coverage. 2–3 spot colors max. No text. Horizontal 3:2 format. Raw and powerful, like a vintage Japanese woodblock print.</div>
       <button class="copy-btn" onclick="copyPrompt('p-a-rsa-kor', this)">Copy prompt</button>
     </div>
   </div>

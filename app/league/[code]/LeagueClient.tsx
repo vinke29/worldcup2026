@@ -337,8 +337,8 @@ export default function LeagueClient({
               onClick={() => setMobileView(tab)}
               className="flex-1 py-2 text-sm font-bold rounded-lg capitalize transition-all duration-150 cursor-pointer"
               style={{
-                backgroundColor: mobileView === tab ? t.accent : "transparent",
-                color: mobileView === tab ? t.accentText : t.textSec,
+                backgroundColor: "transparent",
+                color: mobileView === tab ? t.accent : t.textSec,
               }}
             >
               {tab}
