@@ -14,7 +14,7 @@ export default function Home() {
   const [name, setName] = useState("");
   const [leagueName, setLeagueName] = useState("");
   const [joinCode, setJoinCode] = useState("");
-  const [leagueMode, setLeagueMode] = useState<"phase_by_phase" | "entire_tournament">("phase_by_phase");
+  const [leagueMode, setLeagueMode] = useState<"phase_by_phase" | "entire_tournament">("entire_tournament");
   const [mono, setMono] = useState(false);
   const formRef = useRef<HTMLDivElement>(null);
 
