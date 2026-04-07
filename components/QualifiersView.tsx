@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect } from "react";
 import type { Match, LeagueMode } from "@/lib/mock-data";
 import { computeGroupTables, rankThirdPlaceTeams, type TeamRow } from "@/lib/group-standings";
-import { resolveBracketTeams, TOP_R32_IDS, BOT_R32_IDS, R16_IDS, QF_IDS, SF_IDS, FINAL_ID, KNOCKOUT_MATCH_META } from "@/lib/bracket";
+import { resolveBracketTeams, TOP_R32_IDS, BOT_R32_IDS, R16_IDS, QF_IDS, SF_IDS, THIRD_PLACE_ID, FINAL_ID, KNOCKOUT_MATCH_META } from "@/lib/bracket";
 import type { ScoreEntry } from "@/lib/bracket";
 import FlagImage from "@/lib/flag-image";
 
@@ -144,20 +144,21 @@ function buildFinalConnectors(colX: number[], finalX: number, podW: number): str
   ];
 }
 
-type MobileRound = "r32" | "r16" | "qf" | "sf" | "final";
+type MobileRound = "r32" | "r16" | "qf" | "sf" | "third" | "final";
 
 const ROUND_PICK_IDS: Record<MobileRound, string[]> = {
   r32:   [...TOP_R32_IDS, ...BOT_R32_IDS],
   r16:   R16_IDS,
   qf:    QF_IDS,
   sf:    SF_IDS,
+  third: [THIRD_PLACE_ID],
   final: [FINAL_ID],
 };
 const NEXT_ROUND: Record<MobileRound, MobileRound | null> = {
-  r32: "r16", r16: "qf", qf: "sf", sf: "final", final: null,
+  r32: "r16", r16: "qf", qf: "sf", sf: "third", third: "final", final: null,
 };
 const ROUND_LABEL: Record<MobileRound, string> = {
-  r32: "R32", r16: "R16", qf: "QF", sf: "Semi-finals", final: "Final",
+  r32: "R32", r16: "R16", qf: "QF", sf: "Semis", third: "3rd Place", final: "Final",
 };
 
 // ── Main component ────────────────────────────────────────────────────────────
@@ -270,11 +271,16 @@ export default function QualifiersView({ matches, scorePicks, actualScores, mono
     }));
 
     const sf: MobileGroup[] = [{
-      nextRoundLabel: "→ Final",
+      nextRoundLabel: "→ 3rd Place & Final",
       matches: [
         { id: SF_IDS[0], homeTeam: predictedBracketTeams.sfTop.home, awayTeam: predictedBracketTeams.sfTop.away, homeLabel: "", awayLabel: "" },
         { id: SF_IDS[1], homeTeam: predictedBracketTeams.sfBot.home, awayTeam: predictedBracketTeams.sfBot.away, homeLabel: "", awayLabel: "" },
       ],
+    }];
+
+    const third: MobileGroup[] = [{
+      nextRoundLabel: "→ Final",
+      matches: [{ id: THIRD_PLACE_ID, homeTeam: predictedBracketTeams.thirdPlace.home, awayTeam: predictedBracketTeams.thirdPlace.away, homeLabel: "", awayLabel: "" }],
     }];
 
     const final: MobileGroup[] = [{
@@ -282,7 +288,7 @@ export default function QualifiersView({ matches, scorePicks, actualScores, mono
       matches: [{ id: FINAL_ID, homeTeam: predictedBracketTeams.final.home, awayTeam: predictedBracketTeams.final.away, homeLabel: "", awayLabel: "" }],
     }];
 
-    return { r32, r16, qf, sf, final };
+    return { r32, r16, qf, sf, third, final };
   }, [topR32Pairs, botR32Pairs, predictedBracketTeams, thirdGroupAssign]);
 
   // For compare: actual R32 teams overlaid on predicted bracket
@@ -404,8 +410,8 @@ export default function QualifiersView({ matches, scorePicks, actualScores, mono
         <div className="block md:hidden">
           {/* Round tabs */}
           <div className="flex gap-2 mb-4 overflow-x-auto pb-1">
-            {(["r32","r16","qf","sf","final"] as MobileRound[]).map((id) => {
-              const label = id === "final" ? "Final" : id.toUpperCase();
+            {(["r32","r16","qf","sf","third","final"] as MobileRound[]).map((id) => {
+              const label = ROUND_LABEL[id];
               const active = mobileRound === id;
               return (
                 <button key={id} onClick={() => setMobileRound(id)}
@@ -480,6 +486,14 @@ export default function QualifiersView({ matches, scorePicks, actualScores, mono
           textTransform: "uppercase", color: t.accent,
         }}>
           Final
+        </span>
+        <span style={{
+          position: "absolute", left: finalX, width: POD_W, textAlign: "center",
+          fontSize: 9, fontWeight: 900, letterSpacing: "0.1em",
+          textTransform: "uppercase", color: t.textMuted,
+          top: HALF_H + POD_H + 28,
+        }}>
+          3rd Place
         </span>
       </div>
 
@@ -584,6 +598,14 @@ export default function QualifiersView({ matches, scorePicks, actualScores, mono
             ? <MatchPod x={finalX} y={finalPodY} podW={POD_W} homeTeam={activeBracket.final.home} awayTeam={activeBracket.final.away} homeLabel="" awayLabel="" isFinal matchId={FINAL_ID} scorePicks={showPickers ? scorePicks : undefined} onScorePick={showPickers ? onScorePick : undefined} t={t} />
             : <MatchPod x={finalX} y={finalPodY} podW={POD_W} isFinal t={t} />
           }
+
+          {/* 3rd Place */}
+          {(() => {
+            const thirdY = HALF_H + POD_H + 40;
+            return activeBracket && (activeBracket.thirdPlace.home || activeBracket.thirdPlace.away)
+              ? <MatchPod x={finalX} y={thirdY} podW={POD_W} homeTeam={activeBracket.thirdPlace.home} awayTeam={activeBracket.thirdPlace.away} homeLabel="" awayLabel="" matchId={THIRD_PLACE_ID} scorePicks={showPickers ? scorePicks : undefined} onScorePick={showPickers ? onScorePick : undefined} t={t} />
+              : <MatchPod x={finalX} y={thirdY} podW={POD_W} t={t} />;
+          })()}
         </div>
       </div>
       </div>{/* end desktop-only wrapper */}

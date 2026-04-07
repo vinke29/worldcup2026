@@ -4,7 +4,7 @@ import { useState, useMemo, useTransition } from "react";
 import type { Match, Phase, PhaseId } from "@/lib/mock-data";
 import { saveScore } from "@/app/actions/scores";
 import {
-  R32_LABELS, R16_IDS, QF_IDS, SF_IDS, FINAL_ID,
+  R32_LABELS, R16_IDS, QF_IDS, SF_IDS, THIRD_PLACE_ID, FINAL_ID,
   type KnockoutMatchInfo,
 } from "@/lib/bracket";
 
@@ -35,6 +35,9 @@ const SF_LABELS: KnockoutMatchInfo[] = [
   { id: "sf-0", homeLabel: "W qf-0", awayLabel: "W qf-1" },
   { id: "sf-1", homeLabel: "W qf-2", awayLabel: "W qf-3" },
 ];
+const THIRD_LABELS: KnockoutMatchInfo[] = [
+  { id: THIRD_PLACE_ID, homeLabel: "L sf-0", awayLabel: "L sf-1" },
+];
 const FINAL_LABELS: KnockoutMatchInfo[] = [
   { id: FINAL_ID, homeLabel: "W sf-0", awayLabel: "W sf-1" },
 ];
@@ -44,6 +47,7 @@ const KNOCKOUT_LABELS: Record<string, KnockoutMatchInfo[]> = {
   r16: R16_LABELS,
   qf:  QF_LABELS,
   sf:  SF_LABELS,
+  third: THIRD_LABELS,
   final: FINAL_LABELS,
 };
 

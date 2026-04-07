@@ -4,7 +4,7 @@ export type PhaseId =
   | "group-md1" | "group-md2" | "group-md3"
   | "group-a" | "group-b" | "group-c" | "group-d" | "group-e" | "group-f"
   | "group-g" | "group-h" | "group-i" | "group-j" | "group-k" | "group-l"
-  | "r32" | "r16" | "qf" | "sf" | "final";
+  | "r32" | "r16" | "qf" | "sf" | "third" | "final";
 
 export interface Phase {
   id: PhaseId;
@@ -58,8 +58,9 @@ export const PHASES: Phase[] = [
   { id: "r32",       label: "Round of 32",        shortLabel: "R32",  deadline: "Jun 29 · 12:00", status: "locked", matchCount: 16 },
   { id: "r16",       label: "Round of 16",        shortLabel: "R16",  deadline: "Jul 4 · 12:00",  status: "locked", matchCount: 8  },
   { id: "qf",        label: "Quarter-finals",     shortLabel: "QF",   deadline: "Jul 9 · 12:00",  status: "locked", matchCount: 4  },
-  { id: "sf",        label: "Semi-finals",        shortLabel: "SF",   deadline: "Jul 13 · 12:00", status: "locked", matchCount: 2  },
-  { id: "final",     label: "Final",              shortLabel: "Final",deadline: "Jul 18 · 12:00", status: "locked", matchCount: 1  },
+  { id: "sf",        label: "Semi-finals",        shortLabel: "SF",    deadline: "Jul 13 · 12:00", status: "locked", matchCount: 2  },
+  { id: "third",     label: "3rd Place",          shortLabel: "3rd",   deadline: "Jul 18 · 12:00", status: "locked", matchCount: 1  },
+  { id: "final",     label: "Final",              shortLabel: "Final", deadline: "Jul 19 · 12:00", status: "locked", matchCount: 1  },
 ];
 
 /** Per-group phases used in entire_tournament mode (Group A … L, then KO rounds) */

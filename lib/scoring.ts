@@ -1,5 +1,5 @@
 import type { Match, Member, Outcome } from "./mock-data";
-import { TOP_R32_IDS, BOT_R32_IDS, R16_IDS, QF_IDS, SF_IDS, FINAL_ID } from "./bracket";
+import { TOP_R32_IDS, BOT_R32_IDS, R16_IDS, QF_IDS, SF_IDS, THIRD_PLACE_ID, FINAL_ID } from "./bracket";
 import type { ScoreEntry } from "./bracket";
 
 function actualOutcome(match: Match): Outcome | null {
@@ -18,6 +18,7 @@ const PHASE_POINTS: Record<string, [number, number]> = {
   "r16":       [3, 7],
   "qf":        [5, 10],
   "sf":        [7, 12],
+  "third":     [7, 12],
   "final":     [10, 15],
 };
 
@@ -31,6 +32,7 @@ const KNOCKOUT_PHASE: Record<string, string> = {
   ...Object.fromEntries(R16_IDS.map(id => [id, "r16"])),
   ...Object.fromEntries(QF_IDS.map(id => [id, "qf"])),
   ...Object.fromEntries(SF_IDS.map(id => [id, "sf"])),
+  [THIRD_PLACE_ID]: "third",
   [FINAL_ID]: "final",
 };
 

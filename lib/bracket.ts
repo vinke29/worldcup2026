@@ -16,10 +16,11 @@ export const R16_IDS = [
 ];
 
 export const QF_IDS   = ["qf-0","qf-1","qf-2","qf-3"];   // 0–1 top, 2–3 bottom
-export const SF_IDS   = ["sf-0","sf-1"];                   // 0 top, 1 bottom
-export const FINAL_ID = "final-0";
+export const SF_IDS          = ["sf-0","sf-1"];           // 0 top, 1 bottom
+export const THIRD_PLACE_ID  = "third-0";
+export const FINAL_ID        = "final-0";
 
-export const ALL_KNOCKOUT_IDS = [...R32_IDS, ...R16_IDS, ...QF_IDS, ...SF_IDS, FINAL_ID];
+export const ALL_KNOCKOUT_IDS = [...R32_IDS, ...R16_IDS, ...QF_IDS, ...SF_IDS, THIRD_PLACE_ID, FINAL_ID];
 
 // ── Match metadata (date / time / venue) ──────────────────────────────────────
 export interface KnockoutMatchMeta { date: string; time: string; venue: string }
@@ -57,8 +58,10 @@ export const KNOCKOUT_MATCH_META: Record<string, KnockoutMatchMeta> = {
   "qf-2":  { date: "Jul 10", time: "18:00", venue: "SoFi Stadium · Inglewood" },
   "qf-3":  { date: "Jul 10", time: "22:00", venue: "Hard Rock Stadium · Miami" },
   // SF — Jul 14–15
-  "sf-0":  { date: "Jul 14", time: "22:00", venue: "AT&T Stadium · Arlington" },
-  "sf-1":  { date: "Jul 15", time: "22:00", venue: "MetLife Stadium · East Rutherford" },
+  "sf-0":    { date: "Jul 14", time: "22:00", venue: "AT&T Stadium · Arlington" },
+  "sf-1":    { date: "Jul 15", time: "22:00", venue: "MetLife Stadium · East Rutherford" },
+  // 3rd Place — Jul 18
+  "third-0": { date: "Jul 18", time: "22:00", venue: "Hard Rock Stadium · Miami" },
   // Final — Jul 19
   "final-0": { date: "Jul 19", time: "22:00", venue: "MetLife Stadium · East Rutherford" },
 };
@@ -98,6 +101,15 @@ type Pair = { home: TeamRow | null; away: TeamRow | null };
 export type ScoreEntry = { home: number; away: number; pens?: "home" | "away" };
 type Scores = Record<string, ScoreEntry>;
 
+function matchLoser(pair: Pair, score: ScoreEntry | undefined): TeamRow | null {
+  if (!pair.home || !pair.away || !score) return null;
+  if (score.home > score.away) return pair.away;
+  if (score.away > score.home) return pair.home;
+  if (score.pens === "home") return pair.away;
+  if (score.pens === "away") return pair.home;
+  return null;
+}
+
 function matchWinner(pair: Pair, score: ScoreEntry | undefined): TeamRow | null {
   if (!pair.home || !pair.away || !score) return null;
   if (score.home > score.away) return pair.home;
@@ -108,13 +120,14 @@ function matchWinner(pair: Pair, score: ScoreEntry | undefined): TeamRow | null 
 }
 
 export interface BracketTeams {
-  r16Top: Pair[];   // 4 matches
-  r16Bot: Pair[];   // 4 matches
-  qfTop:  Pair[];   // 2 matches
-  qfBot:  Pair[];   // 2 matches
-  sfTop:  Pair;
-  sfBot:  Pair;
-  final:  Pair;
+  r16Top:      Pair[];   // 4 matches
+  r16Bot:      Pair[];   // 4 matches
+  qfTop:       Pair[];   // 2 matches
+  qfBot:       Pair[];   // 2 matches
+  sfTop:       Pair;
+  sfBot:       Pair;
+  thirdPlace:  Pair;     // losers of both SFs
+  final:       Pair;
 }
 
 /**
@@ -150,11 +163,14 @@ export function resolveBracketTeams(
 
   const sfTopW = matchWinner(sfTop, actualScores[SF_IDS[0]]);
   const sfBotW = matchWinner(sfBot, actualScores[SF_IDS[1]]);
+  const sfTopL = matchLoser(sfTop, actualScores[SF_IDS[0]]);
+  const sfBotL = matchLoser(sfBot, actualScores[SF_IDS[1]]);
 
   return {
     r16Top, r16Bot,
     qfTop, qfBot,
     sfTop, sfBot,
+    thirdPlace: { home: sfTopL, away: sfBotL },
     final: { home: sfTopW, away: sfBotW },
   };
 }
@@ -196,7 +212,8 @@ export function computePhaseStatuses(
     "r32":  groupDone ? (r32Done ? "completed" : "open") : "locked",
     "r16":  r32Done   ? (r16Done ? "completed" : "open") : "locked",
     "qf":   r16Done   ? (qfDone  ? "completed" : "open") : "locked",
-    "sf":   qfDone    ? (sfDone  ? "completed" : "open") : "locked",
-    "final":sfDone    ? "open"                            : "locked",
+    "sf":    qfDone ? (sfDone ? "completed" : "open") : "locked",
+    "third": sfDone ? "open"                          : "locked",
+    "final": sfDone ? "open"                          : "locked",
   };
 }
