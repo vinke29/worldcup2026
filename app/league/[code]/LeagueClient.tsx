@@ -352,7 +352,7 @@ export default function LeagueClient({
                 </div>
                 <span className="text-xs font-bold tabular-nums whitespace-nowrap" style={{ color: t.textBody }}>
                   {mode === "entire_tournament"
-                    ? `${dayPredicted}/${visibleMatches.length} Group ${currentPhase.shortLabel}`
+                    ? `${dayPredicted}/${visibleMatches.length} ${currentPhase.shortLabel}`
                     : `${dayPredicted}/${visibleMatches.length} today`}
                 </span>
                 {mode !== "entire_tournament" && (
@@ -424,7 +424,7 @@ export default function LeagueClient({
                   style={{ backgroundColor: "rgba(74,222,128,0.08)", border: "1px solid rgba(74,222,128,0.2)" }}
                 >
                   <span className="w-1.5 h-1.5 rounded-full animate-pulse flex-shrink-0" style={{ backgroundColor: "#4ADE80" }} />
-                  <span className="text-xs font-bold" style={{ color: "#4ADE80" }}>Today · Group {todayLabel}</span>
+                  <span className="text-xs font-bold" style={{ color: "#4ADE80" }}>Today · {todayLabel}</span>
                   <span className="ml-auto text-xs font-bold" style={{ color: "#4ADE80" }}>→</span>
                 </button>
               );
@@ -436,43 +436,6 @@ export default function LeagueClient({
                 {isLocked ? "Matches will appear once this phase opens."
                   : mode === "entire_tournament" && !isGroupPhase ? "Bracket picks are in the Qualifiers tab."
                   : "No matches on this day."}
-              </div>
-            ) : mode === "entire_tournament" && isGroupPhase ? (
-              // entire_tournament: group all 6 matches by date with date sub-headers
-              <div className="space-y-6">
-                {(() => {
-                  const dateGroups: [string, Match[]][] = [];
-                  for (const m of visibleMatches) {
-                    const last = dateGroups[dateGroups.length - 1];
-                    if (last && last[0] === m.date) last[1].push(m);
-                    else dateGroups.push([m.date, [m]]);
-                  }
-                  return dateGroups.map(([date, dateMatches]) => (
-                    <div key={date}>
-                      <div className="flex items-center gap-3 mb-3">
-                        <span className="text-[10px] font-black uppercase tracking-widest" style={{ color: t.textSec }}>
-                          {date}
-                        </span>
-                        <div className="flex-1 h-px" style={{ backgroundColor: t.borderInner }} />
-                      </div>
-                      <div className="space-y-3">
-                        {dateMatches.map((match) => (
-                          <div key={match.id} id={`match-${match.id}`}>
-                            <MatchCard
-                              match={match}
-                              savedPrediction={predictions[match.id]}
-                              savedScorePick={scorePredictions[match.id]}
-                              onPredict={handlePredict}
-                              onScorePick={handleScorePick}
-                              lockedByPhase={isLocked}
-                              illustrationStyle={mono ? "mono" : "color"}
-                            />
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  ));
-                })()}
               </div>
             ) : (
               <div className="space-y-8">
@@ -617,12 +580,12 @@ export default function LeagueClient({
               <div className="text-left">
                 <p className="text-sm font-black" style={{ color: mono ? "#F7F4EE" : "#0B1E0D" }}>
                   {mode === "entire_tournament"
-                    ? `Group ${currentPhase.shortLabel} complete`
+                    ? `${currentPhase.shortLabel} complete`
                     : "All done for today"}
                 </p>
                 <p className="text-xs font-medium" style={{ color: mono ? "rgba(247,244,238,0.6)" : "rgba(11,30,13,0.6)" }}>
                   {mode === "entire_tournament" && nextGroupPhase
-                    ? `Next up: Group ${nextGroupPhase.shortLabel} · ${nextGroupPhase.matchCount} matches`
+                    ? `Next up: ${nextGroupPhase.shortLabel} · ${nextGroupPhase.matchCount} matches`
                     : nextDay
                       ? `Next up: ${nextDay.date} · ${nextDay.matchCount} ${nextDay.matchCount === 1 ? "match" : "matches"}`
                       : ""}
