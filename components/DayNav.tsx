@@ -26,7 +26,7 @@ export default function DayNav({ days, activeDay, onSelect, mono = false }: DayN
 
   return (
     <div
-      className="border-b"
+      className="border-b overflow-hidden"
       style={{
         borderColor: mono ? "#DDD9D0" : "#1F3A24",
         backgroundColor: mono ? "#EDE8E0" : "#0F2411",

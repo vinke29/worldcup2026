@@ -12,7 +12,7 @@ interface PhaseNavProps {
 export default function PhaseNav({ phases, activePhase, onSelect, mono = false }: PhaseNavProps) {
   return (
     <div
-      className="sticky top-14 z-40 border-b"
+      className="sticky top-14 z-40 border-b overflow-hidden"
       style={{
         backgroundColor: mono ? "rgba(245,240,232,0.97)" : "rgba(11,30,13,0.95)",
         borderColor: mono ? "#DDD9D0" : "#2C4832",

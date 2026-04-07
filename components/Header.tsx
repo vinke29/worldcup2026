@@ -23,7 +23,7 @@ export default function Header({ leagueName, leagueCode, mono = false, onToggleM
 
   return (
     <header
-      className="sticky top-0 z-50 border-b"
+      className="sticky top-0 z-50 border-b overflow-hidden"
       style={{
         backgroundColor: mono ? "rgba(245,240,232,0.95)" : "rgba(11,30,13,0.92)",
         borderColor: mono ? "#DDD9D0" : "#2C4832",
