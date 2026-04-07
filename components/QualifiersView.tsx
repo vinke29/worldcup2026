@@ -410,8 +410,8 @@ export default function QualifiersView({ matches, scorePicks, actualScores, mono
                   className="text-xs font-black uppercase tracking-widest px-3 py-1.5 rounded-lg cursor-pointer whitespace-nowrap transition-all"
                   style={{
                     border: `1px solid ${active ? t.accent : t.border}`,
-                    backgroundColor: active ? t.accent : "transparent",
-                    color: active ? t.accentText : t.textSec,
+                    backgroundColor: "transparent",
+                    color: active ? t.accent : t.textSec,
                   }}>
                   {label}
                 </button>
