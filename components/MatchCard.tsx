@@ -497,6 +497,8 @@ function StatusBadge({
     ? "px-2 py-1 rounded-md text-[10px] font-bold"
     : "px-2 py-1 rounded-md text-[10px] font-bold";
   const bg = overlay ? "rgba(11,30,13,0.75)" : "transparent";
+  const localTime = matchKickoff(match.date, match.time)
+    .toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit", hour12: true });
 
   if (isFinished) return null;
 
@@ -515,7 +517,7 @@ function StatusBadge({
 
   if (isGameLocked) return (
     <span className={base} style={{ backgroundColor: bg, color: "#7A9B84" }}>
-      🔒 Locked · {match.time}
+      🔒 Locked · {localTime}
     </span>
   );
 
@@ -529,7 +531,7 @@ function StatusBadge({
 
   return (
     <span className={base} style={{ backgroundColor: bg, color: "#4A6B50" }}>
-      {match.time}
+      {localTime}
     </span>
   );
 }

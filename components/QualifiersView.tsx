@@ -90,6 +90,16 @@ function assignThirdPlaceGroups(qualifyingGroups: string[]): Record<string, stri
   return assignment;
 }
 
+// Convert ET kickoff time to a local Date (same logic as MatchCard.tsx)
+function knockoutKickoff(dateStr: string, timeStr: string): Date {
+  const months: Record<string, number> = {
+    Jan:0,Feb:1,Mar:2,Apr:3,May:4,Jun:5,Jul:6,Aug:7,Sep:8,Oct:9,Nov:10,Dec:11
+  };
+  const [mon, day] = dateStr.split(" ");
+  const [h, m] = timeStr.split(":").map(Number);
+  return new Date(Date.UTC(2026, months[mon], Number(day), h + 4, m));
+}
+
 function useTheme(mono: boolean) {
   return mono
     ? { card: "#EDE8DE", border: "#DDD9D0", text: "#1A1208", textSec: "#6B5E4E", textMuted: "#A89E8E",
@@ -395,9 +405,9 @@ export default function QualifiersView({ matches, scorePicks, actualScores, mono
       )}
 
 
-      {/* Mobile list — vertical, visible only on small screens in entire_tournament mode */}
+      {/* Match list — visible on all screen sizes in entire_tournament mode */}
       {showMobileList && (
-        <div className="block md:hidden">
+        <div>
           {/* Round tabs */}
           <div className="flex gap-2 mb-4 overflow-x-auto pb-1">
             {(["r32","r16","qf","sf","third","final"] as MobileRound[]).map((id) => {
@@ -421,7 +431,7 @@ export default function QualifiersView({ matches, scorePicks, actualScores, mono
           </div>
 
           {/* Match cards — grouped by next-round pairing */}
-          <div className="flex flex-col gap-8 mb-6">
+          <div className="flex flex-col gap-8 mb-6 md:grid md:grid-cols-2 md:gap-6">
             {mobileGroups[mobileRound].map((group, gi) => {
               const isMulti = group.matches.length > 1;
               return (
@@ -474,8 +484,8 @@ export default function QualifiersView({ matches, scorePicks, actualScores, mono
         </div>
       )}
 
-      {/* Round labels + bracket — desktop only in entire_tournament mode */}
-      <div className={showMobileList ? "hidden md:block" : ""}>
+      {/* Round labels + bracket — hidden in entire_tournament mode (card list is used instead) */}
+      <div className={showMobileList ? "hidden" : ""}>
       <div style={{ position: "relative", height: 20, marginBottom: 6, width: totalWidth }}>
         {(["R32","R16","QF","SF"] as const).map((lbl, r) => (
           <span key={lbl} style={{
@@ -796,6 +806,10 @@ function MobileMatchCard({
       {meta && (
         <div style={{ padding: "7px 14px 6px", borderBottom: `1px solid ${t.border}`, display: "flex", alignItems: "center", gap: 6 }}>
           <span style={{ fontSize: 11, fontWeight: 700, color: t.textSec }}>{meta.date}</span>
+          <span style={{ fontSize: 11, color: t.border }}>·</span>
+          <span style={{ fontSize: 11, fontWeight: 700, color: t.textSec }}>
+            {knockoutKickoff(meta.date, meta.time).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit", hour12: true })}
+          </span>
           <span style={{ fontSize: 11, color: t.border }}>·</span>
           <span style={{ fontSize: 10, color: t.textMuted, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{meta.venue}</span>
           {interactive && (
