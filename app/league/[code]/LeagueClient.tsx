@@ -98,12 +98,14 @@ export default function LeagueClient({
   });
   const DISMISSED_KEY = `quiniela_dismissed_${code}`;
   const [dismissedDays, setDismissedDays] = useState<Set<string>>(new Set());
+  const [bannersHydrated, setBannersHydrated] = useState(false);
   // Load persisted dismissals after mount (can't read localStorage during SSR)
   useEffect(() => {
     try {
       const stored = localStorage.getItem(DISMISSED_KEY);
       if (stored) setDismissedDays(new Set(JSON.parse(stored) as string[]));
     } catch {}
+    setBannersHydrated(true);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
   // Persist whenever dismissals change (skip initial empty-set write)
   useEffect(() => {
@@ -254,10 +256,10 @@ export default function LeagueClient({
     return idx >= 0 && idx < groupPhases.length - 1 ? groupPhases[idx + 1] : null;
   }, [phases, activePhase, isGroupPhase, mode]);
 
-  const nextDayBannerVisible = mode !== "entire_tournament" && isGroupPhase && !!nextDay && visibleMatches.length > 0 && mobileView === "matches" && dayPredicted === visibleMatches.length && !dismissedDays.has(activeDay);
-  const nextGroupBannerVisible = mode === "entire_tournament" && isGroupPhase && !!nextGroupPhase && phaseMatches.length > 0 && mobileView === "matches" && phasePredicted === phaseMatches.length && !dismissedDays.has(activePhase);
+  const nextDayBannerVisible = bannersHydrated && mode !== "entire_tournament" && isGroupPhase && !!nextDay && visibleMatches.length > 0 && mobileView === "matches" && dayPredicted === visibleMatches.length && !dismissedDays.has(activeDay);
+  const nextGroupBannerVisible = bannersHydrated && mode === "entire_tournament" && isGroupPhase && !!nextGroupPhase && phaseMatches.length > 0 && mobileView === "matches" && phasePredicted === phaseMatches.length && !dismissedDays.has(activePhase);
   const isLastGroupPhase = mode === "entire_tournament" && isGroupPhase && !nextGroupPhase;
-  const playoffsStartBannerVisible = isLastGroupPhase && totalGroupMatches > 0 && totalGroupPredicted === totalGroupMatches && mobileView === "matches" && !dismissedDays.has("playoffs-start");
+  const playoffsStartBannerVisible = bannersHydrated && isLastGroupPhase && totalGroupMatches > 0 && totalGroupPredicted === totalGroupMatches && mobileView === "matches" && !dismissedDays.has("playoffs-start");
 
   const dayFirstKickoff = useMemo(() => {
     if (visibleMatches.length === 0) return null;
