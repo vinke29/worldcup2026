@@ -97,15 +97,18 @@ export default function LeagueClient({
     return !hasPredictions && !localStorage.getItem(`quiniela_onboarded_${currentUserId}`);
   });
   const DISMISSED_KEY = `quiniela_dismissed_${code}`;
-  const [dismissedDays, setDismissedDays] = useState<Set<string>>(() => {
-    if (typeof window === "undefined") return new Set();
+  const [dismissedDays, setDismissedDays] = useState<Set<string>>(new Set());
+  // Load persisted dismissals after mount (can't read localStorage during SSR)
+  useEffect(() => {
     try {
       const stored = localStorage.getItem(DISMISSED_KEY);
-      return stored ? new Set(JSON.parse(stored) as string[]) : new Set();
-    } catch { return new Set(); }
-  });
+      if (stored) setDismissedDays(new Set(JSON.parse(stored) as string[]));
+    } catch {}
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  // Persist whenever dismissals change (skip initial empty-set write)
   useEffect(() => {
-    localStorage.setItem(DISMISSED_KEY, JSON.stringify([...dismissedDays]));
+    if (dismissedDays.size > 0)
+      localStorage.setItem(DISMISSED_KEY, JSON.stringify([...dismissedDays]));
   }, [dismissedDays]); // eslint-disable-line react-hooks/exhaustive-deps
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
 
