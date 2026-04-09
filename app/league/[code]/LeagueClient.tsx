@@ -596,7 +596,13 @@ export default function LeagueClient({
 
         {/* Qualifiers view */}
         {mobileView === "qualifiers" && (
-          <QualifiersView matches={matches} scorePicks={scorePredictions} actualScores={actualScores} mono={mono} mode={mode} onScorePick={!isPreview ? handleScorePick : undefined} />
+          <QualifiersView
+            matches={matches} scorePicks={scorePredictions} actualScores={actualScores}
+            mono={mono} mode={mode} onScorePick={!isPreview ? handleScorePick : undefined}
+            dismissedRounds={dismissedDays}
+            onDismissRound={(round) => setDismissedDays(prev => new Set([...prev, round]))}
+            bannersReady={bannersHydrated}
+          />
         )}
       </div>
 

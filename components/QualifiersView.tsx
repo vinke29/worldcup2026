@@ -14,6 +14,9 @@ interface QualifiersViewProps {
   mono: boolean;
   mode?: LeagueMode;
   onScorePick?: (matchId: string, home: number, away: number, pens?: "home" | "away") => void;
+  dismissedRounds?: Set<string>;
+  onDismissRound?: (round: string) => void;
+  bannersReady?: boolean;
 }
 
 // ── Layout constants ──────────────────────────────────────────────────────────
@@ -162,12 +165,17 @@ const ROUND_LABEL: Record<MobileRound, string> = {
 };
 
 // ── Main component ────────────────────────────────────────────────────────────
-export default function QualifiersView({ matches, scorePicks, actualScores, mono, mode = "phase_by_phase", onScorePick }: QualifiersViewProps) {
+export default function QualifiersView({ matches, scorePicks, actualScores, mono, mode = "phase_by_phase", onScorePick, dismissedRounds: dismissedRoundsProp, onDismissRound, bannersReady = true }: QualifiersViewProps) {
   const hasActual = useMemo(() => matches.some(m => m.homeScore !== null), [matches]);
   const defaultView = hasActual ? "compare" : "predicted";
   const [view, setView] = useState<"predicted" | "actual" | "compare">(defaultView);
   const [mobileRound, setMobileRound] = useState<MobileRound>("r32");
-  const [dismissedRounds, setDismissedRounds] = useState<Set<MobileRound>>(new Set());
+  const [dismissedRoundsInternal, setDismissedRoundsInternal] = useState<Set<MobileRound>>(new Set());
+  const dismissedRounds = dismissedRoundsProp ?? dismissedRoundsInternal;
+  function dismissRound(round: MobileRound) {
+    if (onDismissRound) onDismissRound(round);
+    else setDismissedRoundsInternal(prev => new Set([...prev, round]));
+  }
   const t = useTheme(mono);
 
   // In entire_tournament mode, show mobile list (read-only or interactive)
@@ -335,16 +343,17 @@ export default function QualifiersView({ matches, scorePicks, actualScores, mono
 
   const finalPodY = HALF_H - POD_H / 2;
 
-  // Which bracket to use for R16+ rendering
+  // Which bracket to use for R16+ rendering.
+  // Compare/read-only: show user's predicted bracket; actual vs predicted shown via R32 pod overlays.
+  // Actual bracket only propagates when knockout scores exist (handled by bracketTeams).
   const activeBracket = view === "actual" ? bracketTeams
-    : showPickers ? predictedBracketTeams
-    : hasActual ? bracketTeams   // compare/read-only: show actual bracket
+    : (showPickers || hasActual) ? predictedBracketTeams
     : null;
 
   // Round completion banner
   const nextRound = NEXT_ROUND[mobileRound];
   const allPickedForRound = showPickers && ROUND_PICK_IDS[mobileRound].every(id => scorePicks[id] !== undefined);
-  const roundBannerVisible = allPickedForRound && nextRound !== null && !dismissedRounds.has(mobileRound);
+  const roundBannerVisible = bannersReady && allPickedForRound && nextRound !== null && !dismissedRounds.has(mobileRound);
 
   return (
     <div>
@@ -359,7 +368,7 @@ export default function QualifiersView({ matches, scorePicks, actualScores, mono
         >
           <button
             onClick={() => {
-              setDismissedRounds(prev => new Set([...prev, mobileRound]));
+              dismissRound(mobileRound);
               setMobileRound(nextRound);
             }}
             className="pointer-events-auto w-full max-w-lg flex items-center justify-between px-5 py-4 rounded-2xl cursor-pointer"
@@ -396,7 +405,7 @@ export default function QualifiersView({ matches, scorePicks, actualScores, mono
               const active = mobileRound === id;
               return (
                 <button key={id} onClick={() => {
-                  setDismissedRounds(prev => new Set([...prev, mobileRound]));
+                  dismissRound(mobileRound);
                   setMobileRound(id);
                 }}
                   className="text-xs font-black uppercase tracking-widest px-3 py-1.5 rounded-lg cursor-pointer whitespace-nowrap transition-all"
