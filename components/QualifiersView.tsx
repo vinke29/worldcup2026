@@ -379,31 +379,6 @@ export default function QualifiersView({ matches, scorePicks, actualScores, mono
         </div>
       )}
 
-      {/* Toggle — only shown when actual results exist */}
-      {hasActual && (
-        <div className="flex items-center gap-2 mb-5">
-          {([
-            { id: "compare" as const, label: "Compare" },
-            { id: "actual" as const, label: "Actual" },
-          ]).map(({ id, label }) => {
-            const active = view === id;
-            return (
-              <button
-                key={id}
-                onClick={() => setView(id)}
-                className="text-xs font-bold uppercase tracking-widest px-3 py-1.5 rounded-lg transition-all cursor-pointer"
-                style={{
-                  backgroundColor: active ? t.accent : "transparent",
-                  color: active ? t.accentText : t.textSec,
-                  border: `1px solid ${active ? t.accent : t.border}`,
-                }}
-              >
-                {label}
-              </button>
-            );
-          })}
-        </div>
-      )}
 
       {/* Mobile list — vertical, visible only on small screens in entire_tournament mode */}
       {showMobileList && (
