@@ -428,22 +428,33 @@ export default function QualifiersView({ matches, scorePicks, actualScores, mono
           </div>
 
           {/* Match cards — grouped by next-round pairing */}
-          <div className="flex flex-col gap-5 mb-6">
-            {mobileGroups[mobileRound].map((group, gi) => (
-              <div key={gi}>
-                <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-8 mb-6">
+            {mobileGroups[mobileRound].map((group, gi) => {
+              const isMulti = group.matches.length > 1;
+              return (
+                <div key={gi} style={isMulti ? { border: `1px solid ${t.border}`, borderRadius: 16, overflow: "hidden" } : {}}>
+                  {/* Advancement label as header of the group card */}
+                  {isMulti && group.nextRoundLabel && (
+                    <div style={{ padding: "6px 14px", borderBottom: `1px solid ${t.border}`, backgroundColor: t.halfDivider }}>
+                      <span style={{ fontSize: 9, color: t.textMuted, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em" }}>
+                        {group.nextRoundLabel}
+                      </span>
+                    </div>
+                  )}
+
                   {group.matches.map((m, mi) => (
                     <div key={m.id}>
                       <MobileMatchCard
                         id={m.id} homeTeam={m.homeTeam} awayTeam={m.awayTeam}
                         homeLabel={m.homeLabel} awayLabel={m.awayLabel}
                         scorePicks={scorePicks} onScorePick={onScorePick} t={t}
+                        grouped={isMulti}
                       />
-                      {/* Connector between the two matches in a pair */}
-                      {mi === 0 && group.matches.length > 1 && (
-                        <div className="flex items-center gap-2 py-1 px-1">
+                      {/* "Winners meet" divider between the two matches */}
+                      {mi === 0 && isMulti && (
+                        <div style={{ position: "relative", height: 28, display: "flex", alignItems: "center", borderTop: `1px solid ${t.border}`, borderBottom: `1px solid ${t.border}`, backgroundColor: t.halfDivider }}>
                           <div style={{ flex: 1, height: 1, backgroundColor: t.border }} />
-                          <span style={{ fontSize: 9, color: t.textMuted, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", flexShrink: 0 }}>
+                          <span style={{ padding: "0 10px", fontSize: 9, color: t.textMuted, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", flexShrink: 0 }}>
                             winners meet
                           </span>
                           <div style={{ flex: 1, height: 1, backgroundColor: t.border }} />
@@ -451,19 +462,20 @@ export default function QualifiersView({ matches, scorePicks, actualScores, mono
                       )}
                     </div>
                   ))}
+
+                  {/* Advancement label below single-match groups */}
+                  {!isMulti && group.nextRoundLabel && (
+                    <div className="flex items-center gap-2 mt-2">
+                      <div style={{ flex: 1, height: 1, backgroundColor: t.border }} />
+                      <span style={{ fontSize: 9, color: t.textMuted, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em" }}>
+                        {group.nextRoundLabel}
+                      </span>
+                      <div style={{ flex: 1, height: 1, backgroundColor: t.border }} />
+                    </div>
+                  )}
                 </div>
-                {/* Group label showing where winners advance */}
-                {group.nextRoundLabel && (
-                  <div className="flex items-center gap-2 mt-2">
-                    <div style={{ flex: 1, height: 1, backgroundColor: t.border }} />
-                    <span style={{ fontSize: 9, color: t.textMuted, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em" }}>
-                      {group.nextRoundLabel}
-                    </span>
-                    <div style={{ flex: 1, height: 1, backgroundColor: t.border }} />
-                  </div>
-                )}
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}
@@ -672,7 +684,7 @@ function TbdPod({ x, y, podW, t }: { x: number; y: number; podW: number; t: Reco
 
 // ── Mobile match card ─────────────────────────────────────────────────────────
 function MobileMatchCard({
-  id, homeTeam, awayTeam, homeLabel, awayLabel, scorePicks, onScorePick, t,
+  id, homeTeam, awayTeam, homeLabel, awayLabel, scorePicks, onScorePick, t, grouped,
 }: {
   id: string;
   homeTeam: TeamRow | null;
@@ -682,6 +694,7 @@ function MobileMatchCard({
   scorePicks: Record<string, ScoreEntry>;
   onScorePick?: (matchId: string, home: number, away: number, pens?: "home" | "away") => void;
   t: Record<string, string>;
+  grouped?: boolean;
 }) {
   const homeScore = scorePicks[id]?.home ?? 0;
   const awayScore = scorePicks[id]?.away ?? 0;
@@ -739,7 +752,7 @@ function MobileMatchCard({
   }
 
   return (
-    <div style={{ border: `1px solid ${t.border}`, borderRadius: 12, overflow: "hidden", backgroundColor: t.card }}>
+    <div style={grouped ? { overflow: "hidden", backgroundColor: t.card } : { border: `1px solid ${t.border}`, borderRadius: 12, overflow: "hidden", backgroundColor: t.card }}>
       {/* Date + venue header */}
       {meta && (
         <div style={{ padding: "7px 14px 6px", borderBottom: `1px solid ${t.border}`, display: "flex", alignItems: "center", gap: 6 }}>
