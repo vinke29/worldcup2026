@@ -593,6 +593,7 @@ export default function LeagueClient({
                 setDismissedDays(prev => new Set([...prev, activeDay]));
                 setActiveDay(nextDay.date);
               }
+              window.scrollTo({ top: 0, behavior: "smooth" });
             }}
             className="pointer-events-auto w-full max-w-lg flex items-center justify-between px-5 py-4 rounded-2xl cursor-pointer"
             style={{
