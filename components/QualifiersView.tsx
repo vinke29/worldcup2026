@@ -19,7 +19,7 @@ interface QualifiersViewProps {
 // ── Layout constants ──────────────────────────────────────────────────────────
 const COL_GAP = 28;
 const SLOTS   = 8;
-const SLOT_H  = 60;
+const SLOT_H  = 72;
 const HALF_H  = SLOTS * SLOT_H;
 const TOTAL_H = 2 * HALF_H;
 const ROUNDS  = 4;
@@ -512,6 +512,34 @@ export default function QualifiersView({ matches, scorePicks, actualScores, mono
       {/* Bracket */}
       <div className="overflow-x-auto pb-4">
         <div style={{ width: totalWidth, position: "relative", height: TOTAL_H }}>
+
+          {/* R32 pair group backgrounds — visually groups pairs that feed the same R16 slot */}
+          {Array.from({ length: 4 }, (_, k) => (
+            <div key={`top-bg-${k}`} style={{
+              position: "absolute",
+              left: colX[0] - 8,
+              top: k * 2 * SLOT_H + 8,
+              width: POD_W + 16,
+              height: 2 * SLOT_H - 16,
+              borderRadius: 12,
+              border: `1px solid ${t.border}`,
+              backgroundColor: mono ? "rgba(26,18,8,0.04)" : "rgba(255,255,255,0.025)",
+              pointerEvents: "none",
+            }} />
+          ))}
+          {Array.from({ length: 4 }, (_, k) => (
+            <div key={`bot-bg-${k}`} style={{
+              position: "absolute",
+              left: colX[0] - 8,
+              top: HALF_H + k * 2 * SLOT_H + 8,
+              width: POD_W + 16,
+              height: 2 * SLOT_H - 16,
+              borderRadius: 12,
+              border: `1px solid ${t.border}`,
+              backgroundColor: mono ? "rgba(26,18,8,0.04)" : "rgba(255,255,255,0.025)",
+              pointerEvents: "none",
+            }} />
+          ))}
 
           <div style={{ position: "absolute", top: HALF_H, left: 0, width: colX[3] + POD_W, height: 1, backgroundColor: t.halfDivider }} />
 
