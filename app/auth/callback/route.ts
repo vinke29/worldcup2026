@@ -1,6 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { after } from "next/server";
+import { sendWelcomeEmail } from "@/lib/email";
 
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
@@ -16,6 +18,13 @@ export async function GET(request: NextRequest) {
       } = await supabase.auth.getUser();
 
       if (user) {
+        // Send welcome email for brand-new signups (account < 5 min old).
+        // Runs after the response is sent so it doesn't block the redirect.
+        if (Date.now() - new Date(user.created_at).getTime() < 5 * 60 * 1000) {
+          const name = (user.user_metadata?.name as string | undefined) ?? user.email ?? "";
+          after(() => sendWelcomeEmail(user.email!, name).catch(() => {}));
+        }
+
         // If they already have a league (e.g. re-confirming), go straight there
         const { data: membership } = await supabase
           .from("league_members")

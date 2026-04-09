@@ -402,13 +402,33 @@ export default function Home() {
 
       {/* ── FOOTER ─────────────────────────────────────────────────────── */}
       <footer
-        className="max-w-5xl mx-auto px-6 sm:px-10 pb-12 flex items-center justify-between"
-        style={{ borderTop: `1px solid ${t.borderInner}`, paddingTop: "24px", transition: "border-color 0.3s" }}
+        className="max-w-5xl mx-auto px-6 sm:px-10 pb-12"
+        style={{ borderTop: `1px solid ${t.borderInner}`, paddingTop: "32px", transition: "border-color 0.3s" }}
       >
-        <span className="font-black text-sm tracking-tight" style={{ color: t.textMuted }}>
-          quiniel<span>a</span>
-        </span>
-        <span className="text-xs" style={{ color: t.textMuted }}>World Cup 2026</span>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
+          <span className="font-black text-sm tracking-tight" style={{ color: t.textMuted }}>
+            quiniel<span style={{ color: mono ? t.textMuted : "#D7FF5A" }}>a</span>
+            <span className="font-normal ml-2" style={{ color: t.textMuted, opacity: 0.5 }}>· World Cup 2026</span>
+          </span>
+          <nav className="flex flex-wrap gap-x-6 gap-y-2">
+            {[
+              { label: "FAQ",     href: "/faq" },
+              { label: "Blog",    href: "/blog" },
+              { label: "Privacy", href: "/privacy" },
+              { label: "Terms",   href: "/terms" },
+              { label: "Contact", href: "/contact" },
+            ].map(({ label, href }) => (
+              <a
+                key={href}
+                href={href}
+                className="text-xs font-semibold transition-opacity hover:opacity-100"
+                style={{ color: t.textMuted, opacity: 0.7 }}
+              >
+                {label}
+              </a>
+            ))}
+          </nav>
+        </div>
       </footer>
     </main>
   );
