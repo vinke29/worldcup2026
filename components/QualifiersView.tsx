@@ -414,7 +414,10 @@ export default function QualifiersView({ matches, scorePicks, actualScores, mono
               const label = ROUND_LABEL[id];
               const active = mobileRound === id;
               return (
-                <button key={id} onClick={() => setMobileRound(id)}
+                <button key={id} onClick={() => {
+                  setDismissedRounds(prev => new Set([...prev, mobileRound]));
+                  setMobileRound(id);
+                }}
                   className="text-xs font-black uppercase tracking-widest px-3 py-1.5 rounded-lg cursor-pointer whitespace-nowrap transition-all"
                   style={{
                     border: `1px solid ${active ? t.accent : t.border}`,

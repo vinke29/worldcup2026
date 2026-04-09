@@ -160,6 +160,8 @@ export default function LeagueClient({
   }, [phaseMatches, isGroupPhase]);
 
   const handlePhaseChange = (phase: PhaseId) => {
+    // Auto-dismiss banner for the phase we're leaving
+    setDismissedDays(prev => new Set([...prev, activePhase, activeDay]));
     setActivePhase(phase);
     if (mode === "entire_tournament") {
       // Group tab → show matches. Playoffs tab → show bracket.
@@ -173,6 +175,12 @@ export default function LeagueClient({
       if (first) setActiveDay(first.date);
     }
   };
+
+  function handleDayChange(day: string) {
+    // Auto-dismiss banner for the day we're leaving
+    setDismissedDays(prev => new Set([...prev, activeDay]));
+    setActiveDay(day);
+  }
 
   const visibleMatches = useMemo(() => {
     if (isVirtualGroupPhase) return phaseMatches; // all 6 group matches, no day filter
@@ -235,6 +243,8 @@ export default function LeagueClient({
 
   const nextDayBannerVisible = mode !== "entire_tournament" && isGroupPhase && !!nextDay && visibleMatches.length > 0 && mobileView === "matches" && dayPredicted === visibleMatches.length && !dismissedDays.has(activeDay);
   const nextGroupBannerVisible = mode === "entire_tournament" && isGroupPhase && !!nextGroupPhase && phaseMatches.length > 0 && mobileView === "matches" && phasePredicted === phaseMatches.length && !dismissedDays.has(activePhase);
+  const isLastGroupPhase = mode === "entire_tournament" && isGroupPhase && !nextGroupPhase;
+  const playoffsStartBannerVisible = isLastGroupPhase && totalGroupMatches > 0 && totalGroupPredicted === totalGroupMatches && mobileView === "matches" && !dismissedDays.has("playoffs-start");
 
   const dayFirstKickoff = useMemo(() => {
     if (visibleMatches.length === 0) return null;
@@ -322,7 +332,7 @@ export default function LeagueClient({
       />
       <PhaseNav phases={phases} activePhase={activePhase} onSelect={handlePhaseChange} mono={mono} todayPhases={mode === "entire_tournament" ? todayPhases : undefined} />
       {isGroupPhase && days.length > 0 && mode !== "entire_tournament" && (
-        <DayNav days={days} activeDay={activeDay} onSelect={setActiveDay} mono={mono} />
+        <DayNav days={days} activeDay={activeDay} onSelect={handleDayChange} mono={mono} />
       )}
 
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6">
@@ -591,7 +601,7 @@ export default function LeagueClient({
                 handlePhaseChange(nextGroupPhase.id as PhaseId);
               } else if (nextDay) {
                 setDismissedDays(prev => new Set([...prev, activeDay]));
-                setActiveDay(nextDay.date);
+                handleDayChange(nextDay.date);
               }
               window.scrollTo({ top: 0, behavior: "smooth" });
             }}
@@ -616,6 +626,44 @@ export default function LeagueClient({
                     : nextDay
                       ? `Next up: ${nextDay.date} · ${nextDay.matchCount} ${nextDay.matchCount === 1 ? "match" : "matches"}`
                       : ""}
+                </p>
+              </div>
+            </div>
+            <span className="text-sm font-bold" style={{ color: mono ? "#F7F4EE" : "#0B1E0D" }}>→</span>
+          </button>
+        </div>
+      )}
+
+      {/* Playoffs start banner — slides down when all group picks are done on the last group */}
+      {isLastGroupPhase && mobileView === "matches" && (
+        <div
+          className="fixed top-14 inset-x-0 z-[60] flex justify-center px-4 pt-2 pointer-events-none"
+          style={{
+            transform: playoffsStartBannerVisible ? "translateY(0)" : "translateY(calc(-100% - 72px))",
+            transition: "transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)",
+          }}
+        >
+          <button
+            onClick={() => {
+              setDismissedDays(prev => new Set([...prev, "playoffs-start"]));
+              handlePhaseChange("r32" as PhaseId);
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
+            className="pointer-events-auto w-full max-w-lg flex items-center justify-between px-5 py-4 rounded-2xl cursor-pointer"
+            style={{
+              backgroundColor: mono ? "#1A1208" : "#D7FF5A",
+              border: "none",
+              boxShadow: mono ? "0 8px 32px rgba(0,0,0,0.3)" : "0 8px 32px rgba(215,255,90,0.35)",
+            }}
+          >
+            <div className="flex items-center gap-3">
+              <span className="text-base" style={{ color: mono ? "#D7FF5A" : "#0B1E0D" }}>✓</span>
+              <div className="text-left">
+                <p className="text-sm font-black" style={{ color: mono ? "#F7F4EE" : "#0B1E0D" }}>
+                  All groups complete!
+                </p>
+                <p className="text-xs font-medium" style={{ color: mono ? "rgba(247,244,238,0.6)" : "rgba(11,30,13,0.6)" }}>
+                  Next up: fill the playoff bracket · 31 matches
                 </p>
               </div>
             </div>
