@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useTransition } from "react";
 import type { Match, Phase, PhaseId } from "@/lib/mock-data";
-import { saveScore } from "@/app/actions/scores";
+import { saveScore, saveAllScores, clearAllScores } from "@/app/actions/scores";
 import {
   R32_LABELS, R16_IDS, QF_IDS, SF_IDS, THIRD_PLACE_ID, FINAL_ID,
   type KnockoutMatchInfo,
@@ -158,6 +158,46 @@ export default function AdminClient({ matches, phases, initialScores }: AdminCli
     });
   }
 
+  // Rotating score patterns — varied enough to produce interesting group standings
+  const SEED_PATTERNS = [
+    { home: 2, away: 1 }, { home: 1, away: 0 }, { home: 1, away: 1 },
+    { home: 0, away: 1 }, { home: 2, away: 0 }, { home: 0, away: 2 },
+    { home: 3, away: 1 }, { home: 1, away: 2 }, { home: 0, away: 0 },
+    { home: 2, away: 2 }, { home: 1, away: 3 }, { home: 3, away: 0 },
+  ];
+
+  function handleSeedScores() {
+    const bulk: Record<string, { home: number; away: number }> = {};
+    matches.forEach((m, i) => {
+      bulk[m.id] = SEED_PATTERNS[i % SEED_PATTERNS.length];
+    });
+    // Flatten local state
+    setScores(prev => ({ ...prev, ...bulk }));
+    const allSaved: Record<string, boolean> = {};
+    for (const id of Object.keys(bulk)) allSaved[id] = false;
+    setSaved(prev => ({ ...prev, ...allSaved }));
+    startTransition(async () => {
+      await saveAllScores(bulk);
+      setSaved(prev => {
+        const next = { ...prev };
+        for (const id of Object.keys(bulk)) next[id] = true;
+        return next;
+      });
+    });
+  }
+
+  function handleClearScores() {
+    setScores(() => {
+      const init: Record<string, { home: number; away: number }> = {};
+      for (const m of matches) init[m.id] = { home: 0, away: 0 };
+      for (const id of allKnockoutIds) init[id] = { home: 0, away: 0 };
+      return init;
+    });
+    setSaved({});
+    setPensWinners({});
+    startTransition(async () => { await clearAllScores(); });
+  }
+
   // Group by group name for group phases
   const matchesByGroup = useMemo(() => {
     const groups: Record<string, Match[]> = {};
@@ -188,9 +228,25 @@ export default function AdminClient({ matches, phases, initialScores }: AdminCli
             Score Entry
           </span>
         </div>
-        <span className="text-xs" style={{ color: T.textMuted }}>
-          {savedCount} scores saved
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="text-xs" style={{ color: T.textMuted }}>
+            {savedCount} saved
+          </span>
+          <button
+            onClick={handleSeedScores}
+            className="px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest cursor-pointer"
+            style={{ backgroundColor: T.accent, color: T.accentTx, border: "none" }}
+          >
+            Seed scores
+          </button>
+          <button
+            onClick={handleClearScores}
+            className="px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest cursor-pointer"
+            style={{ backgroundColor: "transparent", color: T.textSec, border: `1px solid ${T.border}` }}
+          >
+            Clear all
+          </button>
+        </div>
       </div>
 
       {/* Phase tabs */}

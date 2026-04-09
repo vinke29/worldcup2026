@@ -33,6 +33,36 @@ export async function saveScore(
   revalidatePath("/league", "layout");
 }
 
+export async function saveAllScores(
+  scores: Record<string, { home: number; away: number; pens?: "home" | "away" | null }>,
+) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user || user.id !== ADMIN_USER_ID) throw new Error("Unauthorized");
+
+  const rows = Object.entries(scores).map(([matchId, s]) => ({
+    match_id: matchId,
+    home_score: s.home,
+    away_score: s.away,
+    pens_winner: s.pens ?? null,
+    updated_at: new Date().toISOString(),
+  }));
+
+  const { error } = await supabase.from("match_scores").upsert(rows, { onConflict: "match_id" });
+  if (error) throw error;
+  revalidatePath("/league", "layout");
+}
+
+export async function clearAllScores() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user || user.id !== ADMIN_USER_ID) throw new Error("Unauthorized");
+
+  const { error } = await supabase.from("match_scores").delete().neq("match_id", "");
+  if (error) throw error;
+  revalidatePath("/league", "layout");
+}
+
 export async function getActualScores(): Promise<Record<string, { home: number; away: number; pens?: "home" | "away" }>> {
   const supabase = await createClient();
   const { data } = await supabase
