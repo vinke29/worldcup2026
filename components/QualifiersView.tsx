@@ -431,7 +431,7 @@ export default function QualifiersView({ matches, scorePicks, actualScores, mono
           </div>
 
           {/* Match cards — grouped by next-round pairing */}
-          <div className="flex flex-col gap-8 mb-6 md:grid md:grid-cols-2 md:gap-6">
+          <div className="flex flex-col gap-8 mb-6 max-w-2xl mx-auto w-full">
             {mobileGroups[mobileRound].map((group, gi) => {
               const isMulti = group.matches.length > 1;
               return (
