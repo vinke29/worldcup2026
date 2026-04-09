@@ -96,7 +96,17 @@ export default function LeagueClient({
     const hasPredictions = Object.keys(initialPredictions).length > 0;
     return !hasPredictions && !localStorage.getItem(`quiniela_onboarded_${currentUserId}`);
   });
-  const [dismissedDays, setDismissedDays] = useState<Set<string>>(new Set());
+  const DISMISSED_KEY = `quiniela_dismissed_${code}`;
+  const [dismissedDays, setDismissedDays] = useState<Set<string>>(() => {
+    if (typeof window === "undefined") return new Set();
+    try {
+      const stored = localStorage.getItem(DISMISSED_KEY);
+      return stored ? new Set(JSON.parse(stored) as string[]) : new Set();
+    } catch { return new Set(); }
+  });
+  useEffect(() => {
+    localStorage.setItem(DISMISSED_KEY, JSON.stringify([...dismissedDays]));
+  }, [dismissedDays]); // eslint-disable-line react-hooks/exhaustive-deps
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
 
   // Merge actual scores from DB into the static MATCHES array
