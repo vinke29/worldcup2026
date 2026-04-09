@@ -229,68 +229,6 @@ export default function QualifiersView({ matches, scorePicks, actualScores, mono
     [topR32Pairs, botR32Pairs, scorePicks]
   );
 
-  // Match lists for mobile picker — grouped as pairs that feed the same next-round slot
-  type MobileMatch = { id: string; homeTeam: TeamRow | null; awayTeam: TeamRow | null; homeLabel: string; awayLabel: string };
-  type MobileGroup = { nextRoundLabel: string; matches: MobileMatch[] };
-
-  const mobileGroups = useMemo((): Record<MobileRound, MobileGroup[]> => {
-    const r32flat = [
-      ...TOP_R32.map((m, i) => ({
-        id: m.id, homeTeam: topR32Pairs[i].home, awayTeam: topR32Pairs[i].away,
-        homeLabel: slotLabel(m.home, m.home.kind === "third" ? thirdGroupAssign[m.id] : undefined),
-        awayLabel: slotLabel(m.away, m.away.kind === "third" ? thirdGroupAssign[m.id] : undefined),
-      })),
-      ...BOTTOM_R32.map((m, i) => ({
-        id: m.id, homeTeam: botR32Pairs[i].home, awayTeam: botR32Pairs[i].away,
-        homeLabel: slotLabel(m.home, m.home.kind === "third" ? thirdGroupAssign[m.id] : undefined),
-        awayLabel: slotLabel(m.away, m.away.kind === "third" ? thirdGroupAssign[m.id] : undefined),
-      })),
-    ];
-    // Pair R32 matches by R16 destination (every 2 consecutive share an R16 slot)
-    const r32: MobileGroup[] = Array.from({ length: 8 }, (_, i) => ({
-      nextRoundLabel: `→ R16 Match ${i + 1}`,
-      matches: [r32flat[i * 2], r32flat[i * 2 + 1]],
-    }));
-
-    const r16flat: MobileMatch[] = [
-      ...predictedBracketTeams.r16Top.map((p, i) => ({ id: R16_IDS[i],   homeTeam: p.home, awayTeam: p.away, homeLabel: "", awayLabel: "" })),
-      ...predictedBracketTeams.r16Bot.map((p, i) => ({ id: R16_IDS[4+i], homeTeam: p.home, awayTeam: p.away, homeLabel: "", awayLabel: "" })),
-    ];
-    const r16: MobileGroup[] = Array.from({ length: 4 }, (_, i) => ({
-      nextRoundLabel: `→ QF Match ${i + 1}`,
-      matches: [r16flat[i * 2], r16flat[i * 2 + 1]],
-    }));
-
-    const qfflat: MobileMatch[] = [
-      ...predictedBracketTeams.qfTop.map((p, i) => ({ id: QF_IDS[i],   homeTeam: p.home, awayTeam: p.away, homeLabel: "", awayLabel: "" })),
-      ...predictedBracketTeams.qfBot.map((p, i) => ({ id: QF_IDS[2+i], homeTeam: p.home, awayTeam: p.away, homeLabel: "", awayLabel: "" })),
-    ];
-    const qf: MobileGroup[] = Array.from({ length: 2 }, (_, i) => ({
-      nextRoundLabel: `→ Semi-final ${i + 1}`,
-      matches: [qfflat[i * 2], qfflat[i * 2 + 1]],
-    }));
-
-    const sf: MobileGroup[] = [{
-      nextRoundLabel: "→ 3rd Place & Final",
-      matches: [
-        { id: SF_IDS[0], homeTeam: predictedBracketTeams.sfTop.home, awayTeam: predictedBracketTeams.sfTop.away, homeLabel: "", awayLabel: "" },
-        { id: SF_IDS[1], homeTeam: predictedBracketTeams.sfBot.home, awayTeam: predictedBracketTeams.sfBot.away, homeLabel: "", awayLabel: "" },
-      ],
-    }];
-
-    const third: MobileGroup[] = [{
-      nextRoundLabel: "→ Final",
-      matches: [{ id: THIRD_PLACE_ID, homeTeam: predictedBracketTeams.thirdPlace.home, awayTeam: predictedBracketTeams.thirdPlace.away, homeLabel: "", awayLabel: "" }],
-    }];
-
-    const final: MobileGroup[] = [{
-      nextRoundLabel: "",
-      matches: [{ id: FINAL_ID, homeTeam: predictedBracketTeams.final.home, awayTeam: predictedBracketTeams.final.away, homeLabel: "", awayLabel: "" }],
-    }];
-
-    return { r32, r16, qf, sf, third, final };
-  }, [topR32Pairs, botR32Pairs, predictedBracketTeams, thirdGroupAssign]);
-
   // For compare: actual R32 teams overlaid on predicted bracket
   const actualThirdMap = useMemo(() => {
     const ranked  = rankThirdPlaceTeams(actualTables);
@@ -324,6 +262,71 @@ export default function QualifiersView({ matches, scorePicks, actualScores, mono
     return map;
   }, [actualTables, actualThirdMap]);
 
+  // Match lists for mobile picker — grouped as pairs that feed the same next-round slot
+  type MobileMatch = { id: string; homeTeam: TeamRow | null; awayTeam: TeamRow | null; homeLabel: string; awayLabel: string; actualHomeTeam?: TeamRow | null; actualAwayTeam?: TeamRow | null };
+  type MobileGroup = { nextRoundLabel: string; matches: MobileMatch[] };
+
+  const mobileGroups = useMemo((): Record<MobileRound, MobileGroup[]> => {
+    const r32flat = [
+      ...TOP_R32.map((m, i) => ({
+        id: m.id, homeTeam: topR32Pairs[i].home, awayTeam: topR32Pairs[i].away,
+        homeLabel: slotLabel(m.home, m.home.kind === "third" ? thirdGroupAssign[m.id] : undefined),
+        awayLabel: slotLabel(m.away, m.away.kind === "third" ? thirdGroupAssign[m.id] : undefined),
+        actualHomeTeam: hasActual ? (actualR32ByMatchId[m.id]?.home ?? null) : undefined,
+        actualAwayTeam: hasActual ? (actualR32ByMatchId[m.id]?.away ?? null) : undefined,
+      })),
+      ...BOTTOM_R32.map((m, i) => ({
+        id: m.id, homeTeam: botR32Pairs[i].home, awayTeam: botR32Pairs[i].away,
+        homeLabel: slotLabel(m.home, m.home.kind === "third" ? thirdGroupAssign[m.id] : undefined),
+        awayLabel: slotLabel(m.away, m.away.kind === "third" ? thirdGroupAssign[m.id] : undefined),
+        actualHomeTeam: hasActual ? (actualR32ByMatchId[m.id]?.home ?? null) : undefined,
+        actualAwayTeam: hasActual ? (actualR32ByMatchId[m.id]?.away ?? null) : undefined,
+      })),
+    ];
+    const r32: MobileGroup[] = Array.from({ length: 8 }, (_, i) => ({
+      nextRoundLabel: `→ R16 Match ${i + 1}`,
+      matches: [r32flat[i * 2], r32flat[i * 2 + 1]],
+    }));
+
+    const r16flat: MobileMatch[] = [
+      ...predictedBracketTeams.r16Top.map((p, i) => ({ id: R16_IDS[i],   homeTeam: p.home, awayTeam: p.away, homeLabel: "", awayLabel: "", actualHomeTeam: hasActual ? (bracketTeams.r16Top[i]?.home ?? null) : undefined, actualAwayTeam: hasActual ? (bracketTeams.r16Top[i]?.away ?? null) : undefined })),
+      ...predictedBracketTeams.r16Bot.map((p, i) => ({ id: R16_IDS[4+i], homeTeam: p.home, awayTeam: p.away, homeLabel: "", awayLabel: "", actualHomeTeam: hasActual ? (bracketTeams.r16Bot[i]?.home ?? null) : undefined, actualAwayTeam: hasActual ? (bracketTeams.r16Bot[i]?.away ?? null) : undefined })),
+    ];
+    const r16: MobileGroup[] = Array.from({ length: 4 }, (_, i) => ({
+      nextRoundLabel: `→ QF Match ${i + 1}`,
+      matches: [r16flat[i * 2], r16flat[i * 2 + 1]],
+    }));
+
+    const qfflat: MobileMatch[] = [
+      ...predictedBracketTeams.qfTop.map((p, i) => ({ id: QF_IDS[i],   homeTeam: p.home, awayTeam: p.away, homeLabel: "", awayLabel: "", actualHomeTeam: hasActual ? (bracketTeams.qfTop[i]?.home ?? null) : undefined, actualAwayTeam: hasActual ? (bracketTeams.qfTop[i]?.away ?? null) : undefined })),
+      ...predictedBracketTeams.qfBot.map((p, i) => ({ id: QF_IDS[2+i], homeTeam: p.home, awayTeam: p.away, homeLabel: "", awayLabel: "", actualHomeTeam: hasActual ? (bracketTeams.qfBot[i]?.home ?? null) : undefined, actualAwayTeam: hasActual ? (bracketTeams.qfBot[i]?.away ?? null) : undefined })),
+    ];
+    const qf: MobileGroup[] = Array.from({ length: 2 }, (_, i) => ({
+      nextRoundLabel: `→ Semi-final ${i + 1}`,
+      matches: [qfflat[i * 2], qfflat[i * 2 + 1]],
+    }));
+
+    const sf: MobileGroup[] = [{
+      nextRoundLabel: "→ 3rd Place & Final",
+      matches: [
+        { id: SF_IDS[0], homeTeam: predictedBracketTeams.sfTop.home, awayTeam: predictedBracketTeams.sfTop.away, homeLabel: "", awayLabel: "", actualHomeTeam: hasActual ? (bracketTeams.sfTop.home ?? null) : undefined, actualAwayTeam: hasActual ? (bracketTeams.sfTop.away ?? null) : undefined },
+        { id: SF_IDS[1], homeTeam: predictedBracketTeams.sfBot.home, awayTeam: predictedBracketTeams.sfBot.away, homeLabel: "", awayLabel: "", actualHomeTeam: hasActual ? (bracketTeams.sfBot.home ?? null) : undefined, actualAwayTeam: hasActual ? (bracketTeams.sfBot.away ?? null) : undefined },
+      ],
+    }];
+
+    const third: MobileGroup[] = [{
+      nextRoundLabel: "→ Final",
+      matches: [{ id: THIRD_PLACE_ID, homeTeam: predictedBracketTeams.thirdPlace.home, awayTeam: predictedBracketTeams.thirdPlace.away, homeLabel: "", awayLabel: "", actualHomeTeam: hasActual ? (bracketTeams.thirdPlace.home ?? null) : undefined, actualAwayTeam: hasActual ? (bracketTeams.thirdPlace.away ?? null) : undefined }],
+    }];
+
+    const final: MobileGroup[] = [{
+      nextRoundLabel: "",
+      matches: [{ id: FINAL_ID, homeTeam: predictedBracketTeams.final.home, awayTeam: predictedBracketTeams.final.away, homeLabel: "", awayLabel: "", actualHomeTeam: hasActual ? (bracketTeams.final.home ?? null) : undefined, actualAwayTeam: hasActual ? (bracketTeams.final.away ?? null) : undefined }],
+    }];
+
+    return { r32, r16, qf, sf, third, final };
+  }, [topR32Pairs, botR32Pairs, predictedBracketTeams, bracketTeams, actualR32ByMatchId, hasActual, thirdGroupAssign]);
+
   const connectorPaths = [
     ...halfConnectors(0, 0, colX, POD_W), ...halfConnectors(0, 1, colX, POD_W), ...halfConnectors(0, 2, colX, POD_W),
     ...halfConnectors(HALF_H, 0, colX, POD_W), ...halfConnectors(HALF_H, 1, colX, POD_W), ...halfConnectors(HALF_H, 2, colX, POD_W),
@@ -333,7 +336,10 @@ export default function QualifiersView({ matches, scorePicks, actualScores, mono
   const finalPodY = HALF_H - POD_H / 2;
 
   // Which bracket to use for R16+ rendering
-  const activeBracket = view === "actual" ? bracketTeams : (showPickers ? predictedBracketTeams : null);
+  const activeBracket = view === "actual" ? bracketTeams
+    : showPickers ? predictedBracketTeams
+    : hasActual ? bracketTeams   // compare/read-only: show actual bracket
+    : null;
 
   // Round completion banner
   const nextRound = NEXT_ROUND[mobileRound];
@@ -425,6 +431,7 @@ export default function QualifiersView({ matches, scorePicks, actualScores, mono
                       <MobileMatchCard
                         id={m.id} homeTeam={m.homeTeam} awayTeam={m.awayTeam}
                         homeLabel={m.homeLabel} awayLabel={m.awayLabel}
+                        actualHomeTeam={m.actualHomeTeam} actualAwayTeam={m.actualAwayTeam}
                         scorePicks={scorePicks} onScorePick={onScorePick} t={t}
                         grouped={isMulti}
                       />
@@ -690,13 +697,15 @@ function TbdPod({ x, y, podW, t }: { x: number; y: number; podW: number; t: Reco
 
 // ── Mobile match card ─────────────────────────────────────────────────────────
 function MobileMatchCard({
-  id, homeTeam, awayTeam, homeLabel, awayLabel, scorePicks, onScorePick, t, grouped,
+  id, homeTeam, awayTeam, homeLabel, awayLabel, actualHomeTeam, actualAwayTeam, scorePicks, onScorePick, t, grouped,
 }: {
   id: string;
   homeTeam: TeamRow | null;
   awayTeam: TeamRow | null;
   homeLabel: string;
   awayLabel: string;
+  actualHomeTeam?: TeamRow | null;
+  actualAwayTeam?: TeamRow | null;
   scorePicks: Record<string, ScoreEntry>;
   onScorePick?: (matchId: string, home: number, away: number, pens?: "home" | "away") => void;
   t: Record<string, string>;
@@ -719,19 +728,34 @@ function MobileMatchCard({
 
   const interactive = !!onScorePick;
 
-  function TeamRow_({ team, label, score, onMinus, onPlus }: {
+  function TeamRow_({ team, label, score, onMinus, onPlus, actualTeam }: {
     team: TeamRow | null; label: string;
     score: number; onMinus?: () => void; onPlus?: () => void;
+    actualTeam?: TeamRow | null;
   }) {
+    const isCompare = actualTeam !== undefined;
+    const correct = isCompare && team && actualTeam && team.team === actualTeam.team;
+    const wrong   = isCompare && team && actualTeam && team.team !== actualTeam.team;
+
     return (
       <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "13px 14px" }}>
         {label && <span style={{ fontSize: 9, color: t.textMuted, fontWeight: 900, width: 22, flexShrink: 0 }}>{label}</span>}
         {team ? (
           <>
             <FlagImage emoji={team.flag} size={20} team={team.team} />
-            <span style={{ flex: 1, fontSize: 14, fontWeight: 600, color: t.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            <span style={{ flex: 1, fontSize: 14, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+              color: correct ? "#4ADE80" : t.text,
+              textDecoration: wrong ? "line-through" : "none",
+              opacity: wrong ? 0.5 : 1,
+            }}>
               {team.team}
             </span>
+            {correct && <span style={{ fontSize: 12, color: "#4ADE80", flexShrink: 0 }}>✓</span>}
+            {wrong && actualTeam && (
+              <span style={{ fontSize: 13, fontWeight: 700, color: t.text, flexShrink: 0, maxWidth: 90, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                {actualTeam.team}
+              </span>
+            )}
           </>
         ) : (
           <span style={{ flex: 1, fontSize: 14, color: t.textMuted, fontStyle: "italic" }}>TBD</span>
@@ -777,13 +801,13 @@ function MobileMatchCard({
       )}
 
       <TeamRow_
-        team={homeTeam} label={homeLabel} score={homeScore}
+        team={homeTeam} label={homeLabel} score={homeScore} actualTeam={actualHomeTeam}
         onMinus={() => onScorePick!(id, Math.max(0, homeScore - 1), awayScore)}
         onPlus={() => onScorePick!(id, homeScore + 1, awayScore)}
       />
       <div style={{ height: 1, backgroundColor: t.border }} />
       <TeamRow_
-        team={awayTeam} label={awayLabel} score={awayScore}
+        team={awayTeam} label={awayLabel} score={awayScore} actualTeam={actualAwayTeam}
         onMinus={() => onScorePick!(id, homeScore, Math.max(0, awayScore - 1))}
         onPlus={() => onScorePick!(id, homeScore, awayScore + 1)}
       />
