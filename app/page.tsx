@@ -3,19 +3,19 @@
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 
-// ── Design tokens — dark B&W, lime as the only color ─────────────────────────
+// ── Design tokens — light/cream, lime as the only color ──────────────────────
 const t = {
-  pageBg:      "#080808",
-  border:      "#1E1E1E",
-  borderInner: "#141414",
-  cardBg:      "#0F0F0F",
-  inputBg:     "#080808",
-  textPrimary: "#F0EDE6",
-  textSec:     "#606060",
-  textMuted:   "#3A3A3A",
+  pageBg:      "#F5F0E8",
+  border:      "#DDD9D0",
+  borderInner: "#E5E1D8",
+  cardBg:      "#EDE8E0",
+  inputBg:     "#E8E3DB",
+  textPrimary: "#111111",
+  textSec:     "#888880",
+  textMuted:   "#AAAAAA",
   accent:      "#D7FF5A",
-  accentText:  "#080808",
-  liveGlow:    "#D7FF5A",
+  accentText:  "#111111",
+  liveGlow:    "#111111",
 };
 
 export default function Home() {
@@ -60,31 +60,32 @@ export default function Home() {
         {/* Video background — desktop */}
         <div className="hidden sm:block absolute inset-0 overflow-hidden">
           <video
-            autoPlay muted loop playsInline
+            autoPlay muted playsInline preload="auto"
             className="absolute"
             style={{
-              left: "35%",
+              left: "32%",
               top: "50%",
               transform: "translateY(-50%)",
               height: "110%",
               width: "auto",
-              filter: "grayscale(1) contrast(1.15) brightness(0.85)",
-              opacity: 0.6,
+              filter: "grayscale(1) contrast(1.1) brightness(1.05)",
+              mixBlendMode: "multiply",
+              opacity: 0.9,
             }}
           >
             <source src="/hero-video.mp4" type="video/mp4" />
           </video>
           {/* Left fade */}
           <div className="absolute inset-0" style={{
-            background: `linear-gradient(to right, ${t.pageBg} 28%, ${t.pageBg}E6 48%, ${t.pageBg}55 68%, transparent 88%)`,
+            background: `linear-gradient(to right, ${t.pageBg} 25%, ${t.pageBg}DD 45%, ${t.pageBg}44 70%, transparent 90%)`,
           }} />
           {/* Right fade */}
           <div className="absolute inset-0" style={{
-            background: `linear-gradient(to left, ${t.pageBg} 0%, transparent 20%)`,
+            background: `linear-gradient(to left, ${t.pageBg} 0%, transparent 18%)`,
           }} />
           {/* Bottom fade */}
           <div className="absolute inset-x-0 bottom-0" style={{
-            height: "35%",
+            height: "30%",
             background: `linear-gradient(to bottom, transparent, ${t.pageBg})`,
           }} />
         </div>
@@ -114,7 +115,7 @@ export default function Home() {
         {/* Mobile video strip */}
         <div className="sm:hidden relative overflow-hidden flex-shrink-0" style={{ height: "280px", marginTop: "12px" }}>
           <video
-            autoPlay muted loop playsInline
+            autoPlay muted playsInline preload="auto"
             className="absolute"
             style={{
               height: "160%",
@@ -122,8 +123,9 @@ export default function Home() {
               top: "50%",
               left: "50%",
               transform: "translate(-50%, -42%)",
-              filter: "grayscale(1) contrast(1.15) brightness(0.85)",
-              opacity: 0.65,
+              filter: "grayscale(1) contrast(1.1) brightness(1.05)",
+              mixBlendMode: "multiply",
+              opacity: 0.9,
             }}
           >
             <source src="/hero-video.mp4" type="video/mp4" />
@@ -138,7 +140,7 @@ export default function Home() {
         <div className="relative z-10 flex-1 flex flex-col justify-start sm:justify-end px-6 sm:px-10 pt-4 sm:pt-0 pb-20 max-w-5xl mx-auto w-full">
 
           <div className="flex items-center gap-2 mb-8">
-            <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: t.accent }} />
+            <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: t.textPrimary }} />
             <span className="text-xs font-bold tracking-widest uppercase" style={{ color: t.textSec }}>
               World Cup 2026 · 104 matches
             </span>
