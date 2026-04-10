@@ -101,3 +101,33 @@ export async function logout() {
   await supabase.auth.signOut();
   redirect("/auth/login");
 }
+
+export async function forgotPassword(
+  _prevState: { ok: boolean } | null,
+  formData: FormData
+): Promise<{ ok: boolean }> {
+  const email = (formData.get("email") as string).trim();
+  const supabase = await createClient();
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+
+  await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${siteUrl}/auth/reset-callback`,
+  });
+
+  // Always succeed — don't reveal whether the email exists
+  return { ok: true };
+}
+
+export async function resetPassword(
+  _prevState: string | null,
+  formData: FormData
+): Promise<string | null> {
+  const password = formData.get("password") as string;
+  if (password.length < 6) return "Password must be at least 6 characters.";
+
+  const supabase = await createClient();
+  const { error } = await supabase.auth.updateUser({ password });
+  if (error) return error.message;
+
+  redirect("/auth/login?message=Password+updated.+Sign+in+with+your+new+password.");
+}

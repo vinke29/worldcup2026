@@ -10,6 +10,7 @@ function LoginForm() {
   const [actionError, action, pending] = useActionState(login, null);
   const searchParams = useSearchParams();
   const urlError = searchParams.get("error");
+  const message = searchParams.get("message");
   const error = actionError ?? urlError;
 
   return (
@@ -45,6 +46,19 @@ function LoginForm() {
             Welcome back.
           </p>
 
+          {message && (
+            <div
+              className="mb-4 px-4 py-3 rounded-xl text-sm"
+              style={{
+                backgroundColor: "rgba(215,255,90,0.08)",
+                border: "1px solid rgba(215,255,90,0.2)",
+                color: "#D7FF5A",
+              }}
+            >
+              {message}
+            </div>
+          )}
+
           {error && (
             <div
               className="mb-4 px-4 py-3 rounded-xl text-sm"
@@ -77,6 +91,15 @@ function LoginForm() {
                 autoComplete="current-password"
               />
             </AuthField>
+            <div className="flex justify-end">
+              <Link
+                href="/auth/forgot-password"
+                className="text-xs font-semibold hover:opacity-80"
+                style={{ color: "#4A6B50" }}
+              >
+                Forgot password?
+              </Link>
+            </div>
             <AuthButton pending={pending}>Sign in →</AuthButton>
           </form>
         </div>
