@@ -113,6 +113,7 @@ export default function LeagueClient({
       localStorage.setItem(DISMISSED_KEY, JSON.stringify([...dismissedDays]));
   }, [dismissedDays]); // eslint-disable-line react-hooks/exhaustive-deps
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
+  const [linkCopied, setLinkCopied] = useState(false);
 
   // Merge actual scores from DB into the static MATCHES array
   const matches: Match[] = useMemo(
@@ -542,16 +543,19 @@ export default function LeagueClient({
                 <button
                   onClick={() => {
                     const url = `${window.location.origin}/auth/setup?intent=join&code=${code}`;
-                    if (navigator.share) {
-                      navigator.share({ title: "Join my Quiniela", text: `Join my World Cup 2026 prediction league! Use code ${code} or tap the link.`, url });
-                    } else {
-                      navigator.clipboard.writeText(url);
-                    }
+                    navigator.clipboard.writeText(url).then(() => {
+                      setLinkCopied(true);
+                      setTimeout(() => setLinkCopied(false), 2500);
+                    });
                   }}
-                  className="w-full py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all hover:opacity-80 cursor-pointer"
-                  style={{ backgroundColor: t.accent, color: t.accentText, border: "none" }}
+                  className="w-full py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all cursor-pointer"
+                  style={{
+                    backgroundColor: linkCopied ? "transparent" : t.accent,
+                    color: linkCopied ? t.accent : t.accentText,
+                    border: `1px solid ${t.accent}`,
+                  }}
                 >
-                  Share invite link
+                  {linkCopied ? "Link copied! Send it to your friends" : "Copy invite link"}
                 </button>
               </div>
 
