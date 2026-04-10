@@ -114,20 +114,32 @@ export default function Home() {
           </div>
 
           <div className="flex items-center gap-3">
-            {/* Mono toggle */}
+            {/* Theme toggle */}
             <button
               onClick={() => setMono(v => !v)}
-              className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 border cursor-pointer transition-all duration-200"
+              className="w-8 h-8 flex items-center justify-center rounded-full border cursor-pointer transition-all duration-200"
               style={{
                 borderColor: mono ? "#C8C0B0" : "rgba(44,72,50,0.7)",
                 backgroundColor: mono ? "rgba(26,18,8,0.06)" : "rgba(26,46,31,0.4)",
                 backdropFilter: "blur(8px)",
               }}
+              aria-label={mono ? "Switch to dark mode" : "Switch to light mode"}
             >
-              <span className="text-sm" style={{ lineHeight: 1 }}>{mono ? "🎨" : "◑"}</span>
-              <span className="text-[10px] font-bold tracking-widest uppercase" style={{ color: mono ? "#1A1208" : "#7A9B84" }}>
-                {mono ? "Color" : "Ink"}
-              </span>
+              {mono ? (
+                /* Sun */
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6B5E4E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="5"/>
+                  <line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
+                  <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+                  <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
+                  <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+                </svg>
+              ) : (
+                /* Moon */
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#7A9B84" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>
+                </svg>
+              )}
             </button>
 
             <a
@@ -190,8 +202,7 @@ export default function Home() {
             className="mb-10 leading-relaxed max-w-sm"
             style={{ fontSize: "clamp(14px, 1.6vw, 17px)", color: t.textSec, transition: "color 0.3s" }}
           >
-            A private prediction game for you and your friends.
-            Pick every match. See who really knows football.
+            A private World Cup game for you and your friends.
           </p>
 
           <div className="flex flex-wrap gap-3">
