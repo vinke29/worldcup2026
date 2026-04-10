@@ -10,16 +10,17 @@ function actualOutcome(match: Match): Outcome | null {
 }
 
 // Points for [correct outcome, exact score] by phase
+// KO exact score = winner pts + 5 flat bonus
 const PHASE_POINTS: Record<string, [number, number]> = {
   "group-md1": [1, 3],
   "group-md2": [1, 3],
   "group-md3": [1, 3],
-  "r32":       [2, 5],
-  "r16":       [3, 7],
-  "qf":        [5, 10],
-  "sf":        [7, 12],
-  "third":     [7, 12],
-  "final":     [10, 15],
+  "r32":       [2, 7],   // Made R32
+  "r16":       [3, 8],   // Made R16
+  "qf":        [5, 10],  // Made QF
+  "sf":        [10, 15], // Made Final (SF winner reaches the Final)
+  "third":     [5, 10],  // 3rd place
+  "final":     [15, 20], // Champion
 };
 
 export function phasePoints(phase: string): [number, number] {

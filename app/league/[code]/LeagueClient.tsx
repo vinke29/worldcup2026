@@ -586,25 +586,26 @@ export default function LeagueClient({
                 <div className="rounded-xl overflow-hidden" style={{ border: `1px solid ${t.borderInner}` }}>
                   {/* Header */}
                   <div className="grid grid-cols-3 px-3 py-1.5" style={{ backgroundColor: t.cardBgDeep }}>
-                    <span className="text-[9px] font-black uppercase tracking-widest" style={{ color: t.textMuted }}>Round</span>
-                    <span className="text-[9px] font-black uppercase tracking-widest text-center" style={{ color: t.textMuted }}>Winner</span>
-                    <span className="text-[9px] font-black uppercase tracking-widest text-right" style={{ color: t.textMuted }}>Exact</span>
+                    <span className="text-[9px] font-black uppercase tracking-widest" style={{ color: t.textMuted }}>Milestone</span>
+                    <span className="text-[9px] font-black uppercase tracking-widest text-center" style={{ color: t.textMuted }}>Pts</span>
+                    <span className="text-[9px] font-black uppercase tracking-widest text-right" style={{ color: t.textMuted }}>+ Exact</span>
                   </div>
                   {[
-                    { round: "R32", winner: 2, exact: 5 },
-                    { round: "R16", winner: 3, exact: 7 },
-                    { round: "QF", winner: 5, exact: 10 },
-                    { round: "SF", winner: 7, exact: 12 },
-                    { round: "Final", winner: 10, exact: 15 },
-                  ].map(({ round, winner, exact }, i, arr) => (
+                    { round: "Made R32", winner: 2, exact: 5 },
+                    { round: "Made R16", winner: 3, exact: 5 },
+                    { round: "Made QF", winner: 5, exact: 5 },
+                    { round: "Made SF", winner: 7, exact: 5 },
+                    { round: "Made Final", winner: 10, exact: 5 },
+                    { round: "Champion", winner: 15, exact: 5 },
+                  ].map(({ round, winner, exact }) => (
                     <div
                       key={round}
                       className="grid grid-cols-3 px-3 py-1.5"
-                      style={{ borderTop: `1px solid ${t.borderInner}`, backgroundColor: round === "Final" ? (mono ? "rgba(26,18,8,0.04)" : "rgba(215,255,90,0.04)") : "transparent" }}
+                      style={{ borderTop: `1px solid ${t.borderInner}`, backgroundColor: round === "Champion" ? (mono ? "rgba(26,18,8,0.04)" : "rgba(215,255,90,0.04)") : "transparent" }}
                     >
-                      <span className="text-xs font-semibold" style={{ color: round === "Final" ? t.accent : t.textBody }}>{round}</span>
+                      <span className="text-xs font-semibold" style={{ color: round === "Champion" ? t.accent : t.textBody }}>{round}</span>
                       <span className="text-xs font-black text-center" style={{ color: t.accent }}>{winner} pts</span>
-                      <span className="text-xs font-black text-right" style={{ color: t.accent }}>{exact} pts</span>
+                      <span className="text-xs font-black text-right" style={{ color: t.textSec }}>+{exact} pts</span>
                     </div>
                   ))}
                 </div>
