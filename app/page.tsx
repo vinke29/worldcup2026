@@ -3,10 +3,6 @@
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 
-function generateCode() {
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-  return Array.from({ length: 7 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
-}
 
 export default function Home() {
   const router = useRouter();
@@ -141,13 +137,6 @@ export default function Home() {
             >
               Sign in
             </a>
-            <a
-              href="/league/BANDA26"
-              className="text-xs font-semibold transition-opacity hover:opacity-60"
-              style={{ color: t.textSec }}
-            >
-              Preview →
-            </a>
           </div>
         </nav>
 
@@ -201,8 +190,8 @@ export default function Home() {
             className="mb-10 leading-relaxed max-w-sm"
             style={{ fontSize: "clamp(14px, 1.6vw, 17px)", color: t.textSec, transition: "color 0.3s" }}
           >
-            A private prediction league for you and your friends.
-            Predictions lock one hour before kickoff — no backing out.
+            A private prediction game for you and your friends.
+            Pick every match. See who really knows football.
           </p>
 
           <div className="flex flex-wrap gap-3">
@@ -245,7 +234,7 @@ export default function Home() {
             {
               num: "01",
               title: "Predict every match",
-              body: "Fill in results for all 104 matches — group stage through the final. Community picks and odds help you decide.",
+              body: "Fill in results for all 104 matches — group stage through the final. Every match, before the tournament begins.",
             },
             {
               num: "02",
@@ -298,13 +287,6 @@ export default function Home() {
               Create a private league and share your invite code.
               Friends join in seconds.
             </p>
-            <a
-              href="/league/BANDA26"
-              className="inline-flex items-center gap-1.5 text-xs font-bold tracking-widest uppercase transition-opacity hover:opacity-60"
-              style={{ color: t.textMuted }}
-            >
-              Preview a league first →
-            </a>
           </div>
 
           {/* Form card */}
