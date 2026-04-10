@@ -6,6 +6,7 @@ import Header from "@/components/Header";
 import PhaseNav from "@/components/PhaseNav";
 import DayNav, { type Day } from "@/components/DayNav";
 import MatchCard from "@/components/MatchCard";
+import GroupStandingsWidget from "@/components/GroupStandingsWidget";
 import Leaderboard from "@/components/Leaderboard";
 import OnboardingModal from "@/components/OnboardingModal";
 import MemberPicksModal from "@/components/MemberPicksModal";
@@ -214,6 +215,18 @@ export default function LeagueClient({
   }, [visibleMatches]);
 
   const groupNames = useMemo(() => Object.keys(matchesByGroup).sort(), [matchesByGroup]);
+
+  // All group matches by group name (across all matchdays) — used for standings widget
+  const allGroupMatchesByGroup = useMemo(() => {
+    const groups: Record<string, typeof matches> = {};
+    for (const m of matches) {
+      if (m.group && m.phase.startsWith("group")) {
+        if (!groups[m.group]) groups[m.group] = [];
+        groups[m.group].push(m);
+      }
+    }
+    return groups;
+  }, [matches]);
 
   // In entire_tournament mode, a match counts as picked if it has either an outcome
   // prediction OR a score pick (0-0 is a valid prediction, so we track any interaction)
@@ -514,6 +527,12 @@ export default function LeagueClient({
                         </div>
                       ))}
                     </div>
+                    <GroupStandingsWidget
+                      groupName={groupName}
+                      allGroupMatches={allGroupMatchesByGroup[groupName] ?? []}
+                      scorePicks={scorePredictions}
+                      mono={mono}
+                    />
                   </div>
                 ))}
               </div>
