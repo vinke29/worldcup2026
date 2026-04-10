@@ -204,14 +204,14 @@ export default function Home() {
             <div key={num} className="space-y-5">
               <span
                 className="block font-black leading-none tabular-nums"
-                style={{ fontSize: "72px", color: t.borderInner, letterSpacing: "-0.04em" }}
+                style={{ fontSize: "72px", color: "#2A2A2A", letterSpacing: "-0.04em" }}
               >
                 {num}
               </span>
               <h3 className="font-black text-xl tracking-tight" style={{ color: t.textPrimary }}>
                 {title}
               </h3>
-              <p className="text-sm leading-relaxed" style={{ color: t.textSec }}>
+              <p className="text-sm leading-relaxed" style={{ color: "#909090" }}>
                 {body}
               </p>
             </div>
@@ -236,7 +236,7 @@ export default function Home() {
               Ready to<br />
               <span style={{ color: t.accent }}>play?</span>
             </h2>
-            <p className="text-sm leading-relaxed mb-10 max-w-xs" style={{ color: t.textSec }}>
+            <p className="text-sm leading-relaxed mb-10 max-w-xs" style={{ color: "#909090" }}>
               Create a private league and share your invite code.
               Friends join in seconds.
             </p>
