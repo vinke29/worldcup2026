@@ -609,6 +609,9 @@ export default function LeagueClient({
                     </div>
                   ))}
                 </div>
+                <p className="text-[10px] mt-2.5 leading-relaxed" style={{ color: t.textMuted }}>
+                  Points stack as your team advances. Netherlands to Final = 2+3+5+7+10 = <span style={{ color: t.accent, fontWeight: 800 }}>27 pts</span>. Champion = 42 pts.
+                </p>
               </div>
             </div>
           </div>
