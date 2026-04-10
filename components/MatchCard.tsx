@@ -281,7 +281,7 @@ export default function MatchCard({
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-start gap-2.5 min-w-0 flex-1">
             {match.illustration && <FlagImage emoji={match.homeFlag} size={28} team={match.homeTeam} />}
-            <span className="font-black text-lg sm:text-xl uppercase tracking-tight leading-tight" style={{ color: isMono ? "#1A1208" : "#F0EDE6" }}>
+            <span className="font-black text-base uppercase tracking-tight leading-tight whitespace-nowrap overflow-hidden text-ellipsis" style={{ color: isMono ? "#1A1208" : "#F0EDE6" }}>
               {match.homeTeam}
             </span>
           </div>
@@ -295,7 +295,7 @@ export default function MatchCard({
             )}
           </div>
           <div className="flex items-start gap-2.5 min-w-0 flex-1 justify-end">
-            <span className="font-black text-lg sm:text-xl uppercase tracking-tight leading-tight text-right" style={{ color: isMono ? "#1A1208" : "#F0EDE6" }}>
+            <span className="font-black text-base uppercase tracking-tight leading-tight text-right whitespace-nowrap overflow-hidden text-ellipsis" style={{ color: isMono ? "#1A1208" : "#F0EDE6" }}>
               {match.awayTeam}
             </span>
             {match.illustration && <FlagImage emoji={match.awayFlag} size={28} team={match.awayTeam} />}
@@ -360,6 +360,8 @@ export default function MatchCard({
         <>
           {/* Time + venue */}
           <div className="flex items-center gap-1.5 px-4 pb-3 text-[10px]" style={{ color: isMono ? "#A89E8E" : "#4A6B50" }}>
+            <span className="font-bold">{match.date}</span>
+            <span>·</span>
             <span className="font-bold">
               {kickoff.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit", hour12: true })}
             </span>
