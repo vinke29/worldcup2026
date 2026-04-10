@@ -7,6 +7,7 @@ import PhaseNav from "@/components/PhaseNav";
 import DayNav, { type Day } from "@/components/DayNav";
 import MatchCard from "@/components/MatchCard";
 import GroupStandingsWidget from "@/components/GroupStandingsWidget";
+import RecentMatchesStrip from "@/components/RecentMatchesStrip";
 import Leaderboard from "@/components/Leaderboard";
 import OnboardingModal from "@/components/OnboardingModal";
 import MemberPicksModal from "@/components/MemberPicksModal";
@@ -89,7 +90,14 @@ export default function LeagueClient({
   const [activeDay, setActiveDay] = useState<string>(defaultNav.day);
   const [predictions, setPredictions] = useState<Record<string, Outcome>>(initialPredictions);
   const [scorePredictions, setScorePredictions] = useState<Record<string, ScoreEntry>>(initialScorePicks);
-  const [mobileView, setMobileView] = useState<"matches" | "standings" | "groups" | "qualifiers">("matches");
+  const [mobileView, setMobileView] = useState<"matches" | "standings" | "groups" | "qualifiers">(() => {
+    if (mode !== "entire_tournament") return "matches";
+    // If the tournament has started and the user has made picks, land on Standings
+    const firstKickoff = Date.UTC(2026, 5, 11, 23, 0); // Jun 11 19:00 EDT = 23:00 UTC
+    const hasPicks = Object.keys(initialScorePicks).length > 0 || Object.keys(initialPredictions).length > 0;
+    if (Date.now() > firstKickoff && hasPicks) return "standings";
+    return "matches";
+  });
   const [mono, setMono] = useState(false);
   // Initialise synchronously to avoid a flash/jump on first render
   const [showOnboarding, setShowOnboarding] = useState(() => {
@@ -545,6 +553,13 @@ export default function LeagueClient({
         {/* Standings view — full width */}
         {mobileView === "standings" && (
           <div className="space-y-4">
+            <RecentMatchesStrip
+              matches={matches}
+              predictions={predictions}
+              scorePredictions={scorePredictions}
+              mono={mono}
+              onGoToMatches={() => setMobileView("matches")}
+            />
             <Leaderboard
               members={computeStandings(matches, members, currentUserId, predictions, scorePredictions, actualScores)}
               currentUserId={currentUserId}
