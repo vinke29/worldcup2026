@@ -45,13 +45,16 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Guard the setup page — forward intent/code so the login→signup path preserves them
+  // Guard the setup page — send unauthenticated users to signup (not login)
+  // because /auth/setup is only reached via a share link, so the visitor is new.
   if (pathname === "/auth/setup" && !user) {
     const url = request.nextUrl.clone();
-    url.pathname = "/auth/login";
+    url.pathname = "/auth/signup";
     const qs = request.nextUrl.searchParams;
     const intent = qs.get("intent");
     const code   = qs.get("code");
+    // Clear any stale params from the clone before re-setting
+    url.search = "";
     if (intent) url.searchParams.set("intent", intent);
     if (code)   url.searchParams.set("code", code);
     return NextResponse.redirect(url);

@@ -187,7 +187,7 @@ function SetupField({
       <style>{`
         .setup-input {
           width: 100%; background: #0F2411; border: 1px solid #2C4832;
-          border-radius: 12px; padding: 12px 16px; font-size: 14px;
+          border-radius: 12px; padding: 12px 16px; font-size: 16px;
           color: #F0EDE6; outline: none; transition: border-color 0.15s;
           font-family: inherit;
         }

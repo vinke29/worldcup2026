@@ -381,7 +381,7 @@ function Field({
           border: 1px solid ${border};
           border-radius: 12px;
           padding: 12px 16px;
-          font-size: 14px;
+          font-size: 16px;
           color: ${textPrimary};
           outline: none;
           transition: border-color 0.15s;
