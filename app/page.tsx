@@ -104,15 +104,15 @@ export default function Home() {
           </div>
           <a
             href="/auth/login"
-            className="text-xs font-semibold transition-opacity hover:opacity-100"
-            style={{ color: t.textSec, opacity: 0.8 }}
+            className="text-xs font-semibold transition-opacity hover:opacity-70"
+            style={{ color: t.textPrimary }}
           >
             Sign in
           </a>
         </nav>
 
         {/* Mobile video strip */}
-        <div className="sm:hidden relative overflow-hidden flex-shrink-0" style={{ height: "280px", marginTop: "12px" }}>
+        <div className="sm:hidden relative overflow-hidden flex-shrink-0" style={{ height: "340px", marginTop: "0px" }}>
           <video
             autoPlay muted playsInline preload="auto"
             className="absolute"
@@ -137,7 +137,7 @@ export default function Home() {
         {/* Hero text */}
         <div className="relative z-10 flex-1 flex flex-col justify-start sm:justify-end px-6 sm:px-10 pt-4 sm:pt-0 pb-20 max-w-5xl mx-auto w-full">
 
-          <div className="flex items-center gap-2 mb-8">
+          <div className="flex items-center gap-2 mb-6 sm:mb-8">
             <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: t.accent }} />
             <span className="text-xs font-bold tracking-widest uppercase" style={{ color: t.textSec }}>
               World Cup 2026 · 104 matches
@@ -154,7 +154,7 @@ export default function Home() {
             <span style={{ color: t.accent }}>friends.</span>
           </h1>
 
-          <div className="flex flex-wrap gap-3">
+          <div className="flex items-center gap-4">
             <button
               onClick={() => scrollToForm("create")}
               className="px-7 py-3.5 rounded-xl font-black text-sm uppercase tracking-widest transition-all hover:opacity-90 active:scale-[0.98]"
@@ -164,13 +164,8 @@ export default function Home() {
             </button>
             <button
               onClick={() => scrollToForm("join")}
-              className="px-7 py-3.5 rounded-xl font-black text-sm uppercase tracking-widest border transition-all hover:border-white/30"
-              style={{
-                borderColor: t.border,
-                color: t.textSec,
-                backgroundColor: "rgba(255,255,255,0.03)",
-                backdropFilter: "blur(8px)",
-              }}
+              className="font-black text-sm uppercase tracking-widest transition-opacity hover:opacity-100"
+              style={{ color: t.textSec, opacity: 0.7 }}
             >
               Join with code
             </button>
