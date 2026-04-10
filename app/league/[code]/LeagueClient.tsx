@@ -569,9 +569,8 @@ export default function LeagueClient({
                   {(mode === "entire_tournament" ? [
                     { label: "Correct result · Group", pts: "1 pt" },
                     { label: "Exact score · Group", pts: "3 pts" },
-                    { label: "Team reached round · Knockout", pts: "2 pts" },
-                    { label: "Team won the round · Knockout", pts: "5 pts" },
-                    { label: "Exact score · Knockout", pts: "10 pts" },
+                    { label: "Correct winner · R32–Final", pts: "2–10 pts" },
+                    { label: "Exact score · R32–Final", pts: "5–15 pts" },
                   ] : [
                     { label: "Correct result · Group", pts: "1 pt" },
                     { label: "Exact score · Group", pts: "3 pts" },
