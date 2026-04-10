@@ -16,9 +16,11 @@ export default function Header({ leagueName, leagueCode, mono = false, onToggleM
 
   function copyCode() {
     if (!leagueCode) return;
-    navigator.clipboard.writeText(leagueCode);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    const url = `${window.location.origin}/auth/setup?intent=join&code=${leagueCode}`;
+    navigator.clipboard.writeText(url).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
   }
 
   return (
