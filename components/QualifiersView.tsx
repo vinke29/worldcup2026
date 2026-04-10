@@ -194,7 +194,7 @@ export default function QualifiersView({ matches, scorePicks, actualScores, mono
   const showPickers = showMobileList && !!onScorePick;
 
   // Dynamic layout based on whether pickers are shown
-  const POD_W    = showPickers ? 168 : 132;
+  const POD_W    = 132; // bracket is always read-only; picks stay in the list
   const colX     = Array.from({ length: ROUNDS }, (_, r) => r * (POD_W + COL_GAP));
   const finalX   = ROUNDS * (POD_W + COL_GAP);
   const totalWidth = finalX + POD_W;
@@ -405,9 +405,9 @@ export default function QualifiersView({ matches, scorePicks, actualScores, mono
       )}
 
 
-      {/* Match list — visible on all screen sizes in entire_tournament mode */}
+      {/* Match list — mobile only in entire_tournament mode; desktop shows the bracket */}
       {showMobileList && (
-        <div>
+        <div className="md:hidden">
           {/* Round tabs */}
           <div className="flex gap-2 mb-4 overflow-x-auto pb-1">
             {(["r32","r16","qf","sf","third","final"] as MobileRound[]).map((id) => {
@@ -484,8 +484,8 @@ export default function QualifiersView({ matches, scorePicks, actualScores, mono
         </div>
       )}
 
-      {/* Round labels + bracket — hidden in entire_tournament mode (card list is used instead) */}
-      <div className={showMobileList ? "hidden" : ""}>
+      {/* Round labels + bracket — always shown on desktop; hidden on mobile in entire_tournament mode */}
+      <div className={showMobileList ? "hidden md:block" : ""}>
       <div style={{ position: "relative", height: 20, marginBottom: 6, width: totalWidth }}>
         {(["R32","R16","QF","SF"] as const).map((lbl, r) => (
           <span key={lbl} style={{
@@ -564,7 +564,7 @@ export default function QualifiersView({ matches, scorePicks, actualScores, mono
               actualHome={view === "compare" ? actualR32ByMatchId[m.id]?.home : undefined}
               actualAway={view === "compare" ? actualR32ByMatchId[m.id]?.away : undefined}
               compare={view === "compare"}
-              matchId={m.id} scorePicks={showPickers ? scorePicks : undefined} onScorePick={showPickers ? onScorePick : undefined}
+              matchId={m.id} scorePicks={scorePicks} onScorePick={undefined}
               t={t}
             />
           ))}
@@ -574,16 +574,16 @@ export default function QualifiersView({ matches, scorePicks, actualScores, mono
             <>
               {activeBracket.r16Top.map((p, i) => (
                 p.home || p.away
-                  ? <MatchPod key={`top-r16-${i}`} x={colX[1]} y={podTop(1, i)} podW={POD_W} homeTeam={p.home} awayTeam={p.away} homeLabel="" awayLabel="" matchId={R16_IDS[i]} scorePicks={showPickers ? scorePicks : undefined} onScorePick={showPickers ? onScorePick : undefined} t={t} />
+                  ? <MatchPod key={`top-r16-${i}`} x={colX[1]} y={podTop(1, i)} podW={POD_W} homeTeam={p.home} awayTeam={p.away} homeLabel="" awayLabel="" matchId={R16_IDS[i]} scorePicks={scorePicks} onScorePick={undefined} t={t} />
                   : <TbdPod  key={`top-r16-${i}`} x={colX[1]} y={podTop(1, i)} podW={POD_W} t={t} />
               ))}
               {activeBracket.qfTop.map((p, i) => (
                 p.home || p.away
-                  ? <MatchPod key={`top-qf-${i}`} x={colX[2]} y={podTop(2, i)} podW={POD_W} homeTeam={p.home} awayTeam={p.away} homeLabel="" awayLabel="" matchId={QF_IDS[i]} scorePicks={showPickers ? scorePicks : undefined} onScorePick={showPickers ? onScorePick : undefined} t={t} />
+                  ? <MatchPod key={`top-qf-${i}`} x={colX[2]} y={podTop(2, i)} podW={POD_W} homeTeam={p.home} awayTeam={p.away} homeLabel="" awayLabel="" matchId={QF_IDS[i]} scorePicks={scorePicks} onScorePick={undefined} t={t} />
                   : <TbdPod  key={`top-qf-${i}`} x={colX[2]} y={podTop(2, i)} podW={POD_W} t={t} />
               ))}
               {activeBracket.sfTop.home || activeBracket.sfTop.away
-                ? <MatchPod x={colX[3]} y={podTop(3, 0)} podW={POD_W} homeTeam={activeBracket.sfTop.home} awayTeam={activeBracket.sfTop.away} homeLabel="" awayLabel="" matchId={SF_IDS[0]} scorePicks={showPickers ? scorePicks : undefined} onScorePick={showPickers ? onScorePick : undefined} t={t} />
+                ? <MatchPod x={colX[3]} y={podTop(3, 0)} podW={POD_W} homeTeam={activeBracket.sfTop.home} awayTeam={activeBracket.sfTop.away} homeLabel="" awayLabel="" matchId={SF_IDS[0]} scorePicks={scorePicks} onScorePick={undefined} t={t} />
                 : <TbdPod  x={colX[3]} y={podTop(3, 0)} podW={POD_W} t={t} />
               }
             </>
@@ -606,7 +606,7 @@ export default function QualifiersView({ matches, scorePicks, actualScores, mono
               actualHome={view === "compare" ? actualR32ByMatchId[m.id]?.home : undefined}
               actualAway={view === "compare" ? actualR32ByMatchId[m.id]?.away : undefined}
               compare={view === "compare"}
-              matchId={m.id} scorePicks={showPickers ? scorePicks : undefined} onScorePick={showPickers ? onScorePick : undefined}
+              matchId={m.id} scorePicks={scorePicks} onScorePick={undefined}
               t={t}
             />
           ))}
@@ -616,16 +616,16 @@ export default function QualifiersView({ matches, scorePicks, actualScores, mono
             <>
               {activeBracket.r16Bot.map((p, i) => (
                 p.home || p.away
-                  ? <MatchPod key={`bot-r16-${i}`} x={colX[1]} y={HALF_H + podTop(1, i)} podW={POD_W} homeTeam={p.home} awayTeam={p.away} homeLabel="" awayLabel="" matchId={R16_IDS[4+i]} scorePicks={showPickers ? scorePicks : undefined} onScorePick={showPickers ? onScorePick : undefined} t={t} />
+                  ? <MatchPod key={`bot-r16-${i}`} x={colX[1]} y={HALF_H + podTop(1, i)} podW={POD_W} homeTeam={p.home} awayTeam={p.away} homeLabel="" awayLabel="" matchId={R16_IDS[4+i]} scorePicks={scorePicks} onScorePick={undefined} t={t} />
                   : <TbdPod  key={`bot-r16-${i}`} x={colX[1]} y={HALF_H + podTop(1, i)} podW={POD_W} t={t} />
               ))}
               {activeBracket.qfBot.map((p, i) => (
                 p.home || p.away
-                  ? <MatchPod key={`bot-qf-${i}`} x={colX[2]} y={HALF_H + podTop(2, i)} podW={POD_W} homeTeam={p.home} awayTeam={p.away} homeLabel="" awayLabel="" matchId={QF_IDS[2+i]} scorePicks={showPickers ? scorePicks : undefined} onScorePick={showPickers ? onScorePick : undefined} t={t} />
+                  ? <MatchPod key={`bot-qf-${i}`} x={colX[2]} y={HALF_H + podTop(2, i)} podW={POD_W} homeTeam={p.home} awayTeam={p.away} homeLabel="" awayLabel="" matchId={QF_IDS[2+i]} scorePicks={scorePicks} onScorePick={undefined} t={t} />
                   : <TbdPod  key={`bot-qf-${i}`} x={colX[2]} y={HALF_H + podTop(2, i)} podW={POD_W} t={t} />
               ))}
               {activeBracket.sfBot.home || activeBracket.sfBot.away
-                ? <MatchPod x={colX[3]} y={HALF_H + podTop(3, 0)} podW={POD_W} homeTeam={activeBracket.sfBot.home} awayTeam={activeBracket.sfBot.away} homeLabel="" awayLabel="" matchId={SF_IDS[1]} scorePicks={showPickers ? scorePicks : undefined} onScorePick={showPickers ? onScorePick : undefined} t={t} />
+                ? <MatchPod x={colX[3]} y={HALF_H + podTop(3, 0)} podW={POD_W} homeTeam={activeBracket.sfBot.home} awayTeam={activeBracket.sfBot.away} homeLabel="" awayLabel="" matchId={SF_IDS[1]} scorePicks={scorePicks} onScorePick={undefined} t={t} />
                 : <TbdPod  x={colX[3]} y={HALF_H + podTop(3, 0)} podW={POD_W} t={t} />
               }
             </>
@@ -639,7 +639,7 @@ export default function QualifiersView({ matches, scorePicks, actualScores, mono
 
           {/* Final */}
           {activeBracket && (activeBracket.final.home || activeBracket.final.away)
-            ? <MatchPod x={finalX} y={finalPodY} podW={POD_W} homeTeam={activeBracket.final.home} awayTeam={activeBracket.final.away} homeLabel="" awayLabel="" isFinal matchId={FINAL_ID} scorePicks={showPickers ? scorePicks : undefined} onScorePick={showPickers ? onScorePick : undefined} t={t} />
+            ? <MatchPod x={finalX} y={finalPodY} podW={POD_W} homeTeam={activeBracket.final.home} awayTeam={activeBracket.final.away} homeLabel="" awayLabel="" isFinal matchId={FINAL_ID} scorePicks={scorePicks} onScorePick={undefined} t={t} />
             : <MatchPod x={finalX} y={finalPodY} podW={POD_W} isFinal t={t} />
           }
 
@@ -647,7 +647,7 @@ export default function QualifiersView({ matches, scorePicks, actualScores, mono
           {(() => {
             const thirdY = HALF_H + POD_H + 40;
             return activeBracket && (activeBracket.thirdPlace.home || activeBracket.thirdPlace.away)
-              ? <MatchPod x={finalX} y={thirdY} podW={POD_W} homeTeam={activeBracket.thirdPlace.home} awayTeam={activeBracket.thirdPlace.away} homeLabel="" awayLabel="" matchId={THIRD_PLACE_ID} scorePicks={showPickers ? scorePicks : undefined} onScorePick={showPickers ? onScorePick : undefined} t={t} />
+              ? <MatchPod x={finalX} y={thirdY} podW={POD_W} homeTeam={activeBracket.thirdPlace.home} awayTeam={activeBracket.thirdPlace.away} homeLabel="" awayLabel="" matchId={THIRD_PLACE_ID} scorePicks={scorePicks} onScorePick={undefined} t={t} />
               : <MatchPod x={finalX} y={thirdY} podW={POD_W} t={t} />;
           })()}
         </div>
