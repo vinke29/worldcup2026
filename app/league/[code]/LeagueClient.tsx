@@ -499,7 +499,7 @@ export default function LeagueClient({
                       </span>
                       <div className="flex-1 h-px" style={{ backgroundColor: t.borderInner }} />
                     </div>
-                    <div className="space-y-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       {matchesByGroup[groupName].map((match) => (
                         <div key={match.id} id={`match-${match.id}`}>
                         <MatchCard
