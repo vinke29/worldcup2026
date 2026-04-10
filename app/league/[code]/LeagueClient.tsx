@@ -570,48 +570,44 @@ export default function LeagueClient({
                   </span>
                 </div>
 
-                {/* Group stage */}
-                <div className="space-y-1.5 mb-3">
-                  <div className="flex justify-between items-center gap-2">
-                    <span className="text-xs" style={{ color: t.textBody }}>Correct result · Group</span>
-                    <span className="text-xs font-black" style={{ color: t.accent }}>1 pt</span>
-                  </div>
-                  <div className="flex justify-between items-center gap-2">
-                    <span className="text-xs" style={{ color: t.textBody }}>Exact score · Group</span>
-                    <span className="text-xs font-black" style={{ color: t.accent }}>3 pts</span>
-                  </div>
-                </div>
-
-                {/* Knockout per-round table */}
-                <div className="rounded-xl overflow-hidden" style={{ border: `1px solid ${t.borderInner}` }}>
-                  {/* Header */}
-                  <div className="grid grid-cols-3 px-3 py-1.5" style={{ backgroundColor: t.cardBgDeep }}>
-                    <span className="text-[9px] font-black uppercase tracking-widest" style={{ color: t.textMuted }}>Milestone</span>
-                    <span className="text-[9px] font-black uppercase tracking-widest text-center" style={{ color: t.textMuted }}>Pts</span>
-                    <span className="text-[9px] font-black uppercase tracking-widest text-right" style={{ color: t.textMuted }}>+ Exact</span>
-                  </div>
+                {/* Simple rows */}
+                <div className="space-y-2">
                   {[
-                    { round: "Made R32", winner: 2, exact: 5 },
-                    { round: "Made R16", winner: 3, exact: 5 },
-                    { round: "Made QF", winner: 5, exact: 5 },
-                    { round: "Made SF", winner: 7, exact: 5 },
-                    { round: "Made Final", winner: 10, exact: 5 },
-                    { round: "Champion", winner: 15, exact: 5 },
-                  ].map(({ round, winner, exact }) => (
-                    <div
-                      key={round}
-                      className="grid grid-cols-3 px-3 py-1.5"
-                      style={{ borderTop: `1px solid ${t.borderInner}`, backgroundColor: round === "Champion" ? (mono ? "rgba(26,18,8,0.04)" : "rgba(215,255,90,0.04)") : "transparent" }}
-                    >
-                      <span className="text-xs font-semibold" style={{ color: round === "Champion" ? t.accent : t.textBody }}>{round}</span>
-                      <span className="text-xs font-black text-center" style={{ color: t.accent }}>{winner} pts</span>
-                      <span className="text-xs font-black text-right" style={{ color: t.textSec }}>+{exact} pts</span>
+                    { label: "Correct result · Group", pts: "1 pt", muted: false },
+                    { label: "Exact score · Group", pts: "3 pts", muted: false },
+                    { label: "Exact score · KO round", pts: "+5 pts", muted: false },
+                  ].map(({ label, pts }) => (
+                    <div key={label} className="flex justify-between items-center gap-2">
+                      <span className="text-xs" style={{ color: t.textBody }}>{label}</span>
+                      <span className="text-xs font-black whitespace-nowrap" style={{ color: t.accent }}>{pts}</span>
                     </div>
                   ))}
+
+                  {/* Divider */}
+                  <div style={{ height: 1, backgroundColor: t.borderInner }} />
+
+                  {/* KO milestones — 2 col */}
+                  {[
+                    { label: "Made R32", pts: "2 pts" },
+                    { label: "Made R16", pts: "3 pts" },
+                    { label: "Made QF", pts: "5 pts" },
+                    { label: "Made SF", pts: "7 pts" },
+                    { label: "Made Final", pts: "10 pts" },
+                    { label: "Champion 🏆", pts: "15 pts" },
+                  ].map(({ label, pts }) => (
+                    <div key={label} className="flex justify-between items-center gap-2">
+                      <span className="text-xs font-medium" style={{ color: label.startsWith("Champion") ? t.accent : t.textBody }}>{label}</span>
+                      <span className="text-xs font-black whitespace-nowrap" style={{ color: t.accent }}>{pts}</span>
+                    </div>
+                  ))}
+
+                  {/* Divider */}
+                  <div style={{ height: 1, backgroundColor: t.borderInner }} />
+
+                  <p className="text-[10px] leading-relaxed" style={{ color: t.textMuted }}>
+                    Points stack per round. Netherlands to Final = <span style={{ color: t.accent, fontWeight: 800 }}>27 pts</span>. Champion = <span style={{ color: t.accent, fontWeight: 800 }}>42 pts</span>.
+                  </p>
                 </div>
-                <p className="text-[10px] mt-2.5 leading-relaxed" style={{ color: t.textMuted }}>
-                  Points stack as your team advances. Netherlands to Final = 2+3+5+7+10 = <span style={{ color: t.accent, fontWeight: 800 }}>27 pts</span>. Champion = 42 pts.
-                </p>
               </div>
             </div>
           </div>
