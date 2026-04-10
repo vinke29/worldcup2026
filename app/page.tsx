@@ -3,19 +3,19 @@
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 
-// ── Design tokens — light/cream, lime as the only color ──────────────────────
+// ── Design tokens — dark B&W, lime as the only color ─────────────────────────
 const t = {
-  pageBg:      "#F5F0E8",
-  border:      "#DDD9D0",
-  borderInner: "#E5E1D8",
-  cardBg:      "#EDE8E0",
-  inputBg:     "#E8E3DB",
-  textPrimary: "#111111",
-  textSec:     "#888880",
-  textMuted:   "#AAAAAA",
+  pageBg:      "#080808",
+  border:      "#1E1E1E",
+  borderInner: "#141414",
+  cardBg:      "#0F0F0F",
+  inputBg:     "#080808",
+  textPrimary: "#F0EDE6",
+  textSec:     "#606060",
+  textMuted:   "#3A3A3A",
   accent:      "#D7FF5A",
-  accentText:  "#111111",
-  liveGlow:    "#111111",
+  accentText:  "#080808",
+  liveGlow:    "#D7FF5A",
 };
 
 export default function Home() {
@@ -68,20 +68,19 @@ export default function Home() {
               transform: "translateY(-50%)",
               height: "110%",
               width: "auto",
-              filter: "grayscale(1) contrast(1.1) brightness(1.05)",
-              mixBlendMode: "multiply",
-              opacity: 0.9,
+              filter: "grayscale(1) contrast(1.2) brightness(1.4)",
+              opacity: 0.85,
             }}
           >
             <source src="/hero-video.mp4" type="video/mp4" />
           </video>
-          {/* Left fade */}
+          {/* Left fade — strong, protects text area */}
           <div className="absolute inset-0" style={{
-            background: `linear-gradient(to right, ${t.pageBg} 25%, ${t.pageBg}DD 45%, ${t.pageBg}44 70%, transparent 90%)`,
+            background: `linear-gradient(to right, ${t.pageBg} 28%, ${t.pageBg}F0 44%, ${t.pageBg}88 62%, transparent 85%)`,
           }} />
-          {/* Right fade */}
+          {/* Right fade — subtle, keeps video bright */}
           <div className="absolute inset-0" style={{
-            background: `linear-gradient(to left, ${t.pageBg} 0%, transparent 18%)`,
+            background: `linear-gradient(to left, ${t.pageBg} 0%, transparent 12%)`,
           }} />
           {/* Bottom fade */}
           <div className="absolute inset-x-0 bottom-0" style={{
@@ -123,9 +122,8 @@ export default function Home() {
               top: "50%",
               left: "50%",
               transform: "translate(-50%, -42%)",
-              filter: "grayscale(1) contrast(1.1) brightness(1.05)",
-              mixBlendMode: "multiply",
-              opacity: 0.9,
+              filter: "grayscale(1) contrast(1.2) brightness(1.4)",
+              opacity: 0.85,
             }}
           >
             <source src="/hero-video.mp4" type="video/mp4" />
@@ -140,7 +138,7 @@ export default function Home() {
         <div className="relative z-10 flex-1 flex flex-col justify-start sm:justify-end px-6 sm:px-10 pt-4 sm:pt-0 pb-20 max-w-5xl mx-auto w-full">
 
           <div className="flex items-center gap-2 mb-8">
-            <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: t.textPrimary }} />
+            <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: t.accent }} />
             <span className="text-xs font-bold tracking-widest uppercase" style={{ color: t.textSec }}>
               World Cup 2026 · 104 matches
             </span>
