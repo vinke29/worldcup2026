@@ -38,7 +38,9 @@ export async function login(
     if (league?.code) redirect(`/league/${league.code}`);
   }
 
-  redirect("/auth/setup");
+  // No league yet — forward any invite params so they can join
+  const setupQuery = (formData.get("setupQuery") as string | null) ?? "";
+  redirect(setupQuery ? `/auth/setup?${setupQuery}` : "/auth/setup");
 }
 
 export async function signup(

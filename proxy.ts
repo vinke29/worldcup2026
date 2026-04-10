@@ -45,10 +45,15 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Guard the setup page
+  // Guard the setup page — forward intent/code so the login→signup path preserves them
   if (pathname === "/auth/setup" && !user) {
     const url = request.nextUrl.clone();
     url.pathname = "/auth/login";
+    const qs = request.nextUrl.searchParams;
+    const intent = qs.get("intent");
+    const code   = qs.get("code");
+    if (intent) url.searchParams.set("intent", intent);
+    if (code)   url.searchParams.set("code", code);
     return NextResponse.redirect(url);
   }
 

@@ -13,6 +13,15 @@ function LoginForm() {
   const urlError = searchParams.get("error");
   const message = searchParams.get("message");
   const error = actionError ?? urlError;
+  const intent = searchParams.get("intent");
+  const code   = searchParams.get("code");
+  const setupQuery = (() => {
+    const p = new URLSearchParams();
+    if (intent) p.set("intent", intent);
+    if (code)   p.set("code", code);
+    return p.toString();
+  })();
+  const signupHref = setupQuery ? `/auth/signup?${setupQuery}` : "/auth/signup";
 
   return (
     <main
@@ -74,6 +83,7 @@ function LoginForm() {
           )}
 
           <form action={action} className="space-y-4">
+            {setupQuery && <input type="hidden" name="setupQuery" value={setupQuery} />}
             <AuthField label="Email">
               <input
                 type="email"
@@ -116,7 +126,7 @@ function LoginForm() {
         <p className="text-center text-sm mt-6" style={{ color: "#4A6B50" }}>
           No account?{" "}
           <Link
-            href="/auth/signup"
+            href={signupHref}
             className="font-semibold"
             style={{ color: "#D7FF5A" }}
           >
