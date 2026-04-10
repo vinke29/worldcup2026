@@ -64,22 +64,22 @@ export default function Home() {
         {/* Hero background — desktop only */}
         <div className="hidden sm:block absolute inset-0 overflow-hidden">
           {/* Hero visual — right half */}
-          <video
-            autoPlay muted loop playsInline
+          <img
+            src="/hero-player.png"
+            alt=""
             className="absolute"
             style={{
-              right: "-18%",
-              top: "42%",
+              right: "-5%",
+              top: "50%",
               transform: "translateY(-50%)",
-              height: "82%",
+              height: "100%",
               width: "auto",
-              filter: mono ? "none" : "invert(1) brightness(0.15) sepia(1) hue-rotate(80deg) saturate(3)",
-              opacity: mono ? 0.92 : 0.5,
+              objectFit: "cover",
+              filter: mono ? "grayscale(1) contrast(1.2) brightness(1.05)" : "none",
+              opacity: mono ? 0.55 : 0.75,
               transition: "filter 0.4s, opacity 0.4s",
             }}
-          >
-            <source src="/hero.mp4" type="video/mp4" />
-          </video>
+          />
           {/* Left fade — blends illustration into page bg */}
           <div className="absolute inset-0" style={{
             background: mono
@@ -152,24 +152,23 @@ export default function Home() {
           </div>
         </nav>
 
-        {/* Mobile video strip — below nav, above text */}
+        {/* Mobile image strip — below nav, above text */}
         <div className="sm:hidden relative overflow-hidden flex-shrink-0" style={{ height: "260px", marginTop: "12px" }}>
-          <video
-            autoPlay muted loop playsInline
+          <img
+            src="/hero-player.png"
+            alt=""
             className="absolute"
             style={{
-              height: "170%",
+              height: "160%",
               width: "auto",
               top: "50%",
-              left: "52%",
+              left: "50%",
               transform: "translate(-50%, -42%)",
-              filter: mono ? "none" : "invert(1) brightness(0.15) sepia(1) hue-rotate(80deg) saturate(3)",
-              opacity: mono ? 1 : 0.5,
-              mixBlendMode: mono ? "multiply" : "normal",
+              filter: mono ? "grayscale(1) contrast(1.2) brightness(1.05)" : "none",
+              opacity: mono ? 0.5 : 0.85,
+              transition: "filter 0.4s, opacity 0.4s",
             }}
-          >
-            <source src="/hero.mp4" type="video/mp4" />
-          </video>
+          />
           {/* Bottom fade */}
           <div className="absolute inset-x-0 bottom-0" style={{
             height: "45%",
@@ -189,21 +188,14 @@ export default function Home() {
           </div>
 
           <h1
-            className="font-black leading-[0.92] tracking-tight mb-8"
+            className="font-black leading-[0.92] tracking-tight mb-10"
             style={{ fontSize: "clamp(52px, 9vw, 108px)", color: t.textPrimary, transition: "color 0.3s" }}
           >
             Pick every<br />
-            <span style={{ color: mono ? t.textPrimary : "#D7FF5A", transition: "color 0.3s", fontStyle: mono ? "italic" : "normal" }}>match.</span><br />
-            Prove them<br />
-            wrong.
+            game.<br />
+            <span style={{ color: mono ? t.textPrimary : "#D7FF5A", transition: "color 0.3s", fontStyle: mono ? "italic" : "normal" }}>Beat your</span><br />
+            <span style={{ color: mono ? t.textPrimary : "#D7FF5A", transition: "color 0.3s", fontStyle: mono ? "italic" : "normal" }}>friends.</span>
           </h1>
-
-          <p
-            className="mb-10 leading-relaxed max-w-sm"
-            style={{ fontSize: "clamp(14px, 1.6vw, 17px)", color: t.textSec, transition: "color 0.3s" }}
-          >
-            A private World Cup game for you and your friends.
-          </p>
 
           <div className="flex flex-wrap gap-3">
             <button
