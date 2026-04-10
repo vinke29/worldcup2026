@@ -345,28 +345,6 @@ export default function QualifiersView({ matches, scorePicks, actualScores, mono
     return { r32, r16, qf, sf, third, final };
   }, [topR32Pairs, botR32Pairs, predictedBracketTeams, bracketTeams, actualR32ByMatchId, hasActual, thirdGroupAssign]);
 
-  // Maps each group index (per round) to the resulting next-round match — used for desktop bracket view
-  const desktopNextMatch = useMemo((): Record<MobileRound, Array<{ id: string; homeTeam: TeamRow | null; awayTeam: TeamRow | null } | null>> => ({
-    r32: Array.from({ length: 8 }, (_, i) => ({
-      id: R16_IDS[i],
-      homeTeam: i < 4 ? predictedBracketTeams.r16Top[i].home : predictedBracketTeams.r16Bot[i - 4].home,
-      awayTeam: i < 4 ? predictedBracketTeams.r16Top[i].away : predictedBracketTeams.r16Bot[i - 4].away,
-    })),
-    r16: Array.from({ length: 4 }, (_, i) => ({
-      id: QF_IDS[i],
-      homeTeam: i < 2 ? predictedBracketTeams.qfTop[i].home : predictedBracketTeams.qfBot[i - 2].home,
-      awayTeam: i < 2 ? predictedBracketTeams.qfTop[i].away : predictedBracketTeams.qfBot[i - 2].away,
-    })),
-    qf: Array.from({ length: 2 }, (_, i) => ({
-      id: SF_IDS[i],
-      homeTeam: i === 0 ? predictedBracketTeams.sfTop.home : predictedBracketTeams.sfBot.home,
-      awayTeam: i === 0 ? predictedBracketTeams.sfTop.away : predictedBracketTeams.sfBot.away,
-    })),
-    sf: [{ id: FINAL_ID, homeTeam: predictedBracketTeams.final.home, awayTeam: predictedBracketTeams.final.away }],
-    third: [null],
-    final: [null],
-  }), [predictedBracketTeams]);
-
   const connectorPaths = [
     ...halfConnectors(0, 0, colX, POD_W), ...halfConnectors(0, 1, colX, POD_W), ...halfConnectors(0, 2, colX, POD_W),
     ...halfConnectors(HALF_H, 0, colX, POD_W), ...halfConnectors(HALF_H, 1, colX, POD_W), ...halfConnectors(HALF_H, 2, colX, POD_W),
@@ -430,8 +408,8 @@ export default function QualifiersView({ matches, scorePicks, actualScores, mono
       {/* Match list — visible on all screen sizes in entire_tournament mode */}
       {showMobileList && (
         <div>
-          {/* Round tabs */}
-          <div className="flex gap-2 mb-4 overflow-x-auto pb-1">
+          {/* Round tabs — mobile only */}
+          <div className="flex gap-2 mb-4 overflow-x-auto pb-1 md:hidden">
             {(["r32","r16","qf","sf","third","final"] as MobileRound[]).map((id) => {
               const label = ROUND_LABEL[id];
               const active = mobileRound === id;
@@ -504,96 +482,130 @@ export default function QualifiersView({ matches, scorePicks, actualScores, mono
             })}
           </div>
 
-          {/* Desktop bracket view — hidden on mobile */}
-          <div className="hidden md:flex flex-col gap-10 mb-6">
-            {mobileGroups[mobileRound].map((group, gi) => {
-              const nextMatch = desktopNextMatch[mobileRound][gi];
-              const isMulti = group.matches.length > 1;
-              return (
-                <div key={gi} className="flex items-stretch">
-                  {/* Left: current round cards */}
-                  <div style={{ width: 320, flexShrink: 0 }}>
-                    <div style={isMulti ? { border: `1px solid ${t.border}`, borderRadius: 16, overflow: "hidden" } : {}}>
-                      {isMulti && group.nextRoundLabel && (
-                        <div style={{ padding: "6px 14px", borderBottom: `1px solid ${t.border}`, backgroundColor: t.halfDivider }}>
-                          <span style={{ fontSize: 9, color: t.textMuted, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em" }}>
-                            {group.nextRoundLabel}
-                          </span>
-                        </div>
-                      )}
-                      {group.matches.map((m, mi) => (
-                        <div key={m.id}>
-                          <MobileMatchCard
-                            id={m.id} homeTeam={m.homeTeam} awayTeam={m.awayTeam}
-                            homeLabel={m.homeLabel} awayLabel={m.awayLabel}
-                            actualHomeTeam={m.actualHomeTeam} actualAwayTeam={m.actualAwayTeam}
-                            scorePicks={scorePicks} onScorePick={onScorePick} t={t}
-                            grouped={isMulti}
-                          />
-                          {mi === 0 && isMulti && (
-                            <div style={{ position: "relative", height: 28, display: "flex", alignItems: "center", borderTop: `1px solid ${t.border}`, borderBottom: `1px solid ${t.border}`, backgroundColor: t.halfDivider }}>
-                              <div style={{ flex: 1, height: 1, backgroundColor: t.border }} />
-                              <span style={{ padding: "0 10px", fontSize: 9, color: t.textMuted, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", flexShrink: 0 }}>
-                                winners meet
-                              </span>
-                              <div style={{ flex: 1, height: 1, backgroundColor: t.border }} />
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
+          {/* Full desktop bracket — all rounds side by side, horizontally scrollable */}
+          {(() => {
+            const GH = 460, CW = 280, XW = 52, HDR = 28;
+            const HALF = 100;   // approx half-height of a single card (for vertical centering)
+            const C1 = 127;     // center of first card within an R32 group (from group top)
+            const C2 = 355;     // center of second card within an R32 group (from group top)
+            const TOTAL_H = HDR + 8 * GH;
+            const MID = XW / 2;
+            const cR32 = 0, cCon1 = CW, cR16 = CW + XW;
+            const cCon2 = 2 * CW + XW, cQF = 2 * CW + 2 * XW;
+            const cCon3 = 3 * CW + 2 * XW, cSF = 3 * CW + 3 * XW;
+            const cCon4 = 4 * CW + 3 * XW, cFin = 4 * CW + 4 * XW;
+            const TOTAL_W = 5 * CW + 4 * XW;
+            // Connector path: two inputs (topY, botY) merge to one output (outY)
+            const cp = (topY: number, botY: number, outY: number) =>
+              `M 0,${topY} H ${MID} V ${botY} M 0,${botY} H ${MID} M ${MID},${outY} H ${XW}`;
+            const r32G = mobileGroups.r32;
+            const r16F = mobileGroups.r16.flatMap(g => g.matches);
+            const qfF  = mobileGroups.qf.flatMap(g => g.matches);
+            const sfF  = mobileGroups.sf.flatMap(g => g.matches);
+            const finM = mobileGroups.final[0].matches[0];
+            const trdM = mobileGroups.third[0].matches[0];
+            return (
+              <div className="hidden md:block overflow-x-auto pb-6">
+                <div style={{ position: "relative", width: TOTAL_W, height: TOTAL_H }}>
 
-                  {/* Bracket connector — two matches feeding one next-round slot */}
-                  {isMulti && nextMatch && (
-                    <div style={{ width: 48, flexShrink: 0, position: "relative" }}>
-                      {/* Vertical bar connecting card centers */}
-                      <div style={{ position: "absolute", left: 12, top: "22%", bottom: "22%", width: 1, backgroundColor: t.connector }} />
-                      {/* Cap at card 1 center */}
-                      <div style={{ position: "absolute", left: 0, top: "22%", width: 12, height: 1, backgroundColor: t.connector, transform: "translateY(-0.5px)" }} />
-                      {/* Cap at card 2 center */}
-                      <div style={{ position: "absolute", left: 0, top: "78%", width: 12, height: 1, backgroundColor: t.connector, transform: "translateY(-0.5px)" }} />
-                      {/* Horizontal branch to next-round card */}
-                      <div style={{ position: "absolute", left: 12, right: 0, top: "50%", height: 1, backgroundColor: t.connector, transform: "translateY(-0.5px)" }} />
+                  {/* Column headers */}
+                  {(["R32", "R16", "QF", "SF", "FINAL"] as const).map((lbl, ci) => (
+                    <div key={lbl} style={{ position: "absolute", top: 0, left: [cR32, cR16, cQF, cSF, cFin][ci], width: CW, textAlign: "center" }}>
+                      <span style={{ fontSize: 9, fontWeight: 900, letterSpacing: "0.1em", textTransform: "uppercase", color: lbl === "FINAL" ? t.accent : t.textMuted }}>
+                        {lbl}
+                      </span>
                     </div>
-                  )}
+                  ))}
 
-                  {/* Simple connector — single match */}
-                  {!isMulti && nextMatch && (
-                    <div style={{ width: 48, flexShrink: 0, display: "flex", alignItems: "center" }}>
-                      <div style={{ width: "100%", height: 1, backgroundColor: t.connector }} />
-                    </div>
-                  )}
-
-                  {/* Right: next-round match card, vertically centered */}
-                  {nextMatch && (
-                    <div style={{ width: 320, flexShrink: 0, display: "flex", alignItems: "center" }}>
-                      <div style={{ width: "100%" }}>
+                  {/* ── R32 groups ── */}
+                  {r32G.map((group, gi) => (
+                    <div key={gi} style={{ position: "absolute", top: HDR + gi * GH, left: cR32, width: CW }}>
+                      <div style={{ border: `1px solid ${t.border}`, borderRadius: 16, overflow: "hidden" }}>
                         {group.nextRoundLabel && (
-                          <div style={{ marginBottom: 6 }}>
-                            <span style={{ fontSize: 9, color: t.textMuted, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em" }}>
-                              {group.nextRoundLabel.replace("→ ", "")}
-                            </span>
+                          <div style={{ padding: "6px 14px", borderBottom: `1px solid ${t.border}`, backgroundColor: t.halfDivider }}>
+                            <span style={{ fontSize: 9, color: t.textMuted, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em" }}>{group.nextRoundLabel}</span>
                           </div>
                         )}
-                        <MobileMatchCard
-                          id={nextMatch.id}
-                          homeTeam={nextMatch.homeTeam}
-                          awayTeam={nextMatch.awayTeam}
-                          homeLabel=""
-                          awayLabel=""
-                          scorePicks={scorePicks}
-                          onScorePick={onScorePick}
-                          t={t}
-                          grouped={false}
-                        />
+                        {group.matches.map((m, mi) => (
+                          <div key={m.id}>
+                            <MobileMatchCard id={m.id} homeTeam={m.homeTeam} awayTeam={m.awayTeam} homeLabel={m.homeLabel} awayLabel={m.awayLabel} actualHomeTeam={m.actualHomeTeam} actualAwayTeam={m.actualAwayTeam} scorePicks={scorePicks} onScorePick={onScorePick} t={t} grouped />
+                            {mi === 0 && (
+                              <div style={{ height: 28, display: "flex", alignItems: "center", borderTop: `1px solid ${t.border}`, borderBottom: `1px solid ${t.border}`, backgroundColor: t.halfDivider }}>
+                                <div style={{ flex: 1, height: 1, backgroundColor: t.border }} />
+                                <span style={{ padding: "0 10px", fontSize: 9, color: t.textMuted, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em" }}>winners meet</span>
+                                <div style={{ flex: 1, height: 1, backgroundColor: t.border }} />
+                              </div>
+                            )}
+                          </div>
+                        ))}
                       </div>
                     </div>
-                  )}
+                  ))}
+
+                  {/* ── R32 → R16 connectors ── */}
+                  <svg style={{ position: "absolute", top: 0, left: cCon1, pointerEvents: "none" }} width={XW} height={TOTAL_H}>
+                    {r32G.map((_, gi) => (
+                      <path key={gi} d={cp(HDR + gi * GH + C1, HDR + gi * GH + C2, HDR + (gi + 0.5) * GH)} fill="none" stroke={t.connector} strokeWidth={1.5} />
+                    ))}
+                  </svg>
+
+                  {/* ── R16 ── */}
+                  {r16F.map((m, i) => (
+                    <div key={m.id} style={{ position: "absolute", top: HDR + (i + 0.5) * GH - HALF, left: cR16, width: CW }}>
+                      <MobileMatchCard id={m.id} homeTeam={m.homeTeam} awayTeam={m.awayTeam} homeLabel="" awayLabel="" actualHomeTeam={m.actualHomeTeam} actualAwayTeam={m.actualAwayTeam} scorePicks={scorePicks} onScorePick={onScorePick} t={t} grouped={false} />
+                    </div>
+                  ))}
+
+                  {/* ── R16 → QF connectors ── */}
+                  <svg style={{ position: "absolute", top: 0, left: cCon2, pointerEvents: "none" }} width={XW} height={TOTAL_H}>
+                    {Array.from({ length: 4 }, (_, qi) => (
+                      <path key={qi} d={cp(HDR + (qi * 2 + 0.5) * GH, HDR + (qi * 2 + 1.5) * GH, HDR + (qi * 2 + 1) * GH)} fill="none" stroke={t.connector} strokeWidth={1.5} />
+                    ))}
+                  </svg>
+
+                  {/* ── QF ── */}
+                  {qfF.map((m, i) => (
+                    <div key={m.id} style={{ position: "absolute", top: HDR + (i * 2 + 1) * GH - HALF, left: cQF, width: CW }}>
+                      <MobileMatchCard id={m.id} homeTeam={m.homeTeam} awayTeam={m.awayTeam} homeLabel="" awayLabel="" actualHomeTeam={m.actualHomeTeam} actualAwayTeam={m.actualAwayTeam} scorePicks={scorePicks} onScorePick={onScorePick} t={t} grouped={false} />
+                    </div>
+                  ))}
+
+                  {/* ── QF → SF connectors ── */}
+                  <svg style={{ position: "absolute", top: 0, left: cCon3, pointerEvents: "none" }} width={XW} height={TOTAL_H}>
+                    {Array.from({ length: 2 }, (_, si) => (
+                      <path key={si} d={cp(HDR + (si * 4 + 1) * GH, HDR + (si * 4 + 3) * GH, HDR + (si * 4 + 2) * GH)} fill="none" stroke={t.connector} strokeWidth={1.5} />
+                    ))}
+                  </svg>
+
+                  {/* ── SF ── */}
+                  {sfF.map((m, i) => (
+                    <div key={m.id} style={{ position: "absolute", top: HDR + (i * 4 + 2) * GH - HALF, left: cSF, width: CW }}>
+                      <MobileMatchCard id={m.id} homeTeam={m.homeTeam} awayTeam={m.awayTeam} homeLabel="" awayLabel="" actualHomeTeam={m.actualHomeTeam} actualAwayTeam={m.actualAwayTeam} scorePicks={scorePicks} onScorePick={onScorePick} t={t} grouped={false} />
+                    </div>
+                  ))}
+
+                  {/* ── SF → Final connector ── */}
+                  <svg style={{ position: "absolute", top: 0, left: cCon4, pointerEvents: "none" }} width={XW} height={TOTAL_H}>
+                    <path d={cp(HDR + 2 * GH, HDR + 6 * GH, HDR + 4 * GH)} fill="none" stroke={t.connector} strokeWidth={1.5} />
+                  </svg>
+
+                  {/* ── Final ── */}
+                  <div style={{ position: "absolute", top: HDR + 4 * GH - HALF, left: cFin, width: CW }}>
+                    <MobileMatchCard id={finM.id} homeTeam={finM.homeTeam} awayTeam={finM.awayTeam} homeLabel="" awayLabel="" scorePicks={scorePicks} onScorePick={onScorePick} t={t} grouped={false} />
+                  </div>
+
+                  {/* ── 3rd Place (below Final) ── */}
+                  <div style={{ position: "absolute", top: HDR + 4 * GH - HALF + 240, left: cFin, width: CW }}>
+                    <div style={{ marginBottom: 6, textAlign: "center" }}>
+                      <span style={{ fontSize: 9, fontWeight: 900, letterSpacing: "0.1em", textTransform: "uppercase", color: t.textMuted }}>3RD PLACE</span>
+                    </div>
+                    <MobileMatchCard id={trdM.id} homeTeam={trdM.homeTeam} awayTeam={trdM.awayTeam} homeLabel="" awayLabel="" scorePicks={scorePicks} onScorePick={onScorePick} t={t} grouped={false} />
+                  </div>
+
                 </div>
-              );
-            })}
-          </div>
+              </div>
+            );
+          })()}
         </div>
       )}
 
