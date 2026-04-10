@@ -20,6 +20,8 @@ export default function Leaderboard({ members, currentUserId, mono = false, vari
       <div className="rounded-2xl overflow-hidden border" style={{ backgroundColor: t.card, borderColor: t.border }}>
         {/* Header */}
         <div className="flex items-center gap-3 px-5 py-4" style={{ borderBottom: `1px solid ${t.borderInner}` }}>
+          <div className="w-5 flex-shrink-0" />
+          <div className="w-8 flex-shrink-0" />
           <span className="flex-1 text-[10px] font-black uppercase tracking-widest" style={{ color: t.textMuted }}>Player</span>
           <span className="w-14 text-right text-[10px] font-black uppercase tracking-widest" style={{ color: t.textMuted }}>Pts</span>
           <span className="w-16 text-right text-[10px] font-black uppercase tracking-widest hidden sm:block" style={{ color: t.textMuted }}>Correct</span>
