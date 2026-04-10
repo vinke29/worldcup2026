@@ -53,14 +53,26 @@ export default function Header({ leagueName, leagueCode, mono = false, onToggleM
         )}
 
         <div className="flex items-center gap-2 flex-shrink-0">
-          {/* Logout */}
-          {onLogout && (
+          {/* Invite code */}
+          {leagueCode && (
             <button
-              onClick={onLogout}
-              className="text-[10px] font-bold uppercase tracking-widest transition-opacity hover:opacity-60 cursor-pointer"
-              style={{ color: mono ? "#A09080" : "#4A6B50" }}
+              onClick={copyCode}
+              className="flex items-center gap-2 rounded-lg px-3 py-1.5 border cursor-pointer transition-all duration-150"
+              style={{
+                borderColor: copied
+                  ? mono ? "#1A1208" : "#D7FF5A"
+                  : mono ? "#DDD9D0" : "#2C4832",
+                backgroundColor: copied
+                  ? mono ? "rgba(26,18,8,0.08)" : "rgba(215,255,90,0.08)"
+                  : "transparent",
+              }}
             >
-              Sign out
+              <span className="font-mono text-xs font-bold tracking-widest" style={{ color: mono ? "#1A1208" : "#D7FF5A" }}>
+                {leagueCode}
+              </span>
+              <span className="text-[10px] font-semibold" style={{ color: mono ? "#6B5E4E" : (copied ? "#D7FF5A" : "#7A9B84") }}>
+                {copied ? "Copied!" : "Copy"}
+              </span>
             </button>
           )}
 
@@ -96,26 +108,14 @@ export default function Header({ leagueName, leagueCode, mono = false, onToggleM
             </button>
           )}
 
-          {/* Invite code */}
-          {leagueCode && (
+          {/* Logout */}
+          {onLogout && (
             <button
-              onClick={copyCode}
-              className="flex items-center gap-2 rounded-lg px-3 py-1.5 border cursor-pointer transition-all duration-150"
-              style={{
-                borderColor: copied
-                  ? mono ? "#1A1208" : "#D7FF5A"
-                  : mono ? "#DDD9D0" : "#2C4832",
-                backgroundColor: copied
-                  ? mono ? "rgba(26,18,8,0.08)" : "rgba(215,255,90,0.08)"
-                  : "transparent",
-              }}
+              onClick={onLogout}
+              className="text-[10px] font-bold uppercase tracking-widest transition-opacity hover:opacity-60 cursor-pointer"
+              style={{ color: mono ? "#A09080" : "#4A6B50" }}
             >
-              <span className="font-mono text-xs font-bold tracking-widest" style={{ color: mono ? "#1A1208" : "#D7FF5A" }}>
-                {leagueCode}
-              </span>
-              <span className="text-[10px] font-semibold" style={{ color: mono ? "#6B5E4E" : (copied ? "#D7FF5A" : "#7A9B84") }}>
-                {copied ? "Copied!" : "Copy"}
-              </span>
+              Sign out
             </button>
           )}
         </div>
