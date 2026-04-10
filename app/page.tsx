@@ -3,6 +3,20 @@
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 
+// ── Design tokens — dark B&W, lime as the only color ─────────────────────────
+const t = {
+  pageBg:      "#080808",
+  border:      "#1E1E1E",
+  borderInner: "#141414",
+  cardBg:      "#0F0F0F",
+  inputBg:     "#080808",
+  textPrimary: "#F0EDE6",
+  textSec:     "#606060",
+  textMuted:   "#3A3A3A",
+  accent:      "#D7FF5A",
+  accentText:  "#080808",
+  liveGlow:    "#D7FF5A",
+};
 
 export default function Home() {
   const router = useRouter();
@@ -11,7 +25,6 @@ export default function Home() {
   const [leagueName, setLeagueName] = useState("");
   const [joinCode, setJoinCode] = useState("");
   const [leagueMode, setLeagueMode] = useState<"phase_by_phase" | "entire_tournament">("entire_tournament");
-  const [mono, setMono] = useState(false);
   const formRef = useRef<HTMLDivElement>(null);
 
   function handleCreate(e: React.FormEvent) {
@@ -33,136 +46,75 @@ export default function Home() {
     router.push(`/auth/signup?${params}`);
   }
 
-  function scrollToForm(t: "create" | "join") {
-    setTab(t);
+  function scrollToForm(v: "create" | "join") {
+    setTab(v);
     formRef.current?.scrollIntoView({ behavior: "smooth" });
   }
 
-  // Theme tokens
-  const t = {
-    pageBg:      mono ? "#F5F0E8" : "#0B1E0D",
-    navBg:       mono ? "rgba(245,240,232,0.95)" : "rgba(11,30,13,0.35)",
-    border:      mono ? "#DDD9D0" : "#2C4832",
-    borderInner: mono ? "#E5E1D8" : "#1A2E1F",
-    cardBg:      mono ? "#F7F4EE" : "#1A2E1F",
-    inputBg:     mono ? "#EDE8E0" : "#0F2411",
-    textPrimary: mono ? "#1A1208" : "#F0EDE6",
-    textSec:     mono ? "#6B5E4E" : "#7A9B84",
-    textMuted:   mono ? "#A09080" : "#4A6B50",
-    accent:      mono ? "#1A1208" : "#D7FF5A",
-    accentText:  mono ? "#F7F4EE" : "#0B1E0D",
-    numColor:    mono ? "#E5E1D8" : "#1A2E1F",
-    liveGlow:    "#4ADE80",
-  };
-
   return (
-    <main style={{ backgroundColor: t.pageBg, minHeight: "100vh", transition: "background-color 0.3s" }}>
+    <main style={{ backgroundColor: t.pageBg, minHeight: "100vh" }}>
 
       {/* ── HERO ───────────────────────────────────────────────────────── */}
       <section className="relative flex flex-col min-h-screen overflow-hidden">
 
-        {/* Hero background — desktop only */}
+        {/* Video background — desktop */}
         <div className="hidden sm:block absolute inset-0 overflow-hidden">
-          {/* Hero visual — right half */}
-          <img
-            src="/hero-player.png"
-            alt=""
+          <video
+            autoPlay muted loop playsInline
             className="absolute"
             style={{
-              left: "38%",
+              left: "35%",
               top: "50%",
               transform: "translateY(-50%)",
-              height: "108%",
+              height: "110%",
               width: "auto",
-              filter: mono ? "grayscale(1) contrast(1.2) brightness(1.05)" : "none",
-              opacity: mono ? 0.55 : 0.75,
-              transition: "filter 0.4s, opacity 0.4s",
+              filter: "grayscale(1) contrast(1.15) brightness(0.85)",
+              opacity: 0.6,
             }}
-          />
+          >
+            <source src="/hero-video.mp4" type="video/mp4" />
+          </video>
           {/* Left fade */}
           <div className="absolute inset-0" style={{
-            background: mono
-              ? `linear-gradient(to right, ${t.pageBg} 25%, ${t.pageBg}CC 50%, transparent 80%)`
-              : `linear-gradient(to right, #0B1E0D 30%, #0B1E0D99 55%, transparent 82%)`,
-            transition: "background 0.4s",
+            background: `linear-gradient(to right, ${t.pageBg} 28%, ${t.pageBg}E6 48%, ${t.pageBg}55 68%, transparent 88%)`,
           }} />
           {/* Right fade */}
           <div className="absolute inset-0" style={{
-            background: mono
-              ? `linear-gradient(to left, ${t.pageBg} 0%, transparent 25%)`
-              : `linear-gradient(to left, #0B1E0D 0%, transparent 25%)`,
-            transition: "background 0.4s",
+            background: `linear-gradient(to left, ${t.pageBg} 0%, transparent 20%)`,
           }} />
           {/* Bottom fade */}
           <div className="absolute inset-x-0 bottom-0" style={{
-            height: "40%",
-            background: mono
-              ? `linear-gradient(to bottom, transparent, ${t.pageBg})`
-              : "linear-gradient(to bottom, transparent, #0B1E0D)",
-            transition: "background 0.4s",
+            height: "35%",
+            background: `linear-gradient(to bottom, transparent, ${t.pageBg})`,
           }} />
         </div>
 
         {/* Nav */}
-        <nav
-          className="relative z-10 flex items-center justify-between px-6 sm:px-10 pt-7"
-        >
+        <nav className="relative z-10 flex items-center justify-between px-6 sm:px-10 pt-7">
           <div className="flex items-center gap-2.5">
             <div
               className="w-7 h-7 rounded-lg flex items-center justify-center"
-              style={{ backgroundColor: t.accent, transition: "background-color 0.3s" }}
+              style={{ backgroundColor: t.accent }}
             >
               <span className="text-xs font-black" style={{ color: t.accentText }}>Q</span>
             </div>
-            <span className="font-black text-base tracking-tight" style={{ color: t.textPrimary, transition: "color 0.3s" }}>
-              quiniel<span style={{ color: mono ? t.textSec : "#D7FF5A" }}>a</span>
+            <span className="font-black text-base tracking-tight" style={{ color: t.textPrimary }}>
+              quiniel<span style={{ color: t.accent }}>a</span>
             </span>
           </div>
-
-          <div className="flex items-center gap-3">
-            {/* Theme toggle */}
-            <button
-              onClick={() => setMono(v => !v)}
-              className="w-8 h-8 flex items-center justify-center rounded-full border cursor-pointer transition-all duration-200"
-              style={{
-                borderColor: mono ? "#C8C0B0" : "rgba(44,72,50,0.7)",
-                backgroundColor: mono ? "rgba(26,18,8,0.06)" : "rgba(26,46,31,0.4)",
-                backdropFilter: "blur(8px)",
-              }}
-              aria-label={mono ? "Switch to dark mode" : "Switch to light mode"}
-            >
-              {mono ? (
-                /* Moon — click to go dark */
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#6B5E4E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>
-                </svg>
-              ) : (
-                /* Sun — click to go light */
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7A9B84" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="12" cy="12" r="5"/>
-                  <line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
-                  <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
-                  <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
-                  <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
-                </svg>
-              )}
-            </button>
-
-            <a
-              href="/auth/login"
-              className="text-xs font-semibold transition-opacity hover:opacity-60"
-              style={{ color: t.textSec }}
-            >
-              Sign in
-            </a>
-          </div>
+          <a
+            href="/auth/login"
+            className="text-xs font-semibold transition-opacity hover:opacity-100"
+            style={{ color: t.textSec, opacity: 0.8 }}
+          >
+            Sign in
+          </a>
         </nav>
 
-        {/* Mobile image strip — below nav, above text */}
-        <div className="sm:hidden relative overflow-hidden flex-shrink-0" style={{ height: "260px", marginTop: "12px" }}>
-          <img
-            src="/hero-player.png"
-            alt=""
+        {/* Mobile video strip */}
+        <div className="sm:hidden relative overflow-hidden flex-shrink-0" style={{ height: "280px", marginTop: "12px" }}>
+          <video
+            autoPlay muted loop playsInline
             className="absolute"
             style={{
               height: "160%",
@@ -170,16 +122,15 @@ export default function Home() {
               top: "50%",
               left: "50%",
               transform: "translate(-50%, -42%)",
-              filter: mono ? "grayscale(1) contrast(1.2) brightness(1.05)" : "none",
-              opacity: mono ? 0.5 : 0.85,
-              transition: "filter 0.4s, opacity 0.4s",
+              filter: "grayscale(1) contrast(1.15) brightness(0.85)",
+              opacity: 0.65,
             }}
-          />
-          {/* Bottom fade */}
+          >
+            <source src="/hero-video.mp4" type="video/mp4" />
+          </video>
           <div className="absolute inset-x-0 bottom-0" style={{
-            height: "45%",
+            height: "50%",
             background: `linear-gradient(to bottom, transparent, ${t.pageBg})`,
-            pointerEvents: "none",
           }} />
         </div>
 
@@ -187,39 +138,38 @@ export default function Home() {
         <div className="relative z-10 flex-1 flex flex-col justify-start sm:justify-end px-6 sm:px-10 pt-4 sm:pt-0 pb-20 max-w-5xl mx-auto w-full">
 
           <div className="flex items-center gap-2 mb-8">
-            <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: t.liveGlow }} />
-            <span className="text-xs font-bold tracking-widest uppercase" style={{ color: t.textSec, transition: "color 0.3s" }}>
+            <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: t.accent }} />
+            <span className="text-xs font-bold tracking-widest uppercase" style={{ color: t.textSec }}>
               World Cup 2026 · 104 matches
             </span>
           </div>
 
           <h1
             className="font-black leading-[0.92] tracking-tight mb-10"
-            style={{ fontSize: "clamp(52px, 9vw, 108px)", color: t.textPrimary, transition: "color 0.3s" }}
+            style={{ fontSize: "clamp(52px, 9vw, 108px)", color: t.textPrimary }}
           >
             Pick every<br />
             game.<br />
-            <span style={{ color: mono ? t.textPrimary : "#D7FF5A", transition: "color 0.3s", fontStyle: mono ? "italic" : "normal" }}>Beat your</span><br />
-            <span style={{ color: mono ? t.textPrimary : "#D7FF5A", transition: "color 0.3s", fontStyle: mono ? "italic" : "normal" }}>friends.</span>
+            <span style={{ color: t.accent }}>Beat your</span><br />
+            <span style={{ color: t.accent }}>friends.</span>
           </h1>
 
           <div className="flex flex-wrap gap-3">
             <button
               onClick={() => scrollToForm("create")}
               className="px-7 py-3.5 rounded-xl font-black text-sm uppercase tracking-widest transition-all hover:opacity-90 active:scale-[0.98]"
-              style={{ backgroundColor: t.accent, color: t.accentText, transition: "background-color 0.3s, color 0.3s" }}
+              style={{ backgroundColor: t.accent, color: t.accentText }}
             >
               Create a league
             </button>
             <button
               onClick={() => scrollToForm("join")}
-              className="px-7 py-3.5 rounded-xl font-black text-sm uppercase tracking-widest border transition-all"
+              className="px-7 py-3.5 rounded-xl font-black text-sm uppercase tracking-widest border transition-all hover:border-white/30"
               style={{
-                borderColor: mono ? "#C8C0B0" : "#2C4832",
+                borderColor: t.border,
                 color: t.textSec,
-                backgroundColor: mono ? "rgba(232,228,220,0.6)" : "rgba(26,46,31,0.6)",
+                backgroundColor: "rgba(255,255,255,0.03)",
                 backdropFilter: "blur(8px)",
-                transition: "all 0.3s",
               }}
             >
               Join with code
@@ -229,7 +179,7 @@ export default function Home() {
 
         {/* Scroll indicator */}
         <div className="relative z-10 flex justify-center pb-8">
-          <div className="flex flex-col items-center gap-1.5 opacity-25">
+          <div className="flex flex-col items-center gap-1.5 opacity-20">
             <div className="w-px h-10" style={{ backgroundColor: t.textSec }} />
             <span className="text-[9px] font-bold tracking-[0.3em] uppercase" style={{ color: t.textSec }}>scroll</span>
           </div>
@@ -237,7 +187,7 @@ export default function Home() {
       </section>
 
       {/* ── HOW IT WORKS ───────────────────────────────────────────────── */}
-      <section className="max-w-5xl mx-auto px-6 sm:px-10 py-28" style={{ transition: "all 0.3s" }}>
+      <section className="max-w-5xl mx-auto px-6 sm:px-10 py-28">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-16 sm:gap-10">
           {[
             {
@@ -259,14 +209,14 @@ export default function Home() {
             <div key={num} className="space-y-5">
               <span
                 className="block font-black leading-none tabular-nums"
-                style={{ fontSize: "72px", color: t.numColor, letterSpacing: "-0.04em", transition: "color 0.3s" }}
+                style={{ fontSize: "72px", color: t.borderInner, letterSpacing: "-0.04em" }}
               >
                 {num}
               </span>
-              <h3 className="font-black text-xl tracking-tight" style={{ color: t.textPrimary, transition: "color 0.3s" }}>
+              <h3 className="font-black text-xl tracking-tight" style={{ color: t.textPrimary }}>
                 {title}
               </h3>
-              <p className="text-sm leading-relaxed" style={{ color: t.textSec, transition: "color 0.3s" }}>
+              <p className="text-sm leading-relaxed" style={{ color: t.textSec }}>
                 {body}
               </p>
             </div>
@@ -276,23 +226,22 @@ export default function Home() {
 
       {/* Divider */}
       <div className="max-w-5xl mx-auto px-6 sm:px-10">
-        <div className="h-px" style={{ backgroundColor: t.borderInner, transition: "background-color 0.3s" }} />
+        <div className="h-px" style={{ backgroundColor: t.borderInner }} />
       </div>
 
       {/* ── FORM SECTION ───────────────────────────────────────────────── */}
       <section ref={formRef} className="max-w-5xl mx-auto px-6 sm:px-10 py-28">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-16 items-start">
 
-          {/* Copy */}
           <div className="sm:pt-2">
             <h2
               className="font-black leading-none tracking-tight mb-5"
-              style={{ fontSize: "clamp(40px, 5vw, 64px)", color: t.textPrimary, transition: "color 0.3s" }}
+              style={{ fontSize: "clamp(40px, 5vw, 64px)", color: t.textPrimary }}
             >
               Ready to<br />
-              <span style={{ color: mono ? t.textPrimary : "#D7FF5A", transition: "color 0.3s", fontStyle: mono ? "italic" : "normal" }}>play?</span>
+              <span style={{ color: t.accent }}>play?</span>
             </h2>
-            <p className="text-sm leading-relaxed mb-10 max-w-xs" style={{ color: t.textSec, transition: "color 0.3s" }}>
+            <p className="text-sm leading-relaxed mb-10 max-w-xs" style={{ color: t.textSec }}>
               Create a private league and share your invite code.
               Friends join in seconds.
             </p>
@@ -301,7 +250,7 @@ export default function Home() {
           {/* Form card */}
           <div
             className="rounded-2xl overflow-hidden border"
-            style={{ backgroundColor: t.cardBg, borderColor: t.border, transition: "all 0.3s" }}
+            style={{ backgroundColor: t.cardBg, borderColor: t.border }}
           >
             <div className="flex border-b" style={{ borderColor: t.border }}>
               {(["create", "join"] as const).map((v) => (
@@ -312,7 +261,6 @@ export default function Home() {
                   style={{
                     color: tab === v ? t.accent : t.textSec,
                     borderBottomColor: tab === v ? t.accent : "transparent",
-                    transition: "color 0.2s, border-color 0.2s",
                   }}
                 >
                   {v === "create" ? "New league" : "Join league"}
@@ -323,21 +271,12 @@ export default function Home() {
             <div className="p-6">
               {tab === "create" ? (
                 <form onSubmit={handleCreate} className="space-y-4">
-                  <Field label="Your name" mono={mono} inputBg={t.inputBg} border={t.border} textPrimary={t.textPrimary} textMuted={t.textMuted}>
-                    <input
-                      type="text" value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      placeholder="Ignacio" required
-                    />
+                  <Field label="Your name" inputBg={t.inputBg} border={t.border} textPrimary={t.textPrimary} textMuted={t.textMuted}>
+                    <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ignacio" required />
                   </Field>
-                  <Field label="League name" mono={mono} inputBg={t.inputBg} border={t.border} textPrimary={t.textPrimary} textMuted={t.textMuted}>
-                    <input
-                      type="text" value={leagueName}
-                      onChange={(e) => setLeagueName(e.target.value)}
-                      placeholder="La Banda del Martes" required
-                    />
+                  <Field label="League name" inputBg={t.inputBg} border={t.border} textPrimary={t.textPrimary} textMuted={t.textMuted}>
+                    <input type="text" value={leagueName} onChange={(e) => setLeagueName(e.target.value)} placeholder="La Banda del Martes" required />
                   </Field>
-                  {/* Mode picker */}
                   <div className="space-y-1.5">
                     <label className="block text-[10px] font-bold uppercase tracking-widest" style={{ color: t.textMuted }}>Format</label>
                     <div className="grid grid-cols-2 gap-2">
@@ -353,7 +292,7 @@ export default function Home() {
                             onClick={() => setLeagueMode(value)}
                             className="text-left px-3 py-3 rounded-xl border transition-all cursor-pointer"
                             style={{
-                              backgroundColor: active ? (mono ? "rgba(26,18,8,0.08)" : "rgba(215,255,90,0.08)") : t.inputBg,
+                              backgroundColor: active ? "rgba(215,255,90,0.06)" : t.inputBg,
                               borderColor: active ? t.accent : t.border,
                             }}
                           >
@@ -364,18 +303,14 @@ export default function Home() {
                       })}
                     </div>
                   </div>
-                  <Btn mono={mono} accent={t.accent} accentText={t.accentText}>Create league →</Btn>
+                  <Btn>Create league →</Btn>
                 </form>
               ) : (
                 <form onSubmit={handleJoin} className="space-y-4">
-                  <Field label="Your name" mono={mono} inputBg={t.inputBg} border={t.border} textPrimary={t.textPrimary} textMuted={t.textMuted}>
-                    <input
-                      type="text" value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      placeholder="Ignacio" required
-                    />
+                  <Field label="Your name" inputBg={t.inputBg} border={t.border} textPrimary={t.textPrimary} textMuted={t.textMuted}>
+                    <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ignacio" required />
                   </Field>
-                  <Field label="Invite code" mono={mono} inputBg={t.inputBg} border={t.border} textPrimary={t.textPrimary} textMuted={t.textMuted} accent={t.accent}>
+                  <Field label="Invite code" inputBg={t.inputBg} border={t.border} textPrimary={t.textPrimary} textMuted={t.textMuted} accent={t.accent}>
                     <input
                       type="text" value={joinCode}
                       onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
@@ -383,7 +318,7 @@ export default function Home() {
                       className="font-mono tracking-widest"
                     />
                   </Field>
-                  <Btn mono={mono} accent={t.accent} accentText={t.accentText}>Join league →</Btn>
+                  <Btn>Join league →</Btn>
                 </form>
               )}
             </div>
@@ -394,11 +329,11 @@ export default function Home() {
       {/* ── FOOTER ─────────────────────────────────────────────────────── */}
       <footer
         className="max-w-5xl mx-auto px-6 sm:px-10 pb-12"
-        style={{ borderTop: `1px solid ${t.borderInner}`, paddingTop: "32px", transition: "border-color 0.3s" }}
+        style={{ borderTop: `1px solid ${t.borderInner}`, paddingTop: "32px" }}
       >
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
           <span className="font-black text-sm tracking-tight" style={{ color: t.textMuted }}>
-            quiniel<span style={{ color: mono ? t.textMuted : "#D7FF5A" }}>a</span>
+            quiniel<span style={{ color: t.accent }}>a</span>
             <span className="font-normal ml-2" style={{ color: t.textMuted, opacity: 0.5 }}>· World Cup 2026</span>
           </span>
           <nav className="flex flex-wrap gap-x-6 gap-y-2">
@@ -428,18 +363,17 @@ export default function Home() {
 // ── Sub-components ────────────────────────────────────────────────────────────
 
 function Field({
-  label, children, mono, inputBg, border, textPrimary, textMuted, accent,
+  label, children, inputBg, border, textPrimary, textMuted, accent,
 }: {
   label: string;
   children: React.ReactElement;
-  mono: boolean;
   inputBg: string;
   border: string;
   textPrimary: string;
   textMuted: string;
   accent?: string;
 }) {
-  const focusBorder = accent ?? (mono ? "#1A1208" : "#D7FF5A");
+  const focusBorder = accent ?? "#D7FF5A";
   return (
     <div className="space-y-1.5">
       <label className="block text-[10px] font-bold uppercase tracking-widest" style={{ color: textMuted }}>
@@ -455,13 +389,12 @@ function Field({
           font-size: 14px;
           color: ${textPrimary};
           outline: none;
-          transition: border-color 0.15s, background 0.3s, color 0.3s;
+          transition: border-color 0.15s;
           font-family: inherit;
         }
         .qf-input::placeholder { color: ${textMuted}; }
         .qf-input:focus { border-color: ${focusBorder}; }
       `}</style>
-      {/* Clone child and inject className */}
       {(() => {
         const child = children as React.ReactElement<React.InputHTMLAttributes<HTMLInputElement>>;
         return <child.type {...child.props} className={["qf-input", child.props.className ?? ""].join(" ").trim()} />;
@@ -470,20 +403,19 @@ function Field({
   );
 }
 
-function Btn({ children, mono, accent, accentText }: { children: React.ReactNode; mono: boolean; accent: string; accentText: string }) {
+function Btn({ children }: { children: React.ReactNode }) {
   return (
     <button
       type="submit"
       className="w-full mt-2 font-black text-sm uppercase tracking-widest rounded-xl cursor-pointer transition-all hover:opacity-90 active:scale-[0.98]"
       style={{
-        backgroundColor: accent,
-        color: accentText,
+        backgroundColor: "#D7FF5A",
+        color: "#080808",
         padding: "13px 24px",
         border: "none",
         fontFamily: "inherit",
         display: "block",
         textAlign: "center",
-        transition: "background-color 0.3s, color 0.3s, opacity 0.15s, transform 0.1s",
       }}
     >
       {children}
