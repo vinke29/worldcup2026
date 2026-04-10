@@ -575,7 +575,7 @@ export default function LeagueClient({
                   {[
                     { label: "Correct result · Group", pts: "1 pt", muted: false },
                     { label: "Exact score · Group", pts: "3 pts", muted: false },
-                    { label: "Exact score · KO round", pts: "+5 pts", muted: false },
+                    { label: "Exact score · KO round", pts: "5 pts", muted: false },
                   ].map(({ label, pts }) => (
                     <div key={label} className="flex justify-between items-center gap-2">
                       <span className="text-xs" style={{ color: t.textBody }}>{label}</span>
@@ -588,11 +588,11 @@ export default function LeagueClient({
 
                   {/* KO milestones — 2 col */}
                   {[
-                    { label: "Made R32", pts: "2 pts" },
-                    { label: "Made R16", pts: "3 pts" },
-                    { label: "Made QF", pts: "5 pts" },
-                    { label: "Made SF", pts: "7 pts" },
-                    { label: "Made Final", pts: "10 pts" },
+                    { label: "Reached R32", pts: "2 pts" },
+                    { label: "Reached R16", pts: "3 pts" },
+                    { label: "Reached QF", pts: "5 pts" },
+                    { label: "Reached SF", pts: "7 pts" },
+                    { label: "Reached Final", pts: "10 pts" },
                     { label: "Champion 🏆", pts: "15 pts" },
                   ].map(({ label, pts }) => (
                     <div key={label} className="flex justify-between items-center gap-2">
@@ -605,7 +605,7 @@ export default function LeagueClient({
                   <div style={{ height: 1, backgroundColor: t.borderInner }} />
 
                   <p className="text-[10px] leading-relaxed" style={{ color: t.textMuted }}>
-                    Points stack per round. Netherlands to Final = <span style={{ color: t.accent, fontWeight: 800 }}>27 pts</span>. Champion = <span style={{ color: t.accent, fontWeight: 800 }}>42 pts</span>.
+                    Points stack per round. Brazil reaches the Final = <span style={{ color: t.accent, fontWeight: 800 }}>27 pts</span>. Brazil wins the World Cup = <span style={{ color: t.accent, fontWeight: 800 }}>42 pts</span>.
                   </p>
                 </div>
               </div>
