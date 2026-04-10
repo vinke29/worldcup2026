@@ -345,6 +345,28 @@ export default function QualifiersView({ matches, scorePicks, actualScores, mono
     return { r32, r16, qf, sf, third, final };
   }, [topR32Pairs, botR32Pairs, predictedBracketTeams, bracketTeams, actualR32ByMatchId, hasActual, thirdGroupAssign]);
 
+  // Maps each group index (per round) to the resulting next-round match — used for desktop bracket view
+  const desktopNextMatch = useMemo((): Record<MobileRound, Array<{ id: string; homeTeam: TeamRow | null; awayTeam: TeamRow | null } | null>> => ({
+    r32: Array.from({ length: 8 }, (_, i) => ({
+      id: R16_IDS[i],
+      homeTeam: i < 4 ? predictedBracketTeams.r16Top[i].home : predictedBracketTeams.r16Bot[i - 4].home,
+      awayTeam: i < 4 ? predictedBracketTeams.r16Top[i].away : predictedBracketTeams.r16Bot[i - 4].away,
+    })),
+    r16: Array.from({ length: 4 }, (_, i) => ({
+      id: QF_IDS[i],
+      homeTeam: i < 2 ? predictedBracketTeams.qfTop[i].home : predictedBracketTeams.qfBot[i - 2].home,
+      awayTeam: i < 2 ? predictedBracketTeams.qfTop[i].away : predictedBracketTeams.qfBot[i - 2].away,
+    })),
+    qf: Array.from({ length: 2 }, (_, i) => ({
+      id: SF_IDS[i],
+      homeTeam: i === 0 ? predictedBracketTeams.sfTop.home : predictedBracketTeams.sfBot.home,
+      awayTeam: i === 0 ? predictedBracketTeams.sfTop.away : predictedBracketTeams.sfBot.away,
+    })),
+    sf: [{ id: FINAL_ID, homeTeam: predictedBracketTeams.final.home, awayTeam: predictedBracketTeams.final.away }],
+    third: [null],
+    final: [null],
+  }), [predictedBracketTeams]);
+
   const connectorPaths = [
     ...halfConnectors(0, 0, colX, POD_W), ...halfConnectors(0, 1, colX, POD_W), ...halfConnectors(0, 2, colX, POD_W),
     ...halfConnectors(HALF_H, 0, colX, POD_W), ...halfConnectors(HALF_H, 1, colX, POD_W), ...halfConnectors(HALF_H, 2, colX, POD_W),
@@ -430,8 +452,8 @@ export default function QualifiersView({ matches, scorePicks, actualScores, mono
             })}
           </div>
 
-          {/* Match cards — grouped by next-round pairing */}
-          <div className="flex flex-col gap-8 mb-6 max-w-2xl mx-auto w-full">
+          {/* Match cards — mobile only */}
+          <div className="md:hidden flex flex-col gap-8 mb-6 max-w-2xl mx-auto w-full">
             {mobileGroups[mobileRound].map((group, gi) => {
               const isMulti = group.matches.length > 1;
               return (
@@ -475,6 +497,97 @@ export default function QualifiersView({ matches, scorePicks, actualScores, mono
                         {group.nextRoundLabel}
                       </span>
                       <div style={{ flex: 1, height: 1, backgroundColor: t.border }} />
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Desktop bracket view — hidden on mobile */}
+          <div className="hidden md:flex flex-col gap-10 mb-6">
+            {mobileGroups[mobileRound].map((group, gi) => {
+              const nextMatch = desktopNextMatch[mobileRound][gi];
+              const isMulti = group.matches.length > 1;
+              return (
+                <div key={gi} className="flex items-stretch">
+                  {/* Left: current round cards */}
+                  <div style={{ width: 320, flexShrink: 0 }}>
+                    <div style={isMulti ? { border: `1px solid ${t.border}`, borderRadius: 16, overflow: "hidden" } : {}}>
+                      {isMulti && group.nextRoundLabel && (
+                        <div style={{ padding: "6px 14px", borderBottom: `1px solid ${t.border}`, backgroundColor: t.halfDivider }}>
+                          <span style={{ fontSize: 9, color: t.textMuted, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em" }}>
+                            {group.nextRoundLabel}
+                          </span>
+                        </div>
+                      )}
+                      {group.matches.map((m, mi) => (
+                        <div key={m.id}>
+                          <MobileMatchCard
+                            id={m.id} homeTeam={m.homeTeam} awayTeam={m.awayTeam}
+                            homeLabel={m.homeLabel} awayLabel={m.awayLabel}
+                            actualHomeTeam={m.actualHomeTeam} actualAwayTeam={m.actualAwayTeam}
+                            scorePicks={scorePicks} onScorePick={onScorePick} t={t}
+                            grouped={isMulti}
+                          />
+                          {mi === 0 && isMulti && (
+                            <div style={{ position: "relative", height: 28, display: "flex", alignItems: "center", borderTop: `1px solid ${t.border}`, borderBottom: `1px solid ${t.border}`, backgroundColor: t.halfDivider }}>
+                              <div style={{ flex: 1, height: 1, backgroundColor: t.border }} />
+                              <span style={{ padding: "0 10px", fontSize: 9, color: t.textMuted, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", flexShrink: 0 }}>
+                                winners meet
+                              </span>
+                              <div style={{ flex: 1, height: 1, backgroundColor: t.border }} />
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Bracket connector — two matches feeding one next-round slot */}
+                  {isMulti && nextMatch && (
+                    <div style={{ width: 48, flexShrink: 0, position: "relative" }}>
+                      {/* Vertical bar connecting card centers */}
+                      <div style={{ position: "absolute", left: 12, top: "22%", bottom: "22%", width: 1, backgroundColor: t.connector }} />
+                      {/* Cap at card 1 center */}
+                      <div style={{ position: "absolute", left: 0, top: "22%", width: 12, height: 1, backgroundColor: t.connector, transform: "translateY(-0.5px)" }} />
+                      {/* Cap at card 2 center */}
+                      <div style={{ position: "absolute", left: 0, top: "78%", width: 12, height: 1, backgroundColor: t.connector, transform: "translateY(-0.5px)" }} />
+                      {/* Horizontal branch to next-round card */}
+                      <div style={{ position: "absolute", left: 12, right: 0, top: "50%", height: 1, backgroundColor: t.connector, transform: "translateY(-0.5px)" }} />
+                    </div>
+                  )}
+
+                  {/* Simple connector — single match */}
+                  {!isMulti && nextMatch && (
+                    <div style={{ width: 48, flexShrink: 0, display: "flex", alignItems: "center" }}>
+                      <div style={{ width: "100%", height: 1, backgroundColor: t.connector }} />
+                    </div>
+                  )}
+
+                  {/* Right: next-round match card, vertically centered */}
+                  {nextMatch && (
+                    <div style={{ width: 320, flexShrink: 0, display: "flex", alignItems: "center" }}>
+                      <div style={{ width: "100%" }}>
+                        {group.nextRoundLabel && (
+                          <div style={{ marginBottom: 6 }}>
+                            <span style={{ fontSize: 9, color: t.textMuted, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em" }}>
+                              {group.nextRoundLabel.replace("→ ", "")}
+                            </span>
+                          </div>
+                        )}
+                        <MobileMatchCard
+                          id={nextMatch.id}
+                          homeTeam={nextMatch.homeTeam}
+                          awayTeam={nextMatch.awayTeam}
+                          homeLabel=""
+                          awayLabel=""
+                          scorePicks={scorePicks}
+                          onScorePick={onScorePick}
+                          t={t}
+                          grouped={false}
+                        />
+                      </div>
                     </div>
                   )}
                 </div>
