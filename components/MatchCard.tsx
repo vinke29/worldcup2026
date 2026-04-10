@@ -234,7 +234,7 @@ export default function MatchCard({
     >
       {/* Illustration or placeholder */}
       {match.illustration ? (
-        <div className="relative w-full overflow-hidden" style={{ aspectRatio: "2/1" }}>
+        <div className="relative w-full overflow-hidden" style={{ aspectRatio: "2/1", maxHeight: "160px" }}>
           <img
             src={match.illustration}
             alt={`${match.homeTeam} vs ${match.awayTeam}`}
