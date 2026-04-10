@@ -565,7 +565,12 @@ export default function LeagueClient({
               currentUserId={currentUserId}
               mono={mono}
               variant="full"
-              onSelectMember={setSelectedMember}
+              onSelectMember={
+                // In full-bracket mode, hide other players' picks until the tournament starts
+                mode === "entire_tournament" && Date.now() < Date.UTC(2026, 5, 11, 23, 0)
+                  ? undefined
+                  : setSelectedMember
+              }
             />
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
