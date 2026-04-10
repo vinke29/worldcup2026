@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import Link from "next/link";
 import { login } from "@/app/actions/auth";
+import GoogleButton from "@/components/GoogleButton";
 
 function LoginForm() {
   const [actionError, action, pending] = useActionState(login, null);
@@ -102,6 +103,14 @@ function LoginForm() {
             </div>
             <AuthButton pending={pending}>Sign in →</AuthButton>
           </form>
+
+          <div className="flex items-center gap-3 my-5">
+            <div className="flex-1 h-px" style={{ backgroundColor: "#2C4832" }} />
+            <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: "#4A6B50" }}>or</span>
+            <div className="flex-1 h-px" style={{ backgroundColor: "#2C4832" }} />
+          </div>
+
+          <GoogleButton label="Sign in with Google" />
         </div>
 
         <p className="text-center text-sm mt-6" style={{ color: "#4A6B50" }}>
