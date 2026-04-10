@@ -69,22 +69,28 @@ export default function Home() {
             alt=""
             className="absolute"
             style={{
-              right: "-5%",
+              left: "38%",
               top: "50%",
               transform: "translateY(-50%)",
-              height: "100%",
+              height: "108%",
               width: "auto",
-              objectFit: "cover",
               filter: mono ? "grayscale(1) contrast(1.2) brightness(1.05)" : "none",
               opacity: mono ? 0.55 : 0.75,
               transition: "filter 0.4s, opacity 0.4s",
             }}
           />
-          {/* Left fade — blends illustration into page bg */}
+          {/* Left fade */}
           <div className="absolute inset-0" style={{
             background: mono
               ? `linear-gradient(to right, ${t.pageBg} 25%, ${t.pageBg}CC 50%, transparent 80%)`
               : `linear-gradient(to right, #0B1E0D 30%, #0B1E0D99 55%, transparent 82%)`,
+            transition: "background 0.4s",
+          }} />
+          {/* Right fade */}
+          <div className="absolute inset-0" style={{
+            background: mono
+              ? `linear-gradient(to left, ${t.pageBg} 0%, transparent 25%)`
+              : `linear-gradient(to left, #0B1E0D 0%, transparent 25%)`,
             transition: "background 0.4s",
           }} />
           {/* Bottom fade */}
