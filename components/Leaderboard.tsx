@@ -24,7 +24,7 @@ export default function Leaderboard({ members, currentUserId, mono = false, vari
           <span className="w-14 text-right text-[10px] font-black uppercase tracking-widest" style={{ color: t.textMuted }}>Pts</span>
           <span className="w-16 text-right text-[10px] font-black uppercase tracking-widest hidden sm:block" style={{ color: t.textMuted }}>Correct</span>
           <span className="w-14 text-right text-[10px] font-black uppercase tracking-widest hidden sm:block" style={{ color: t.textMuted }}>Exact</span>
-          <span className="w-16 text-right text-[10px] font-black uppercase tracking-widest hidden sm:block" style={{ color: t.textMuted }}>Picks</span>
+          <div className="w-4 flex-shrink-0" />
         </div>
 
         {sorted.map((member, i) => {
@@ -95,14 +95,9 @@ export default function Leaderboard({ members, currentUserId, mono = false, vari
                 </span>
               </div>
 
-              {/* Picks made / chevron */}
-              <div className="w-16 text-right hidden sm:block">
-                <span className="text-sm tabular-nums" style={{ color: t.textSec }}>{member.picked}</span>
-                <span className="text-[10px]" style={{ color: t.textMuted }}>/104</span>
+              <div className="w-4 flex-shrink-0 text-center">
+                {clickable && <span className="text-xs" style={{ color: t.textMuted }}>›</span>}
               </div>
-              {clickable && (
-                <span className="text-xs flex-shrink-0" style={{ color: t.textMuted }}>›</span>
-              )}
             </div>
           );
         })}
