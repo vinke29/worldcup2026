@@ -569,21 +569,42 @@ export default function LeagueClient({
                     {mode === "entire_tournament" ? "Full bracket" : "Phase by phase"}
                   </span>
                 </div>
-                <div className="space-y-2">
-                  {(mode === "entire_tournament" ? [
-                    { label: "Correct result · Group", pts: "1 pt" },
-                    { label: "Exact score · Group", pts: "3 pts" },
-                    { label: "Correct winner · R32–Final", pts: "2–10 pts" },
-                    { label: "Exact score · R32–Final", pts: "5–15 pts" },
-                  ] : [
-                    { label: "Correct result · Group", pts: "1 pt" },
-                    { label: "Exact score · Group", pts: "3 pts" },
-                    { label: "Correct result · R32–Final", pts: "2–10 pts" },
-                    { label: "Exact score · R32–Final", pts: "5–15 pts" },
-                  ]).map(({ label, pts }) => (
-                    <div key={label} className="flex justify-between items-center gap-2">
-                      <span className="text-xs" style={{ color: t.textBody }}>{label}</span>
-                      <span className="text-xs font-black whitespace-nowrap" style={{ color: t.accent }}>{pts}</span>
+
+                {/* Group stage */}
+                <div className="space-y-1.5 mb-3">
+                  <div className="flex justify-between items-center gap-2">
+                    <span className="text-xs" style={{ color: t.textBody }}>Correct result · Group</span>
+                    <span className="text-xs font-black" style={{ color: t.accent }}>1 pt</span>
+                  </div>
+                  <div className="flex justify-between items-center gap-2">
+                    <span className="text-xs" style={{ color: t.textBody }}>Exact score · Group</span>
+                    <span className="text-xs font-black" style={{ color: t.accent }}>3 pts</span>
+                  </div>
+                </div>
+
+                {/* Knockout per-round table */}
+                <div className="rounded-xl overflow-hidden" style={{ border: `1px solid ${t.borderInner}` }}>
+                  {/* Header */}
+                  <div className="grid grid-cols-3 px-3 py-1.5" style={{ backgroundColor: t.cardBgDeep }}>
+                    <span className="text-[9px] font-black uppercase tracking-widest" style={{ color: t.textMuted }}>Round</span>
+                    <span className="text-[9px] font-black uppercase tracking-widest text-center" style={{ color: t.textMuted }}>Winner</span>
+                    <span className="text-[9px] font-black uppercase tracking-widest text-right" style={{ color: t.textMuted }}>Exact</span>
+                  </div>
+                  {[
+                    { round: "R32", winner: 2, exact: 5 },
+                    { round: "R16", winner: 3, exact: 7 },
+                    { round: "QF", winner: 5, exact: 10 },
+                    { round: "SF", winner: 7, exact: 12 },
+                    { round: "Final", winner: 10, exact: 15 },
+                  ].map(({ round, winner, exact }, i, arr) => (
+                    <div
+                      key={round}
+                      className="grid grid-cols-3 px-3 py-1.5"
+                      style={{ borderTop: `1px solid ${t.borderInner}`, backgroundColor: round === "Final" ? (mono ? "rgba(26,18,8,0.04)" : "rgba(215,255,90,0.04)") : "transparent" }}
+                    >
+                      <span className="text-xs font-semibold" style={{ color: round === "Final" ? t.accent : t.textBody }}>{round}</span>
+                      <span className="text-xs font-black text-center" style={{ color: t.accent }}>{winner} pts</span>
+                      <span className="text-xs font-black text-right" style={{ color: t.accent }}>{exact} pts</span>
                     </div>
                   ))}
                 </div>
