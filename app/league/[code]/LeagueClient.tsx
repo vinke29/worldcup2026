@@ -550,7 +550,13 @@ export default function LeagueClient({
                       mono={mono}
                       onAllPicked={() => {
                         setTimeout(() => {
-                          document.getElementById(`standings-${groupSlug}`)?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+                          if (nextGroupSlug) {
+                            // Non-last group — scroll to standings so user sees the "Continue" button
+                            document.getElementById(`standings-${groupSlug}`)?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+                          } else {
+                            // Last group on screen — scroll to top so the completion banner is visible
+                            window.scrollTo({ top: 0, behavior: "smooth" });
+                          }
                         }, 50);
                       }}
                       nextGroupName={nextGroupName}
