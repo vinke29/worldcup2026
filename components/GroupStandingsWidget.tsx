@@ -190,7 +190,7 @@ export default function GroupStandingsWidget({
               }}
             >
               <span className="text-xs font-black uppercase tracking-widest" style={{ color: mono ? "#1A1208" : "#D7FF5A" }}>
-                {nextGroupName}
+                Continue to {nextGroupName}
               </span>
               <span className="text-xs font-bold" style={{ color: mono ? "#1A1208" : "#D7FF5A" }}>→</span>
             </button>
