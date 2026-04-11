@@ -894,7 +894,7 @@ function MobileMatchCard({
     return () => clearTimeout(timer);
   }, [homeScore, awayScore, pens]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const interactive = !!onScorePick;
+  const interactive = !!onScorePick && !!homeTeam && !!awayTeam;
 
   function TeamRow_({ team, label, score, onMinus, onPlus, actualTeam, isWinner, isLoser }: {
     team: TeamRow | null; label: string;
