@@ -515,8 +515,12 @@ export default function LeagueClient({
               </div>
             ) : (
               <div className="space-y-8">
-                {groupNames.map((groupName) => (
-                  <div key={groupName}>
+                {groupNames.map((groupName, gi) => {
+                  const nextGroupName = groupNames[gi + 1];
+                  const groupSlug = groupName.replace(" ", "-").toLowerCase();
+                  const nextGroupSlug = nextGroupName?.replace(" ", "-").toLowerCase();
+                  return (
+                  <div key={groupName} id={`group-section-${groupSlug}`}>
                     <div className="flex items-center gap-3 mb-3">
                       <span className="text-[10px] font-black uppercase tracking-widest" style={{ color: t.textSec }}>
                         {groupName}
@@ -544,9 +548,19 @@ export default function LeagueClient({
                       allGroupMatches={allGroupMatchesByGroup[groupName] ?? []}
                       scorePicks={scorePredictions}
                       mono={mono}
+                      onAllPicked={() => {
+                        setTimeout(() => {
+                          document.getElementById(`standings-${groupSlug}`)?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+                        }, 50);
+                      }}
+                      nextGroupName={nextGroupName}
+                      onNext={nextGroupSlug ? () => {
+                        document.getElementById(`group-section-${nextGroupSlug}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+                      } : undefined}
                     />
                   </div>
-                ))}
+                  );
+                })}
               </div>
             )}
 

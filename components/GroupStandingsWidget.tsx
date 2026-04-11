@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import type { Match } from "@/lib/mock-data";
 import { computeGroupTables, type TeamRow } from "@/lib/group-standings";
 import FlagImage from "@/lib/flag-image";
@@ -10,6 +10,9 @@ interface GroupStandingsWidgetProps {
   allGroupMatches: Match[];          // all 6 matches for this group across all matchdays
   scorePicks: Record<string, { home: number; away: number }>;
   mono: boolean;
+  onAllPicked?: () => void;          // called once when group first becomes fully picked
+  nextGroupName?: string;            // label of the next group to scroll to
+  onNext?: () => void;               // scroll to the next group
 }
 
 export default function GroupStandingsWidget({
@@ -17,8 +20,12 @@ export default function GroupStandingsWidget({
   allGroupMatches,
   scorePicks,
   mono,
+  onAllPicked,
+  nextGroupName,
+  onNext,
 }: GroupStandingsWidgetProps) {
   const [open, setOpen] = useState(false);
+  const prevAllPickedRef = useRef(false);
 
   // Only show when all 6 matches have score picks
   const allPicked = useMemo(
@@ -31,6 +38,15 @@ export default function GroupStandingsWidget({
     const tables = computeGroupTables(allGroupMatches, scorePicks, false);
     return tables[groupName];
   }, [allPicked, allGroupMatches, scorePicks, groupName]);
+
+  // Auto-open and notify parent the first time all picks are made
+  useEffect(() => {
+    if (allPicked && !prevAllPickedRef.current) {
+      setOpen(true);
+      onAllPicked?.();
+    }
+    prevAllPickedRef.current = allPicked;
+  }, [allPicked, onAllPicked]);
 
   if (!allPicked || !rows) return null;
 
@@ -62,6 +78,7 @@ export default function GroupStandingsWidget({
 
   return (
     <div
+      id={`standings-${groupName.replace(" ", "-").toLowerCase()}`}
       className="mt-3 rounded-2xl overflow-hidden border"
       style={{ borderColor: t.border, backgroundColor: t.cardBg }}
     >
@@ -161,6 +178,23 @@ export default function GroupStandingsWidget({
           <p className="mt-2 px-2 text-[9px]" style={{ color: t.textMuted }}>
             FIFA 2026 rules · H2H before overall GD · Top 2 advance
           </p>
+
+          {/* Next group banner */}
+          {nextGroupName && onNext && (
+            <button
+              onClick={onNext}
+              className="mt-3 w-full flex items-center justify-between px-4 py-3 rounded-xl cursor-pointer transition-opacity hover:opacity-80"
+              style={{
+                backgroundColor: mono ? "rgba(26,18,8,0.06)" : "rgba(215,255,90,0.08)",
+                border: `1px solid ${mono ? "rgba(26,18,8,0.15)" : "rgba(215,255,90,0.2)"}`,
+              }}
+            >
+              <span className="text-xs font-black uppercase tracking-widest" style={{ color: mono ? "#1A1208" : "#D7FF5A" }}>
+                Continue to {nextGroupName}
+              </span>
+              <span className="text-xs font-bold" style={{ color: mono ? "#1A1208" : "#D7FF5A" }}>→</span>
+            </button>
+          )}
         </div>
       )}
     </div>
