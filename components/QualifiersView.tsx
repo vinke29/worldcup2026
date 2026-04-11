@@ -121,9 +121,18 @@ function resolveTeam(
   tables: Record<string, TeamRow[]>,
   matchId: string,
   thirdMap: Record<string, TeamRow | null>,
+  pickedGroups?: Set<string>,
 ): TeamRow | null {
-  if (slot.kind === "winner")  return tables[`Group ${slot.group}`]?.[0] ?? null;
-  if (slot.kind === "runner")  return tables[`Group ${slot.group}`]?.[1] ?? null;
+  if (slot.kind === "winner") {
+    if (pickedGroups && !pickedGroups.has(slot.group)) return null;
+    return tables[`Group ${slot.group}`]?.[0] ?? null;
+  }
+  if (slot.kind === "runner") {
+    if (pickedGroups && !pickedGroups.has(slot.group)) return null;
+    return tables[`Group ${slot.group}`]?.[1] ?? null;
+  }
+  // Third-place: all eligible groups must have at least one pick before resolving
+  if (pickedGroups && !(slot as ThirdSlot).eligible.every(g => pickedGroups.has(g))) return null;
   return thirdMap[matchId] ?? null;
 }
 
@@ -224,16 +233,27 @@ export default function QualifiersView({ matches, scorePicks, actualScores, mono
     return assignThirdPlaceGroups(top8.map(t => t.group));
   }, [tables]);
 
+  // Groups where the user has made at least one score pick — used to gate bracket resolution
+  const pickedGroups = useMemo(() => {
+    const groups = new Set<string>();
+    for (const match of matches) {
+      if (match.group?.startsWith("Group") && scorePicks[match.id] !== undefined) {
+        groups.add(match.group.replace("Group ", ""));
+      }
+    }
+    return groups;
+  }, [matches, scorePicks]);
+
   const topR32Pairs = useMemo(() =>
     TOP_R32.map(m => ({
-      home: resolveTeam(m.home, tables, m.id, thirdMap),
-      away: resolveTeam(m.away, tables, m.id, thirdMap),
-    })), [tables, thirdMap]);
+      home: resolveTeam(m.home, tables, m.id, thirdMap, pickedGroups),
+      away: resolveTeam(m.away, tables, m.id, thirdMap, pickedGroups),
+    })), [tables, thirdMap, pickedGroups]);
   const botR32Pairs = useMemo(() =>
     BOTTOM_R32.map(m => ({
-      home: resolveTeam(m.home, tables, m.id, thirdMap),
-      away: resolveTeam(m.away, tables, m.id, thirdMap),
-    })), [tables, thirdMap]);
+      home: resolveTeam(m.home, tables, m.id, thirdMap, pickedGroups),
+      away: resolveTeam(m.away, tables, m.id, thirdMap, pickedGroups),
+    })), [tables, thirdMap, pickedGroups]);
 
   // Bracket propagated from actual scores (for "actual" view)
   const bracketTeams = useMemo(
