@@ -442,7 +442,7 @@ export default function QualifiersView({ matches, scorePicks, actualScores, mono
             }}
           >
             <div className="flex items-center gap-3">
-              <span className="text-xl">🏆</span>
+              <img src="/world-cup-trophy.png" alt="FIFA World Cup" style={{ width: 28, height: 28, objectFit: "contain" }} />
               <div className="text-left">
                 <p className="text-sm font-black" style={{ color: mono ? "#F7F4EE" : "#0B1E0D" }}>
                   {finalChampion?.team} wins it all
@@ -589,7 +589,7 @@ export default function QualifiersView({ matches, scorePicks, actualScores, mono
               }}
             >
               <div className="flex flex-col items-center gap-4 px-8 py-10 text-center">
-                <span style={{ fontSize: 52, lineHeight: 1 }}>🏆</span>
+                <img src="/world-cup-trophy.png" alt="FIFA World Cup" style={{ width: 120, height: 120, objectFit: "contain", filter: "drop-shadow(0 8px 24px rgba(215,200,80,0.4))" }} />
                 <div className="flex items-center gap-3">
                   <FlagImage emoji={finalChampion.flag} size={36} team={finalChampion.team} />
                   <span className="text-3xl font-black tracking-tight" style={{ color: t.accent }}>
