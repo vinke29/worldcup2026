@@ -520,7 +520,7 @@ export default function LeagueClient({
 
                   // In entire_tournament mode there's one group per screen — use nextGroupPhase for the "continue" button
                   const inlineNextName = mode === "entire_tournament"
-                    ? (nextGroupPhase?.shortLabel ?? undefined)
+                    ? (nextGroupPhase?.label ?? undefined)
                     : groupNames[gi + 1];
                   const inlineNextSlug = mode !== "entire_tournament"
                     ? groupNames[gi + 1]?.replace(" ", "-").toLowerCase()
