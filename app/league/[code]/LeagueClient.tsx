@@ -19,6 +19,7 @@ import { computePhaseStatuses } from "@/lib/bracket";
 import type { ScoreEntry } from "@/lib/bracket";
 import { savePrediction, saveScorePick } from "@/app/actions/predictions";
 import { logout } from "@/app/actions/auth";
+import type { IllustrationSetting } from "@/app/actions/illustrations";
 
 interface LeagueClientProps {
   code: string;
@@ -30,6 +31,7 @@ interface LeagueClientProps {
   actualScores?: Record<string, { home: number; away: number }>;
   mode?: LeagueMode;
   isPreview?: boolean;
+  illustrationSettings?: Record<string, IllustrationSetting>;
 }
 
 function kickoffUTC(date: string, time: string): Date {
@@ -71,6 +73,7 @@ export default function LeagueClient({
   actualScores = {},
   mode = "phase_by_phase",
   isPreview = false,
+  illustrationSettings = {},
 }: LeagueClientProps) {
   const [, startTransition] = useTransition();
   const router = useRouter();
@@ -531,6 +534,7 @@ export default function LeagueClient({
                           onScorePick={handleScorePick}
                           lockedByPhase={isLocked}
                           illustrationStyle={mono ? "mono" : "color"}
+                          illustrationSetting={illustrationSettings[match.id]}
                         />
                         </div>
                       ))}

@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { MOCK_LEAGUE, type Outcome, type Member } from "@/lib/mock-data";
 import { getActualScores } from "@/app/actions/scores";
+import { getIllustrationSettings } from "@/app/actions/illustrations";
 import LeagueClient from "./LeagueClient";
 import type { LeagueMode } from "@/lib/mock-data";
 
@@ -22,7 +23,10 @@ export default async function LeaguePage({
 
   // ── Preview mode — unauthenticated visitors only ──────────────────────────────
   if (!user && code === PREVIEW_CODE) {
-    const actualScores = await getActualScores();
+    const [actualScores, illustrationSettings] = await Promise.all([
+      getActualScores(),
+      getIllustrationSettings(),
+    ]);
     return (
       <LeagueClient
         code={code}
@@ -34,6 +38,7 @@ export default async function LeaguePage({
         actualScores={actualScores}
         mode="phase_by_phase"
         isPreview
+        illustrationSettings={illustrationSettings}
       />
     );
   }
@@ -51,8 +56,8 @@ export default async function LeaguePage({
 
   if (!league) redirect("/auth/setup");
 
-  // Fetch league members, predictions, score picks, actual scores, and current user profile in parallel
-  const [memberIdsResult, predictionsResult, scorePicksResult, actualScores, profileResult] = await Promise.all([
+  // Fetch league members, predictions, score picks, actual scores, illustration settings, and current user profile in parallel
+  const [memberIdsResult, predictionsResult, scorePicksResult, actualScores, illustrationSettings, profileResult] = await Promise.all([
     supabase
       .from("league_members")
       .select("user_id")
@@ -64,6 +69,7 @@ export default async function LeaguePage({
       .from("score_picks")
       .select("user_id, match_id, home_score, away_score, pens_winner"),
     getActualScores(),
+    getIllustrationSettings(),
     supabase
       .from("profiles")
       .select("id, name, avatar")
@@ -139,6 +145,7 @@ export default async function LeaguePage({
       members={members}
       actualScores={actualScores}
       mode={leagueMode}
+      illustrationSettings={illustrationSettings}
     />
   );
 }

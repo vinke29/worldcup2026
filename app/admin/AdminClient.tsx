@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useMemo, useTransition } from "react";
+import { useState, useMemo, useTransition, useRef, useCallback } from "react";
 import type { Match, Phase, PhaseId } from "@/lib/mock-data";
 import { saveScore, saveAllScores, clearAllScores } from "@/app/actions/scores";
+import { saveIllustrationSetting, type IllustrationSetting } from "@/app/actions/illustrations";
 import {
   R32_LABELS, R16_IDS, QF_IDS, SF_IDS, THIRD_PLACE_ID, FINAL_ID,
   type KnockoutMatchInfo,
@@ -12,6 +13,7 @@ interface AdminClientProps {
   matches: Match[];
   phases: Phase[];
   initialScores: Record<string, { home: number; away: number; pens?: "home" | "away" }>;
+  initialIllustrationSettings: Record<string, IllustrationSetting>;
 }
 
 // Knockout match definitions for admin display
@@ -71,7 +73,10 @@ function parseDateStr(date: string): Date {
   return new Date(2026, months[mon], Number(day));
 }
 
-export default function AdminClient({ matches, phases, initialScores }: AdminClientProps) {
+type AdminView = "scores" | "illustrations";
+
+export default function AdminClient({ matches, phases, initialScores, initialIllustrationSettings }: AdminClientProps) {
+  const [adminView, setAdminView] = useState<AdminView>("scores");
   const [activePhase, setActivePhase] = useState<PhaseId>("group-md1");
   const [activeDay, setActiveDay] = useState<string>(() => {
     const first = matches.find(m => m.phase === "group-md1");
@@ -105,6 +110,33 @@ export default function AdminClient({ matches, phases, initialScores }: AdminCli
     return p;
   });
   const [, startTransition] = useTransition();
+  const [illustrationSettings, setIllustrationSettings] = useState<Record<string, IllustrationSetting>>(
+    initialIllustrationSettings
+  );
+  const [illustrationSaved, setIllustrationSaved] = useState<Record<string, boolean>>(() => {
+    const s: Record<string, boolean> = {};
+    for (const id of Object.keys(initialIllustrationSettings)) s[id] = true;
+    return s;
+  });
+
+  const illustratedMatches = useMemo(
+    () => matches.filter(m => m.illustration),
+    [matches]
+  );
+
+  function handleIllustrationChange(matchId: string, setting: IllustrationSetting) {
+    setIllustrationSaved(prev => ({ ...prev, [matchId]: false }));
+    setIllustrationSettings(prev => ({ ...prev, [matchId]: setting }));
+  }
+
+  function handleIllustrationSave(matchId: string) {
+    const s = illustrationSettings[matchId];
+    if (!s) return;
+    startTransition(async () => {
+      await saveIllustrationSetting(matchId, s.x, s.y, s.scale);
+      setIllustrationSaved(prev => ({ ...prev, [matchId]: true }));
+    });
+  }
 
   const isGroupPhase = activePhase.startsWith("group");
 
@@ -220,137 +252,177 @@ export default function AdminClient({ matches, phases, initialScores }: AdminCli
         className="sticky top-0 z-20 px-4 py-3 border-b flex items-center justify-between"
         style={{ backgroundColor: T.bg, borderColor: T.border }}
       >
-        <div>
+        <div className="flex items-center gap-3">
           <span className="text-xs font-black uppercase tracking-widest" style={{ color: T.accent }}>
             Admin
           </span>
-          <span className="text-xs font-bold ml-2" style={{ color: T.textSec }}>
-            Score Entry
-          </span>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="text-xs" style={{ color: T.textMuted }}>
-            {savedCount} saved
-          </span>
-          <button
-            onClick={handleSeedScores}
-            className="px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest cursor-pointer"
-            style={{ backgroundColor: T.accent, color: T.accentTx, border: "none" }}
-          >
-            Seed scores
-          </button>
-          <button
-            onClick={handleClearScores}
-            className="px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest cursor-pointer"
-            style={{ backgroundColor: "transparent", color: T.textSec, border: `1px solid ${T.border}` }}
-          >
-            Clear all
-          </button>
-        </div>
-      </div>
-
-      {/* Phase tabs */}
-      <div
-        className="flex overflow-x-auto border-b"
-        style={{ borderColor: T.border, backgroundColor: T.card }}
-      >
-        {phases.map(phase => {
-          const active = phase.id === activePhase;
-          return (
-            <button
-              key={phase.id}
-              onClick={() => handlePhaseChange(phase.id as PhaseId)}
-              className="flex-shrink-0 px-4 py-2.5 text-[10px] font-black uppercase tracking-widest transition-colors cursor-pointer"
-              style={{
-                color: active ? T.accent : T.textSec,
-                borderBottom: active ? `2px solid ${T.accent}` : "2px solid transparent",
-                backgroundColor: "transparent",
-              }}
-            >
-              {phase.shortLabel}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Day tabs (group phases only) */}
-      {isGroupPhase && (
-        <div
-          className="flex overflow-x-auto border-b px-4 gap-2 py-2"
-          style={{ borderColor: T.border }}
-        >
-          {days.map(day => {
-            const active = day === activeDay;
-            return (
+          <div className="flex rounded-lg overflow-hidden border" style={{ borderColor: T.border }}>
+            {(["scores", "illustrations"] as AdminView[]).map(v => (
               <button
-                key={day}
-                onClick={() => setActiveDay(day)}
-                className="flex-shrink-0 px-3 py-1 rounded-lg text-xs font-bold transition-colors cursor-pointer"
+                key={v}
+                onClick={() => setAdminView(v)}
+                className="px-3 py-1 text-[10px] font-black uppercase tracking-widest cursor-pointer transition-colors"
                 style={{
-                  backgroundColor: active ? T.accent : "transparent",
-                  color: active ? T.accentTx : T.textSec,
-                  border: `1px solid ${active ? T.accent : T.border}`,
+                  backgroundColor: adminView === v ? T.accent : "transparent",
+                  color: adminView === v ? T.accentTx : T.textSec,
                 }}
               >
-                {day}
+                {v}
               </button>
-            );
-          })}
+            ))}
+          </div>
         </div>
-      )}
-
-      {/* Matches */}
-      <div className="max-w-2xl mx-auto px-4 py-6 space-y-8">
-        {isGroupPhase ? (
-          <>
-            {groupKeys.map(groupKey => (
-              <div key={groupKey}>
-                <div className="flex items-center gap-3 mb-3">
-                  <span className="text-[10px] font-black uppercase tracking-widest" style={{ color: T.textSec }}>
-                    {groupKey}
-                  </span>
-                  <div className="flex-1 h-px" style={{ backgroundColor: T.inner }} />
-                </div>
-                <div className="space-y-2">
-                  {matchesByGroup[groupKey].map(match => (
-                    <MatchScoreRow
-                      key={match.id}
-                      match={match}
-                      score={scores[match.id] ?? { home: 0, away: 0 }}
-                      isSaved={!!saved[match.id]}
-                      onChangeHome={val => setScore(match.id, "home", val)}
-                      onChangeAway={val => setScore(match.id, "away", val)}
-                      onSave={() => handleSave(match.id)}
-                    />
-                  ))}
-                </div>
-              </div>
-            ))}
-          </>
-        ) : (
-          /* Knockout phase — use bracket match labels */
-          <div className="space-y-2">
-            {knockoutLabels.map(m => (
-              <KnockoutScoreRow
-                key={m.id}
-                info={m}
-                score={scores[m.id] ?? { home: 0, away: 0 }}
-                pensWinner={pensWinners[m.id] ?? null}
-                isSaved={!!saved[m.id]}
-                onChangeHome={val => setScore(m.id, "home", val)}
-                onChangeAway={val => setScore(m.id, "away", val)}
-                onPensWinner={winner => setPensWinner(m.id, winner)}
-                onSave={() => handleSave(m.id)}
-              />
-            ))}
-            {knockoutLabels.length === 0 && (
-              <p className="text-center py-16 text-sm" style={{ color: T.textMuted }}>
-                No matches in this phase.
-              </p>
-            )}
+        {adminView === "scores" && (
+          <div className="flex items-center gap-2">
+            <span className="text-xs" style={{ color: T.textMuted }}>
+              {savedCount} saved
+            </span>
+            <button
+              onClick={handleSeedScores}
+              className="px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest cursor-pointer"
+              style={{ backgroundColor: T.accent, color: T.accentTx, border: "none" }}
+            >
+              Seed scores
+            </button>
+            <button
+              onClick={handleClearScores}
+              className="px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest cursor-pointer"
+              style={{ backgroundColor: "transparent", color: T.textSec, border: `1px solid ${T.border}` }}
+            >
+              Clear all
+            </button>
           </div>
         )}
       </div>
+
+      {/* Illustrations view */}
+      {adminView === "illustrations" && (
+        <div className="max-w-2xl mx-auto px-4 py-6 space-y-6">
+          {illustratedMatches.length === 0 && (
+            <p className="text-center py-16 text-sm" style={{ color: T.textMuted }}>
+              No illustrated matches found.
+            </p>
+          )}
+          {illustratedMatches.map(match => (
+            <IllustrationEditor
+              key={match.id}
+              match={match}
+              setting={illustrationSettings[match.id] ?? { x: 50, y: 50, scale: 1 }}
+              isSaved={!!illustrationSaved[match.id]}
+              onChange={s => handleIllustrationChange(match.id, s)}
+              onSave={() => handleIllustrationSave(match.id)}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Scores view: phase tabs + day tabs + match rows */}
+      {adminView === "scores" && (
+        <>
+          {/* Phase tabs */}
+          <div
+            className="flex overflow-x-auto border-b"
+            style={{ borderColor: T.border, backgroundColor: T.card }}
+          >
+            {phases.map(phase => {
+              const active = phase.id === activePhase;
+              return (
+                <button
+                  key={phase.id}
+                  onClick={() => handlePhaseChange(phase.id as PhaseId)}
+                  className="flex-shrink-0 px-4 py-2.5 text-[10px] font-black uppercase tracking-widest transition-colors cursor-pointer"
+                  style={{
+                    color: active ? T.accent : T.textSec,
+                    borderBottom: active ? `2px solid ${T.accent}` : "2px solid transparent",
+                    backgroundColor: "transparent",
+                  }}
+                >
+                  {phase.shortLabel}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Day tabs (group phases only) */}
+          {isGroupPhase && (
+            <div
+              className="flex overflow-x-auto border-b px-4 gap-2 py-2"
+              style={{ borderColor: T.border }}
+            >
+              {days.map(day => {
+                const active = day === activeDay;
+                return (
+                  <button
+                    key={day}
+                    onClick={() => setActiveDay(day)}
+                    className="flex-shrink-0 px-3 py-1 rounded-lg text-xs font-bold transition-colors cursor-pointer"
+                    style={{
+                      backgroundColor: active ? T.accent : "transparent",
+                      color: active ? T.accentTx : T.textSec,
+                      border: `1px solid ${active ? T.accent : T.border}`,
+                    }}
+                  >
+                    {day}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Matches */}
+          <div className="max-w-2xl mx-auto px-4 py-6 space-y-8">
+            {isGroupPhase ? (
+              <>
+                {groupKeys.map(groupKey => (
+                  <div key={groupKey}>
+                    <div className="flex items-center gap-3 mb-3">
+                      <span className="text-[10px] font-black uppercase tracking-widest" style={{ color: T.textSec }}>
+                        {groupKey}
+                      </span>
+                      <div className="flex-1 h-px" style={{ backgroundColor: T.inner }} />
+                    </div>
+                    <div className="space-y-2">
+                      {matchesByGroup[groupKey].map(match => (
+                        <MatchScoreRow
+                          key={match.id}
+                          match={match}
+                          score={scores[match.id] ?? { home: 0, away: 0 }}
+                          isSaved={!!saved[match.id]}
+                          onChangeHome={val => setScore(match.id, "home", val)}
+                          onChangeAway={val => setScore(match.id, "away", val)}
+                          onSave={() => handleSave(match.id)}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </>
+            ) : (
+              /* Knockout phase — use bracket match labels */
+              <div className="space-y-2">
+                {knockoutLabels.map(m => (
+                  <KnockoutScoreRow
+                    key={m.id}
+                    info={m}
+                    score={scores[m.id] ?? { home: 0, away: 0 }}
+                    pensWinner={pensWinners[m.id] ?? null}
+                    isSaved={!!saved[m.id]}
+                    onChangeHome={val => setScore(m.id, "home", val)}
+                    onChangeAway={val => setScore(m.id, "away", val)}
+                    onPensWinner={winner => setPensWinner(m.id, winner)}
+                    onSave={() => handleSave(m.id)}
+                  />
+                ))}
+                {knockoutLabels.length === 0 && (
+                  <p className="text-center py-16 text-sm" style={{ color: T.textMuted }}>
+                    No matches in this phase.
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
 }
@@ -494,6 +566,169 @@ function MatchScoreRow({
       >
         {isSaved ? "✓" : "Set"}
       </button>
+    </div>
+  );
+}
+
+// ── Illustration editor ───────────────────────────────────────────────────────
+function IllustrationEditor({
+  match,
+  setting,
+  isSaved,
+  onChange,
+  onSave,
+}: {
+  match: Match;
+  setting: IllustrationSetting;
+  isSaved: boolean;
+  onChange: (s: IllustrationSetting) => void;
+  onSave: () => void;
+}) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const dragState = useRef<{ mouseX: number; mouseY: number; startX: number; startY: number } | null>(null);
+
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    dragState.current = {
+      mouseX: e.clientX,
+      mouseY: e.clientY,
+      startX: setting.x,
+      startY: setting.y,
+    };
+  }, [setting.x, setting.y]);
+
+  const handleMouseMove = useCallback((e: React.MouseEvent) => {
+    if (!dragState.current || !containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    const dx = (e.clientX - dragState.current.mouseX) / rect.width * 100;
+    const dy = (e.clientY - dragState.current.mouseY) / rect.height * 100;
+    // Dragging right reveals left → focal point moves left (x decreases)
+    const newX = Math.max(0, Math.min(100, dragState.current.startX - dx));
+    const newY = Math.max(0, Math.min(100, dragState.current.startY - dy));
+    onChange({ ...setting, x: newX, y: newY });
+  }, [setting, onChange]);
+
+  const handleMouseUp = useCallback(() => {
+    dragState.current = null;
+  }, []);
+
+  const handleScaleChange = useCallback((delta: number) => {
+    const newScale = Math.max(1, Math.min(3, parseFloat((setting.scale + delta).toFixed(2))));
+    onChange({ ...setting, scale: newScale });
+  }, [setting, onChange]);
+
+  return (
+    <div
+      className="rounded-2xl border overflow-hidden"
+      style={{ backgroundColor: T.card, borderColor: isSaved ? "rgba(215,255,90,0.3)" : T.border }}
+    >
+      {/* Match label */}
+      <div className="flex items-center justify-between px-4 py-3 border-b" style={{ borderColor: T.inner }}>
+        <div className="flex items-center gap-2">
+          <span className="text-base leading-none">{match.homeFlag}</span>
+          <span className="text-xs font-black uppercase tracking-tight" style={{ color: T.text }}>
+            {match.homeTeam} vs {match.awayTeam}
+          </span>
+          <span className="text-base leading-none">{match.awayFlag}</span>
+        </div>
+        <button
+          onClick={onSave}
+          disabled={isSaved}
+          className="px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer disabled:cursor-default"
+          style={{
+            backgroundColor: isSaved ? "transparent" : T.accent,
+            color: isSaved ? T.accent : T.accentTx,
+            border: `1px solid ${isSaved ? "rgba(215,255,90,0.4)" : T.accent}`,
+            opacity: isSaved ? 0.7 : 1,
+          }}
+        >
+          {isSaved ? "✓ Saved" : "Save"}
+        </button>
+      </div>
+
+      {/* Draggable image preview */}
+      <div
+        ref={containerRef}
+        className="relative w-full overflow-hidden select-none"
+        style={{ aspectRatio: "3/2", maxHeight: "240px", cursor: dragState.current ? "grabbing" : "grab" }}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseUp}
+      >
+        <img
+          src={match.illustration}
+          alt={`${match.homeTeam} vs ${match.awayTeam}`}
+          className="w-full h-full object-cover pointer-events-none"
+          style={{
+            objectPosition: `${setting.x}% ${setting.y}%`,
+            transform: `scale(${setting.scale})`,
+            transformOrigin: `${setting.x}% ${setting.y}%`,
+          }}
+          draggable={false}
+        />
+        {/* Crosshair overlay */}
+        <div
+          className="absolute pointer-events-none"
+          style={{
+            left: `${setting.x}%`,
+            top: `${setting.y}%`,
+            transform: "translate(-50%, -50%)",
+          }}
+        >
+          <div className="w-4 h-4 rounded-full border-2" style={{ borderColor: T.accent, opacity: 0.8 }} />
+        </div>
+        <div
+          className="absolute bottom-2 right-2 text-[9px] font-black px-2 py-0.5 rounded-full"
+          style={{ backgroundColor: "rgba(0,0,0,0.6)", color: T.accent }}
+        >
+          drag to pan
+        </div>
+      </div>
+
+      {/* Controls row */}
+      <div className="flex items-center gap-4 px-4 py-3 border-t" style={{ borderColor: T.inner }}>
+        {/* Position readout */}
+        <div className="flex gap-3 text-[10px] font-bold" style={{ color: T.textSec }}>
+          <span>X: <span style={{ color: T.text }}>{Math.round(setting.x)}%</span></span>
+          <span>Y: <span style={{ color: T.text }}>{Math.round(setting.y)}%</span></span>
+        </div>
+
+        <div className="flex-1" />
+
+        {/* Scale control */}
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] font-bold" style={{ color: T.textSec }}>
+            Zoom: <span style={{ color: T.text }}>{setting.scale.toFixed(2)}×</span>
+          </span>
+          <button
+            type="button"
+            onClick={() => handleScaleChange(-0.1)}
+            className="w-7 h-7 rounded-lg flex items-center justify-center text-sm font-black cursor-pointer hover:opacity-70"
+            style={{ color: T.textSec, border: `1px solid ${T.border}`, backgroundColor: "transparent" }}
+          >
+            −
+          </button>
+          <button
+            type="button"
+            onClick={() => handleScaleChange(0.1)}
+            className="w-7 h-7 rounded-lg flex items-center justify-center text-sm font-black cursor-pointer hover:opacity-70"
+            style={{ color: T.textSec, border: `1px solid ${T.border}`, backgroundColor: "transparent" }}
+          >
+            +
+          </button>
+        </div>
+
+        {/* Reset button */}
+        <button
+          type="button"
+          onClick={() => onChange({ x: 50, y: 50, scale: 1 })}
+          className="text-[10px] font-bold cursor-pointer hover:opacity-70"
+          style={{ color: T.textMuted }}
+        >
+          Reset
+        </button>
+      </div>
     </div>
   );
 }

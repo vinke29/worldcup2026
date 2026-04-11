@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import type { Match, Outcome } from "@/lib/mock-data";
+import type { IllustrationSetting } from "@/app/actions/illustrations";
 import { phasePoints } from "@/lib/scoring";
 import FlagImage from "@/lib/flag-image";
 
@@ -13,6 +14,7 @@ interface MatchCardProps {
   onScorePick?: (matchId: string, home: number, away: number) => void;
   lockedByPhase?: boolean;
   illustrationStyle?: "color" | "mono";
+  illustrationSetting?: IllustrationSetting;
 }
 
 const OUTCOME_COLORS: Record<Outcome, string> = {
@@ -119,6 +121,7 @@ export default function MatchCard({
   onScorePick,
   lockedByPhase = false,
   illustrationStyle = "color",
+  illustrationSetting,
 }: MatchCardProps) {
   const [selected, setSelected] = useState<Outcome | null>(savedPrediction ?? null);
   const [showOdds, setShowOdds] = useState(false);
@@ -240,7 +243,15 @@ export default function MatchCard({
             alt={`${match.homeTeam} vs ${match.awayTeam}`}
             className="w-full h-full object-cover"
             style={{
-              objectPosition: match.imagePosition ?? "center center",
+              objectPosition: illustrationSetting
+                ? `${illustrationSetting.x}% ${illustrationSetting.y}%`
+                : (match.imagePosition ?? "center center"),
+              transform: illustrationSetting && illustrationSetting.scale !== 1
+                ? `scale(${illustrationSetting.scale})`
+                : undefined,
+              transformOrigin: illustrationSetting && illustrationSetting.scale !== 1
+                ? `${illustrationSetting.x}% ${illustrationSetting.y}%`
+                : undefined,
               filter: isMono ? "grayscale(1) contrast(1.3) brightness(1.05)" : "none",
             }}
           />
