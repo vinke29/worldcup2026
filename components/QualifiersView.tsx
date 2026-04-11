@@ -398,14 +398,56 @@ export default function QualifiersView({ matches, scorePicks, actualScores, mono
     return null; // tied, no pens pick yet
   }, [scorePicks, predictedBracketTeams]);
 
-  const [championBannerDismissed, setChampionBannerDismissed] = useState(false);
-  const championBannerVisible = bannersReady && !!finalChampion && !championBannerDismissed;
+  const BANNER_KEY   = `champion-banner-dismissed-${leagueCode ?? "default"}`;
   const CONFETTI_KEY = `confetti-fired-${leagueCode ?? "default"}`;
+
+  // Persist dismissed state — resets if the champion changes
+  const [championBannerDismissed, setChampionBannerDismissed] = useState(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      const stored = sessionStorage.getItem(BANNER_KEY);
+      if (!stored) return false;
+      const { team, dismissed } = JSON.parse(stored);
+      // Only honour the dismissal if it was for the same team
+      return dismissed === true && team === finalChampion?.team;
+    } catch { return false; }
+  });
+
+  // Keep sessionStorage in sync when dismissed changes or champion changes
+  useEffect(() => {
+    if (!finalChampion) {
+      sessionStorage.removeItem(BANNER_KEY);
+      setChampionBannerDismissed(false);
+      return;
+    }
+    try {
+      const stored = sessionStorage.getItem(BANNER_KEY);
+      if (stored) {
+        const { team } = JSON.parse(stored);
+        if (team !== finalChampion.team) {
+          // Champion changed — show banner again
+          sessionStorage.removeItem(BANNER_KEY);
+          setChampionBannerDismissed(false);
+        }
+      }
+    } catch { /* ignore */ }
+  }, [finalChampion, BANNER_KEY]);
+
+  function dismissChampionBanner() {
+    setChampionBannerDismissed(true);
+    try {
+      sessionStorage.setItem(BANNER_KEY, JSON.stringify({ team: finalChampion?.team, dismissed: true }));
+    } catch { /* ignore */ }
+  }
+
+  const championBannerVisible = bannersReady && !!finalChampion && !championBannerDismissed;
 
   useEffect(() => {
     const alreadyFired = sessionStorage.getItem(CONFETTI_KEY) === "1";
     if (finalChampion && !alreadyFired && showPickers) {
       sessionStorage.setItem(CONFETTI_KEY, "1");
+      // Always show banner when confetti fires (fresh pick)
+      sessionStorage.removeItem(BANNER_KEY);
       setChampionBannerDismissed(false);
       import("canvas-confetti").then(({ default: confetti }) => {
         const colors = mono
@@ -421,7 +463,7 @@ export default function QualifiersView({ matches, scorePicks, actualScores, mono
       });
     }
     if (!finalChampion) sessionStorage.removeItem(CONFETTI_KEY);
-  }, [finalChampion, showPickers, mono, CONFETTI_KEY]);
+  }, [finalChampion, showPickers, mono, CONFETTI_KEY, BANNER_KEY]);
 
   return (
     <div>
@@ -432,6 +474,7 @@ export default function QualifiersView({ matches, scorePicks, actualScores, mono
           style={{
             transform: championBannerVisible ? "translateY(0)" : "translateY(calc(-100% - 72px))",
             transition: "transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)",
+            visibility: championBannerVisible ? "visible" : "hidden",
           }}
         >
           <div
@@ -453,7 +496,7 @@ export default function QualifiersView({ matches, scorePicks, actualScores, mono
               </div>
             </div>
             <button
-              onClick={() => setChampionBannerDismissed(true)}
+              onClick={dismissChampionBanner}
               className="text-sm font-bold cursor-pointer hover:opacity-70 transition-opacity"
               style={{ color: mono ? "#F7F4EE" : "#0B1E0D" }}
             >
