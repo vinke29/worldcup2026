@@ -516,9 +516,26 @@ export default function LeagueClient({
             ) : (
               <div className="space-y-8">
                 {groupNames.map((groupName, gi) => {
-                  const nextGroupName = groupNames[gi + 1];
                   const groupSlug = groupName.replace(" ", "-").toLowerCase();
-                  const nextGroupSlug = nextGroupName?.replace(" ", "-").toLowerCase();
+
+                  // In entire_tournament mode there's one group per screen — use nextGroupPhase for the "continue" button
+                  const inlineNextName = mode === "entire_tournament"
+                    ? (nextGroupPhase?.shortLabel ?? undefined)
+                    : groupNames[gi + 1];
+                  const inlineNextSlug = mode !== "entire_tournament"
+                    ? groupNames[gi + 1]?.replace(" ", "-").toLowerCase()
+                    : undefined;
+
+                  const handleNext = mode === "entire_tournament" && nextGroupPhase
+                    ? () => {
+                        setDismissedDays(prev => new Set([...prev, activePhase]));
+                        handlePhaseChange(nextGroupPhase.id as PhaseId);
+                        window.scrollTo({ top: 0, behavior: "smooth" });
+                      }
+                    : inlineNextSlug
+                      ? () => { document.getElementById(`group-section-${inlineNextSlug}`)?.scrollIntoView({ behavior: "smooth", block: "start" }); }
+                      : undefined;
+
                   return (
                   <div key={groupName} id={`group-section-${groupSlug}`}>
                     <div className="flex items-center gap-3 mb-3">
@@ -550,19 +567,17 @@ export default function LeagueClient({
                       mono={mono}
                       onAllPicked={() => {
                         setTimeout(() => {
-                          if (nextGroupSlug) {
-                            // Non-last group — scroll to standings so user sees the "Continue" button
+                          if (mode === "entire_tournament" || inlineNextSlug) {
+                            // Scroll to standings — the inline "Continue" button handles navigation
                             document.getElementById(`standings-${groupSlug}`)?.scrollIntoView({ behavior: "smooth", block: "nearest" });
                           } else {
-                            // Last group on screen — scroll to top so the completion banner is visible
+                            // Last group on a phase_by_phase day — scroll to top for the completion banner
                             window.scrollTo({ top: 0, behavior: "smooth" });
                           }
                         }, 50);
                       }}
-                      nextGroupName={nextGroupName}
-                      onNext={nextGroupSlug ? () => {
-                        document.getElementById(`group-section-${nextGroupSlug}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
-                      } : undefined}
+                      nextGroupName={inlineNextName}
+                      onNext={handleNext}
                     />
                   </div>
                   );
