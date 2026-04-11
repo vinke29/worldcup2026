@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import type { Match, LeagueMode } from "@/lib/mock-data";
 import { computeGroupTables, rankThirdPlaceTeams, type TeamRow } from "@/lib/group-standings";
 import { resolveBracketTeams, TOP_R32_IDS, BOT_R32_IDS, R16_IDS, QF_IDS, SF_IDS, THIRD_PLACE_ID, FINAL_ID, KNOCKOUT_MATCH_META } from "@/lib/bracket";
@@ -385,12 +385,86 @@ export default function QualifiersView({ matches, scorePicks, actualScores, mono
   const allPickedForRound = showPickers && ROUND_PICK_IDS[mobileRound].every(id => scorePicks[id] !== undefined);
   const roundBannerVisible = bannersReady && allPickedForRound && nextRound !== null && !dismissedRounds.has(mobileRound);
 
+  // Champion — determined once Final has a clear winner
+  const finalChampion = useMemo(() => {
+    const pick = scorePicks[FINAL_ID];
+    if (!pick) return null;
+    const home = predictedBracketTeams.final.home;
+    const away = predictedBracketTeams.final.away;
+    if (!home || !away) return null;
+    if (pick.home > pick.away || pick.pens === "home") return home;
+    if (pick.away > pick.home || pick.pens === "away") return away;
+    return null; // tied, no pens pick yet
+  }, [scorePicks, predictedBracketTeams]);
+
+  const [championBannerDismissed, setChampionBannerDismissed] = useState(false);
+  const championBannerVisible = bannersReady && !!finalChampion && !championBannerDismissed;
+  const confettiFiredRef = useRef(false);
+
+  useEffect(() => {
+    if (finalChampion && !confettiFiredRef.current && showPickers) {
+      confettiFiredRef.current = true;
+      setChampionBannerDismissed(false);
+      import("canvas-confetti").then(({ default: confetti }) => {
+        const colors = mono
+          ? ["#1A1208", "#6B5E4E", "#C8C0B0", "#ffffff"]
+          : ["#D7FF5A", "#4ADE80", "#ffffff", "#B3FF6A"];
+        const shared = { particleCount: 70, spread: 60, colors, startVelocity: 45 };
+        confetti({ ...shared, angle: 60,  origin: { x: 0,   y: 0.6 } });
+        confetti({ ...shared, angle: 120, origin: { x: 1,   y: 0.6 } });
+        setTimeout(() => {
+          confetti({ ...shared, particleCount: 40, angle: 75,  origin: { x: 0.2, y: 0.5 } });
+          confetti({ ...shared, particleCount: 40, angle: 105, origin: { x: 0.8, y: 0.5 } });
+        }, 300);
+      });
+    }
+    if (!finalChampion) confettiFiredRef.current = false;
+  }, [finalChampion, showPickers, mono]);
+
   return (
     <div>
-      {/* Round completion banner — mobile only, entire_tournament mode */}
+      {/* Champion banner — slides down when Final winner is picked */}
+      {showPickers && (
+        <div
+          className="fixed top-14 inset-x-0 z-[61] flex justify-center px-4 pt-2 pointer-events-none"
+          style={{
+            transform: championBannerVisible ? "translateY(0)" : "translateY(calc(-100% - 72px))",
+            transition: "transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)",
+          }}
+        >
+          <div
+            className="pointer-events-auto w-full max-w-lg flex items-center justify-between px-5 py-4 rounded-2xl"
+            style={{
+              backgroundColor: mono ? "#1A1208" : "#D7FF5A",
+              boxShadow: mono ? "0 8px 32px rgba(0,0,0,0.4)" : "0 8px 40px rgba(215,255,90,0.5)",
+            }}
+          >
+            <div className="flex items-center gap-3">
+              <span className="text-xl">🏆</span>
+              <div className="text-left">
+                <p className="text-sm font-black" style={{ color: mono ? "#F7F4EE" : "#0B1E0D" }}>
+                  {finalChampion?.team} wins it all
+                </p>
+                <p className="text-xs font-medium" style={{ color: mono ? "rgba(247,244,238,0.6)" : "rgba(11,30,13,0.6)" }}>
+                  Your bracket is complete ✓
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => setChampionBannerDismissed(true)}
+              className="text-sm font-bold cursor-pointer hover:opacity-70 transition-opacity"
+              style={{ color: mono ? "#F7F4EE" : "#0B1E0D" }}
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Round completion banner — entire_tournament mode */}
       {showPickers && nextRound && (
         <div
-          className="fixed top-14 inset-x-0 z-[60] flex justify-center px-4 pt-2 pointer-events-none md:hidden"
+          className="fixed top-14 inset-x-0 z-[60] flex justify-center px-4 pt-2 pointer-events-none"
           style={{
             transform: roundBannerVisible ? "translateY(0)" : "translateY(calc(-100% - 72px))",
             transition: "transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)",
@@ -501,6 +575,41 @@ export default function QualifiersView({ matches, scorePicks, actualScores, mono
               );
             })}
           </div>
+
+          {/* Champion reveal card — shown on Final tab once winner is determined */}
+          {mobileRound === "final" && finalChampion && showPickers && (
+            <div
+              className="max-w-2xl mx-auto w-full rounded-2xl overflow-hidden mb-6"
+              style={{
+                border: `1px solid ${t.accent}`,
+                backgroundColor: mono ? "rgba(26,18,8,0.04)" : "rgba(215,255,90,0.06)",
+                boxShadow: mono ? "0 0 0 1px rgba(26,18,8,0.1)" : `0 0 40px rgba(215,255,90,0.15)`,
+              }}
+            >
+              <div className="flex flex-col items-center gap-4 px-8 py-10 text-center">
+                <span style={{ fontSize: 52, lineHeight: 1 }}>🏆</span>
+                <div className="flex items-center gap-3">
+                  <FlagImage emoji={finalChampion.flag} size={36} team={finalChampion.team} />
+                  <span className="text-3xl font-black tracking-tight" style={{ color: t.accent }}>
+                    {finalChampion.team}
+                  </span>
+                </div>
+                <p className="text-xs font-black uppercase tracking-widest" style={{ color: t.textMuted }}>
+                  World Champion · FIFA 2026
+                </p>
+                <span
+                  className="text-xs font-bold px-4 py-2 rounded-full"
+                  style={{
+                    backgroundColor: mono ? "rgba(26,18,8,0.08)" : "rgba(215,255,90,0.12)",
+                    color: t.accent,
+                    border: `1px solid ${mono ? "rgba(26,18,8,0.2)" : "rgba(215,255,90,0.3)"}`,
+                  }}
+                >
+                  ✓ Bracket complete
+                </span>
+              </div>
+            </div>
+          )}
 
           {/* Full desktop bracket — all rounds side by side, horizontally scrollable */}
           {(() => {
