@@ -13,6 +13,7 @@ interface QualifiersViewProps {
   actualScores: Record<string, ScoreEntry>;
   mono: boolean;
   mode?: LeagueMode;
+  leagueCode?: string;
   onScorePick?: (matchId: string, home: number, away: number, pens?: "home" | "away") => void;
   dismissedRounds?: Set<string>;
   onDismissRound?: (round: string) => void;
@@ -184,7 +185,7 @@ const ROUND_LABEL: Record<MobileRound, string> = {
 };
 
 // ── Main component ────────────────────────────────────────────────────────────
-export default function QualifiersView({ matches, scorePicks, actualScores, mono, mode = "phase_by_phase", onScorePick, dismissedRounds: dismissedRoundsProp, onDismissRound, bannersReady = true }: QualifiersViewProps) {
+export default function QualifiersView({ matches, scorePicks, actualScores, mono, mode = "phase_by_phase", leagueCode, onScorePick, dismissedRounds: dismissedRoundsProp, onDismissRound, bannersReady = true }: QualifiersViewProps) {
   const hasActual = useMemo(() => matches.some(m => m.homeScore !== null), [matches]);
   const defaultView = hasActual ? "compare" : "predicted";
   const [view, setView] = useState<"predicted" | "actual" | "compare">(defaultView);
@@ -399,11 +400,12 @@ export default function QualifiersView({ matches, scorePicks, actualScores, mono
 
   const [championBannerDismissed, setChampionBannerDismissed] = useState(false);
   const championBannerVisible = bannersReady && !!finalChampion && !championBannerDismissed;
-  const confettiFiredRef = useRef(false);
+  const CONFETTI_KEY = `confetti-fired-${leagueCode ?? "default"}`;
 
   useEffect(() => {
-    if (finalChampion && !confettiFiredRef.current && showPickers) {
-      confettiFiredRef.current = true;
+    const alreadyFired = sessionStorage.getItem(CONFETTI_KEY) === "1";
+    if (finalChampion && !alreadyFired && showPickers) {
+      sessionStorage.setItem(CONFETTI_KEY, "1");
       setChampionBannerDismissed(false);
       import("canvas-confetti").then(({ default: confetti }) => {
         const colors = mono
@@ -418,8 +420,8 @@ export default function QualifiersView({ matches, scorePicks, actualScores, mono
         }, 300);
       });
     }
-    if (!finalChampion) confettiFiredRef.current = false;
-  }, [finalChampion, showPickers, mono]);
+    if (!finalChampion) sessionStorage.removeItem(CONFETTI_KEY);
+  }, [finalChampion, showPickers, mono, CONFETTI_KEY]);
 
   return (
     <div>

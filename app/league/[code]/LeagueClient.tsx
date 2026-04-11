@@ -705,7 +705,7 @@ export default function LeagueClient({
         {mobileView === "qualifiers" && (
           <QualifiersView
             matches={matches} scorePicks={scorePredictions} actualScores={actualScores}
-            mono={mono} mode={mode} onScorePick={!isPreview ? handleScorePick : undefined}
+            mono={mono} mode={mode} leagueCode={code} onScorePick={!isPreview ? handleScorePick : undefined}
             dismissedRounds={dismissedDays}
             onDismissRound={(round) => setDismissedDays(prev => new Set([...prev, round]))}
             bannersReady={bannersHydrated}
