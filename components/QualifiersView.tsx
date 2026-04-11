@@ -519,7 +519,7 @@ export default function QualifiersView({ matches, scorePicks, actualScores, mono
 
                   {/* ── R32 groups ── */}
                   {r32G.map((group, gi) => (
-                    <div key={gi} style={{ position: "absolute", top: HDR + gi * GH, left: cR32, width: CW }}>
+                    <div key={gi} style={{ position: "absolute", top: HDR + gi * GH, left: cR32, width: CW, zIndex: r32G.length - gi }}>
                       <div style={{ border: `1px solid ${t.border}`, borderRadius: 16, overflow: "hidden" }}>
                         {group.nextRoundLabel && (
                           <div style={{ padding: "6px 14px", borderBottom: `1px solid ${t.border}`, backgroundColor: t.halfDivider }}>
@@ -551,7 +551,7 @@ export default function QualifiersView({ matches, scorePicks, actualScores, mono
 
                   {/* ── R16 ── */}
                   {r16F.map((m, i) => (
-                    <div key={m.id} style={{ position: "absolute", top: HDR + (i + 0.5) * GH - HALF, left: cR16, width: CW }}>
+                    <div key={m.id} style={{ position: "absolute", top: HDR + (i + 0.5) * GH - HALF, left: cR16, width: CW, zIndex: r16F.length - i }}>
                       <MobileMatchCard id={m.id} homeTeam={m.homeTeam} awayTeam={m.awayTeam} homeLabel="" awayLabel="" actualHomeTeam={m.actualHomeTeam} actualAwayTeam={m.actualAwayTeam} scorePicks={scorePicks} onScorePick={onScorePick} t={t} grouped={false} />
                     </div>
                   ))}
@@ -565,7 +565,7 @@ export default function QualifiersView({ matches, scorePicks, actualScores, mono
 
                   {/* ── QF ── */}
                   {qfF.map((m, i) => (
-                    <div key={m.id} style={{ position: "absolute", top: HDR + (i * 2 + 1) * GH - HALF, left: cQF, width: CW }}>
+                    <div key={m.id} style={{ position: "absolute", top: HDR + (i * 2 + 1) * GH - HALF, left: cQF, width: CW, zIndex: qfF.length - i }}>
                       <MobileMatchCard id={m.id} homeTeam={m.homeTeam} awayTeam={m.awayTeam} homeLabel="" awayLabel="" actualHomeTeam={m.actualHomeTeam} actualAwayTeam={m.actualAwayTeam} scorePicks={scorePicks} onScorePick={onScorePick} t={t} grouped={false} />
                     </div>
                   ))}
@@ -579,7 +579,7 @@ export default function QualifiersView({ matches, scorePicks, actualScores, mono
 
                   {/* ── SF ── */}
                   {sfF.map((m, i) => (
-                    <div key={m.id} style={{ position: "absolute", top: HDR + (i * 4 + 2) * GH - HALF, left: cSF, width: CW }}>
+                    <div key={m.id} style={{ position: "absolute", top: HDR + (i * 4 + 2) * GH - HALF, left: cSF, width: CW, zIndex: sfF.length - i }}>
                       <MobileMatchCard id={m.id} homeTeam={m.homeTeam} awayTeam={m.awayTeam} homeLabel="" awayLabel="" actualHomeTeam={m.actualHomeTeam} actualAwayTeam={m.actualAwayTeam} scorePicks={scorePicks} onScorePick={onScorePick} t={t} grouped={false} />
                     </div>
                   ))}

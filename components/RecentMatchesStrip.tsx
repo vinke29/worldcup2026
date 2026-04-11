@@ -48,7 +48,17 @@ function relevantMatches(matches: Match[], now: number): { window: Match[]; labe
       .map((m) => m.date)
   )].sort();
 
-  if (pastDates.length === 0) return { window: [], label: "" };
+  if (pastDates.length === 0) {
+    // Tournament hasn't started yet — fall forward to the first upcoming matchday
+    const futureDates = [...new Set(
+      groupMatches
+        .filter((m) => kickoffMs(m.date, m.time) > now)
+        .map((m) => m.date)
+    )].sort();
+    if (futureDates.length === 0) return { window: [], label: "" };
+    const firstDate = futureDates[0];
+    return { window: groupMatches.filter((m) => m.date === firstDate), label: "Opening day" };
+  }
 
   const lastDate = pastDates[pastDates.length - 1];
   const fallback = groupMatches.filter((m) => m.date === lastDate);

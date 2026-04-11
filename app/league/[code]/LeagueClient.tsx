@@ -572,6 +572,11 @@ export default function LeagueClient({
                   : setSelectedMember
               }
             />
+            {mode === "entire_tournament" && Date.now() < Date.UTC(2026, 5, 11, 23, 0) && (
+              <p className="text-center text-xs" style={{ color: t.textMuted }}>
+                🔒 Friend picks visible once the tournament kicks off · Jun 11
+              </p>
+            )}
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="rounded-2xl border p-4 space-y-3" style={{ backgroundColor: t.cardBg, borderColor: t.border }}>
