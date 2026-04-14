@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useRef } from "react";
 import { useSearchParams } from "next/navigation";
-import { createBrowserClient } from "@supabase/ssr";
+import { createClient } from "@/lib/supabase/client";
 
 function CallbackHandler() {
   const searchParams = useSearchParams();
@@ -12,40 +12,46 @@ function CallbackHandler() {
     if (handled.current) return;
     handled.current = true;
 
-    // Create a dedicated client with auto-detection disabled so we control
-    // exactly when the code exchange happens (no double-exchange race).
-    const supabase = createBrowserClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      { auth: { detectSessionInUrl: false } }
-    );
-
+    const supabase = createClient();
     const tokenHash = searchParams.get("token_hash");
     const type = searchParams.get("type");
-    const code = searchParams.get("code");
 
-    async function handle() {
-      // Email confirmation (token_hash) — works across browsers/devices
-      if (tokenHash && type) {
-        const { error } = await supabase.auth.verifyOtp({
-          token_hash: tokenHash,
-          type: type as "signup" | "email",
-        });
-        if (!error) return navigateAfterAuth(supabase);
-        window.location.href = "/auth/login?error=Email+confirmation+failed.+Try+again.";
-        return;
-      }
-
-      // OAuth (Google) or PKCE email — exchange code explicitly
-      if (code) {
-        const { error } = await supabase.auth.exchangeCodeForSession(code);
-        if (!error) return navigateAfterAuth(supabase);
-      }
-
-      window.location.href = "/auth/login?error=Authentication+failed.+Try+again.";
+    // Email confirmation (token_hash) — works across browsers/devices
+    if (tokenHash && type) {
+      supabase.auth.verifyOtp({
+        token_hash: tokenHash,
+        type: type as "signup" | "email",
+      }).then(({ error }) => {
+        if (!error) {
+          navigateAfterAuth(supabase);
+        } else {
+          window.location.href = "/auth/login?error=Email+confirmation+failed.+Try+again.";
+        }
+      });
+      return;
     }
 
-    handle();
+    // OAuth (Google) / PKCE code exchange:
+    // The browser client auto-detects ?code= and exchanges it using the
+    // PKCE verifier it stored earlier. We listen for the SIGNED_IN event
+    // which fires after the exchange completes and cookies are set.
+    let done = false;
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (done) return;
+      if (event === "SIGNED_IN") {
+        done = true;
+        subscription.unsubscribe();
+        clearTimeout(timeout);
+        navigateAfterAuth(supabase);
+      }
+    });
+
+    const timeout = setTimeout(() => {
+      if (done) return;
+      done = true;
+      subscription.unsubscribe();
+      window.location.href = "/auth/login?error=Authentication+failed.+Try+again.";
+    }, 8000);
   }, [searchParams]);
 
   return (
@@ -60,7 +66,7 @@ function CallbackHandler() {
   );
 }
 
-async function navigateAfterAuth(supabase: ReturnType<typeof createBrowserClient>) {
+async function navigateAfterAuth(supabase: ReturnType<typeof createClient>) {
   // Restore setup params (intent, join code) saved before OAuth redirect
   const setup = localStorage.getItem("quiniela_setup");
   localStorage.removeItem("quiniela_setup");
