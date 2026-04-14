@@ -533,7 +533,7 @@ export default function LeagueClient({
                         window.scrollTo({ top: 0, behavior: "smooth" });
                       }
                     : inlineNextSlug
-                      ? () => { document.getElementById(`group-section-${inlineNextSlug}`)?.scrollIntoView({ behavior: "smooth", block: "start" }); }
+                      ? () => { window.scrollTo({ top: 0, behavior: "smooth" }); }
                       : undefined;
 
                   return (
