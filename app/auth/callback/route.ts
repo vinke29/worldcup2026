@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
 
   const supabase = await createClient();
 
-  // Email confirmation (token_hash) — no PKCE verifier needed
+  // Email confirmation (token_hash)
   if (tokenHash && type) {
     const { error } = await supabase.auth.verifyOtp({
       token_hash: tokenHash,
@@ -26,13 +26,15 @@ export async function GET(request: NextRequest) {
 
   // OAuth / PKCE code exchange
   if (code) {
+    // Debug: list cookie names to diagnose PKCE verifier issue
+    const cookieNames = request.cookies.getAll().map(c => c.name).join(", ");
+
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
       return NextResponse.redirect(new URL("/auth/onboard", origin));
     }
-    // Surface the actual error so we can diagnose
     return NextResponse.redirect(
-      new URL(`/auth/login?error=${encodeURIComponent(error.message)}`, origin)
+      new URL(`/auth/login?error=${encodeURIComponent(error.message + " [cookies: " + cookieNames + "]")}`, origin)
     );
   }
 
