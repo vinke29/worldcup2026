@@ -10,6 +10,10 @@ export async function GET(request: NextRequest) {
 
   const supabase = await createClient();
 
+  // Read setup params (intent, join code) stored as a cookie by GoogleButton
+  const setupCookie = request.cookies.get("quiniela_setup")?.value;
+  const setupQuery = setupCookie ? decodeURIComponent(setupCookie) : "";
+
   // Email confirmation (token_hash)
   if (tokenHash && type) {
     const { error } = await supabase.auth.verifyOtp({
@@ -17,7 +21,7 @@ export async function GET(request: NextRequest) {
       type: type as "signup" | "email",
     });
     if (!error) {
-      return NextResponse.redirect(new URL("/auth/onboard", origin));
+      return redirectToOnboard(origin, setupQuery);
     }
     return NextResponse.redirect(
       new URL(`/auth/login?error=${encodeURIComponent(error.message)}`, origin)
@@ -26,19 +30,26 @@ export async function GET(request: NextRequest) {
 
   // OAuth / PKCE code exchange
   if (code) {
-    // Debug: list cookie names to diagnose PKCE verifier issue
-    const cookieNames = request.cookies.getAll().map(c => c.name).join(", ");
-
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
-      return NextResponse.redirect(new URL("/auth/onboard", origin));
+      return redirectToOnboard(origin, setupQuery);
     }
     return NextResponse.redirect(
-      new URL(`/auth/login?error=${encodeURIComponent(error.message + " [cookies: " + cookieNames + "]")}`, origin)
+      new URL(`/auth/login?error=${encodeURIComponent(error.message)}`, origin)
     );
   }
 
   return NextResponse.redirect(
     new URL("/auth/login?error=No+auth+code+found+in+callback", origin)
   );
+}
+
+function redirectToOnboard(origin: string, setupQuery: string) {
+  const url = setupQuery
+    ? new URL(`/auth/onboard?${setupQuery}`, origin)
+    : new URL("/auth/onboard", origin);
+  const response = NextResponse.redirect(url);
+  // Clear the setup cookie
+  response.cookies.set("quiniela_setup", "", { maxAge: 0, path: "/" });
+  return response;
 }

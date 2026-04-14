@@ -4,12 +4,12 @@ import { createClient } from "@/lib/supabase/client";
 
 export default function GoogleButton({ label = "Continue with Google", setupQuery }: { label?: string; setupQuery?: string }) {
   async function handleClick() {
-    // Persist setup params (intent, join code, etc.) so the callback can
-    // restore them after the OAuth redirect round-trip.
+    // Persist setup params in a cookie (not localStorage) so the server-side
+    // callback route can read them after the OAuth redirect round-trip.
     if (setupQuery) {
-      localStorage.setItem("quiniela_setup", setupQuery);
+      document.cookie = `quiniela_setup=${encodeURIComponent(setupQuery)}; path=/; max-age=300; samesite=lax`;
     } else {
-      localStorage.removeItem("quiniela_setup");
+      document.cookie = "quiniela_setup=; path=/; max-age=0";
     }
 
     const supabase = createClient();
@@ -25,6 +25,7 @@ export default function GoogleButton({ label = "Continue with Google", setupQuer
       options: {
         redirectTo: `${window.location.origin}/auth/callback`,
         skipBrowserRedirect: true,
+        queryParams: { prompt: "select_account" },
       },
     });
 
