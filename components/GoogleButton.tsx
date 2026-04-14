@@ -14,8 +14,12 @@ export default function GoogleButton({ label = "Continue with Google", setupQuer
 
     const supabase = createClient();
 
-    // Use skipBrowserRedirect so we control the redirect timing.
-    // This ensures the PKCE verifier cookie is fully committed before navigating.
+    // Wait for the client to finish initializing (session recovery).
+    // _initialize() calls _saveSession which clears the PKCE verifier.
+    // If we don't wait, signInWithOAuth stores the verifier and then
+    // _saveSession wipes it before the redirect.
+    await supabase.auth.getSession();
+
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
