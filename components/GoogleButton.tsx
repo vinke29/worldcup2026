@@ -13,12 +13,20 @@ export default function GoogleButton({ label = "Continue with Google", setupQuer
     }
 
     const supabase = createClient();
-    await supabase.auth.signInWithOAuth({
+
+    // Use skipBrowserRedirect so we control the redirect timing.
+    // This ensures the PKCE verifier cookie is fully committed before navigating.
+    const { data, error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
         redirectTo: `${window.location.origin}/auth/callback`,
+        skipBrowserRedirect: true,
       },
     });
+
+    if (data?.url) {
+      window.location.href = data.url;
+    }
   }
 
   return (
