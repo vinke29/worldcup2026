@@ -110,7 +110,7 @@ function SignupForm() {
             <div className="flex-1 h-px" style={{ backgroundColor: "#2C4832" }} />
           </div>
 
-          <GoogleButton label="Sign up with Google" />
+          <GoogleButton label="Sign up with Google" setupQuery={setupQuery} />
         </div>
 
         <p className="text-center text-sm mt-6" style={{ color: "#4A6B50" }}>

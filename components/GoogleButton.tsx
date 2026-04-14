@@ -2,8 +2,16 @@
 
 import { createClient } from "@/lib/supabase/client";
 
-export default function GoogleButton({ label = "Continue with Google" }: { label?: string }) {
+export default function GoogleButton({ label = "Continue with Google", setupQuery }: { label?: string; setupQuery?: string }) {
   async function handleClick() {
+    // Persist setup params (intent, join code, etc.) so the callback can
+    // restore them after the OAuth redirect round-trip.
+    if (setupQuery) {
+      localStorage.setItem("quiniela_setup", setupQuery);
+    } else {
+      localStorage.removeItem("quiniela_setup");
+    }
+
     const supabase = createClient();
     await supabase.auth.signInWithOAuth({
       provider: "google",

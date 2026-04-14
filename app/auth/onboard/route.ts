@@ -45,11 +45,14 @@ export async function GET(request: NextRequest) {
   }
 
   // Read the intent stored in metadata at signup time.
+  // For Google OAuth, metadata won't have these — fall back to query params
+  // (persisted via localStorage → callback page).
   const meta = user.user_metadata ?? {};
-  const intent = (meta.pending_intent as string) ?? "create";
-  const joinCode = ((meta.pending_join_code as string) ?? "").trim().toUpperCase();
-  const leagueName = ((meta.pending_league_name as string) ?? "").trim();
-  const mode = (meta.pending_league_mode as string) ?? "entire_tournament";
+  const qs = new URL(request.url).searchParams;
+  const intent = (meta.pending_intent as string) ?? qs.get("intent") ?? "create";
+  const joinCode = ((meta.pending_join_code as string) ?? qs.get("code") ?? "").trim().toUpperCase();
+  const leagueName = ((meta.pending_league_name as string) ?? qs.get("leagueName") ?? "").trim();
+  const mode = (meta.pending_league_mode as string) ?? qs.get("mode") ?? "entire_tournament";
 
   // ── Join flow ──────────────────────────────────────────────────────────────
   if (intent === "join" && joinCode) {
@@ -104,8 +107,10 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  // Fallback: send to setup with create params pre-filled if available.
+  // Fallback: send to setup with params pre-filled if available.
   const setupParams = new URLSearchParams();
+  if (intent && intent !== "create") setupParams.set("intent", intent);
+  if (joinCode) setupParams.set("code", joinCode);
   if (leagueName) setupParams.set("leagueName", leagueName);
   if (mode && mode !== "entire_tournament") setupParams.set("mode", mode);
   const qs = setupParams.toString();
