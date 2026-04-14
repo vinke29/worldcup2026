@@ -48,11 +48,11 @@ export async function GET(request: NextRequest) {
   // For Google OAuth, metadata won't have these — fall back to query params
   // (persisted via localStorage → callback page).
   const meta = user.user_metadata ?? {};
-  const qs = new URL(request.url).searchParams;
-  const intent = (meta.pending_intent as string) ?? qs.get("intent") ?? "create";
-  const joinCode = ((meta.pending_join_code as string) ?? qs.get("code") ?? "").trim().toUpperCase();
-  const leagueName = ((meta.pending_league_name as string) ?? qs.get("leagueName") ?? "").trim();
-  const mode = (meta.pending_league_mode as string) ?? qs.get("mode") ?? "entire_tournament";
+  const incomingParams = new URL(request.url).searchParams;
+  const intent = (meta.pending_intent as string) ?? incomingParams.get("intent") ?? "create";
+  const joinCode = ((meta.pending_join_code as string) ?? incomingParams.get("code") ?? "").trim().toUpperCase();
+  const leagueName = ((meta.pending_league_name as string) ?? incomingParams.get("leagueName") ?? "").trim();
+  const mode = (meta.pending_league_mode as string) ?? incomingParams.get("mode") ?? "entire_tournament";
 
   // ── Join flow ──────────────────────────────────────────────────────────────
   if (intent === "join" && joinCode) {
