@@ -16,6 +16,27 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   title: "Quiniela · World Cup 2026",
   description: "Play the World Cup prediction game with your friends.",
+  openGraph: {
+    title: "Quiniela · World Cup 2026",
+    description: "Play the World Cup prediction game with your friends.",
+    url: "https://quinielatikitaka.com",
+    siteName: "Quiniela",
+    images: [
+      {
+        url: "https://quinielatikitaka.com/og-image.jpg",
+        width: 1200,
+        height: 630,
+        alt: "Quiniela · World Cup 2026",
+      },
+    ],
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Quiniela · World Cup 2026",
+    description: "Play the World Cup prediction game with your friends.",
+    images: ["https://quinielatikitaka.com/og-image.jpg"],
+  },
 };
 
 export default function RootLayout({
