@@ -26,44 +26,44 @@ export const ALL_KNOCKOUT_IDS = [...R32_IDS, ...R16_IDS, ...QF_IDS, ...SF_IDS, T
 export interface KnockoutMatchMeta { date: string; time: string; venue: string }
 
 export const KNOCKOUT_MATCH_META: Record<string, KnockoutMatchMeta> = {
-  // R32 — Jun 28 – Jul 2
-  "m73": { date: "Jun 28", time: "18:00", venue: "MetLife Stadium · East Rutherford" },
-  "m74": { date: "Jun 28", time: "22:00", venue: "AT&T Stadium · Arlington" },
-  "m75": { date: "Jun 29", time: "18:00", venue: "SoFi Stadium · Inglewood" },
-  "m76": { date: "Jun 29", time: "22:00", venue: "Hard Rock Stadium · Miami" },
-  "m77": { date: "Jun 29", time: "18:00", venue: "NRG Stadium · Houston" },
-  "m78": { date: "Jun 30", time: "18:00", venue: "Levi's Stadium · Santa Clara" },
-  "m79": { date: "Jun 30", time: "22:00", venue: "Estadio Azteca · Mexico City" },
-  "m80": { date: "Jun 30", time: "18:00", venue: "Lumen Field · Seattle" },
-  "m81": { date: "Jul 1",  time: "18:00", venue: "Arrowhead Stadium · Kansas City" },
-  "m82": { date: "Jul 1",  time: "22:00", venue: "BC Place · Vancouver" },
-  "m83": { date: "Jul 1",  time: "18:00", venue: "Estadio BBVA · Guadalupe" },
-  "m84": { date: "Jul 1",  time: "22:00", venue: "Mercedes-Benz Stadium · Atlanta" },
-  "m85": { date: "Jul 2",  time: "18:00", venue: "Lincoln Financial Field · Philadelphia" },
-  "m86": { date: "Jul 2",  time: "22:00", venue: "Gillette Stadium · Foxborough" },
-  "m87": { date: "Jul 2",  time: "18:00", venue: "BMO Field · Toronto" },
-  "m88": { date: "Jul 2",  time: "22:00", venue: "Estadio Akron · Guadalupe" },
-  // R16 — Jul 4–5
-  "r16-0": { date: "Jul 4",  time: "18:00", venue: "MetLife Stadium · East Rutherford" },
-  "r16-1": { date: "Jul 4",  time: "22:00", venue: "AT&T Stadium · Arlington" },
-  "r16-2": { date: "Jul 4",  time: "18:00", venue: "SoFi Stadium · Inglewood" },
-  "r16-3": { date: "Jul 4",  time: "22:00", venue: "Hard Rock Stadium · Miami" },
-  "r16-4": { date: "Jul 5",  time: "18:00", venue: "NRG Stadium · Houston" },
-  "r16-5": { date: "Jul 5",  time: "22:00", venue: "Levi's Stadium · Santa Clara" },
-  "r16-6": { date: "Jul 5",  time: "18:00", venue: "Arrowhead Stadium · Kansas City" },
-  "r16-7": { date: "Jul 5",  time: "22:00", venue: "Mercedes-Benz Stadium · Atlanta" },
-  // QF — Jul 9–10
-  "qf-0":  { date: "Jul 9",  time: "18:00", venue: "MetLife Stadium · East Rutherford" },
-  "qf-1":  { date: "Jul 9",  time: "22:00", venue: "AT&T Stadium · Arlington" },
-  "qf-2":  { date: "Jul 10", time: "18:00", venue: "SoFi Stadium · Inglewood" },
-  "qf-3":  { date: "Jul 10", time: "22:00", venue: "Hard Rock Stadium · Miami" },
+  // R32 — Jun 28 – Jul 3
+  "m73": { date: "Jun 28", time: "15:00", venue: "SoFi Stadium · Inglewood" },
+  "m74": { date: "Jun 29", time: "16:30", venue: "Gillette Stadium · Foxborough" },
+  "m75": { date: "Jun 29", time: "21:00", venue: "Estadio BBVA · Guadalupe" },
+  "m76": { date: "Jun 29", time: "13:00", venue: "NRG Stadium · Houston" },
+  "m77": { date: "Jun 30", time: "17:00", venue: "MetLife Stadium · East Rutherford" },
+  "m78": { date: "Jun 30", time: "13:00", venue: "AT&T Stadium · Arlington" },
+  "m79": { date: "Jun 30", time: "21:00", venue: "Estadio Azteca · Mexico City" },
+  "m80": { date: "Jul 1",  time: "12:00", venue: "Mercedes-Benz Stadium · Atlanta" },
+  "m81": { date: "Jul 1",  time: "20:00", venue: "Levi's Stadium · Santa Clara" },
+  "m82": { date: "Jul 1",  time: "16:00", venue: "Lumen Field · Seattle" },
+  "m83": { date: "Jul 2",  time: "19:00", venue: "BMO Field · Toronto" },
+  "m84": { date: "Jul 2",  time: "15:00", venue: "SoFi Stadium · Inglewood" },
+  "m85": { date: "Jul 2",  time: "23:00", venue: "BC Place · Vancouver" },
+  "m86": { date: "Jul 3",  time: "18:00", venue: "Hard Rock Stadium · Miami" },
+  "m87": { date: "Jul 3",  time: "21:30", venue: "Arrowhead Stadium · Kansas City" },
+  "m88": { date: "Jul 3",  time: "14:00", venue: "AT&T Stadium · Arlington" },
+  // R16 — Jul 4–7
+  "r16-0": { date: "Jul 4",  time: "13:00", venue: "NRG Stadium · Houston" },
+  "r16-1": { date: "Jul 4",  time: "17:00", venue: "Lincoln Financial Field · Philadelphia" },
+  "r16-2": { date: "Jul 5",  time: "16:00", venue: "MetLife Stadium · East Rutherford" },
+  "r16-3": { date: "Jul 5",  time: "20:00", venue: "Estadio Azteca · Mexico City" },
+  "r16-4": { date: "Jul 6",  time: "15:00", venue: "AT&T Stadium · Arlington" },
+  "r16-5": { date: "Jul 6",  time: "20:00", venue: "Lumen Field · Seattle" },
+  "r16-6": { date: "Jul 7",  time: "12:00", venue: "Mercedes-Benz Stadium · Atlanta" },
+  "r16-7": { date: "Jul 7",  time: "16:00", venue: "BC Place · Vancouver" },
+  // QF — Jul 9–11
+  "qf-0":  { date: "Jul 9",  time: "16:00", venue: "Gillette Stadium · Foxborough" },
+  "qf-1":  { date: "Jul 10", time: "15:00", venue: "SoFi Stadium · Inglewood" },
+  "qf-2":  { date: "Jul 11", time: "17:00", venue: "Hard Rock Stadium · Miami" },
+  "qf-3":  { date: "Jul 11", time: "21:00", venue: "Arrowhead Stadium · Kansas City" },
   // SF — Jul 14–15
-  "sf-0":    { date: "Jul 14", time: "22:00", venue: "AT&T Stadium · Arlington" },
-  "sf-1":    { date: "Jul 15", time: "22:00", venue: "MetLife Stadium · East Rutherford" },
+  "sf-0":    { date: "Jul 14", time: "15:00", venue: "AT&T Stadium · Arlington" },
+  "sf-1":    { date: "Jul 15", time: "15:00", venue: "Mercedes-Benz Stadium · Atlanta" },
   // 3rd Place — Jul 18
-  "third-0": { date: "Jul 18", time: "22:00", venue: "Hard Rock Stadium · Miami" },
+  "third-0": { date: "Jul 18", time: "17:00", venue: "Hard Rock Stadium · Miami" },
   // Final — Jul 19
-  "final-0": { date: "Jul 19", time: "22:00", venue: "MetLife Stadium · East Rutherford" },
+  "final-0": { date: "Jul 19", time: "15:00", venue: "MetLife Stadium · East Rutherford" },
 };
 
 // ── Match labels for admin display ────────────────────────────────────────────

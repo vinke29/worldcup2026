@@ -621,6 +621,27 @@ export default function QualifiersView({ matches, scorePicks, actualScores, mono
             })}
           </div>
 
+          {/* Inline "Continue to next round" button */}
+          {allPickedForRound && nextRound && (
+            <button
+              onClick={() => {
+                dismissRound(mobileRound);
+                setMobileRound(nextRound);
+                window.scrollTo({ top: 0, behavior: "instant" });
+              }}
+              className="mb-6 w-full max-w-2xl mx-auto flex items-center justify-between px-4 py-3 rounded-xl cursor-pointer transition-opacity hover:opacity-80"
+              style={{
+                backgroundColor: mono ? "rgba(26,18,8,0.06)" : "rgba(215,255,90,0.08)",
+                border: `1px solid ${mono ? "rgba(26,18,8,0.15)" : "rgba(215,255,90,0.2)"}`,
+              }}
+            >
+              <span className="text-xs font-black uppercase tracking-widest" style={{ color: t.accent }}>
+                Continue to {ROUND_LABEL[nextRound]}
+              </span>
+              <span className="text-xs font-bold" style={{ color: t.accent }}>→</span>
+            </button>
+          )}
+
           {/* Champion reveal card — shown on Final tab once winner is determined */}
           {mobileRound === "final" && finalChampion && showPickers && (
             <div
