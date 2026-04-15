@@ -1124,37 +1124,26 @@ function MobileMatchCard({
         transition: "opacity 0.2s, background-color 0.2s",
       }}>
         {label && <span style={{ fontSize: 9, color: t.textMuted, fontWeight: 900, width: 22, flexShrink: 0 }}>{label}</span>}
-        {team ? (
+        {/* When actual is known: show actual team big, predicted small below.
+            When no comparison yet: show predicted team big (pre-tournament behaviour). */}
+        {actualKnown ? (
           <>
-            <FlagImage emoji={team.flag} size={20} team={team.team} />
+            <FlagImage emoji={actualTeam!.flag} size={20} team={actualTeam!.team} />
             <div style={{ flex: 1, minWidth: 0 }}>
               <span style={{
-                fontSize: 14,
-                fontWeight: showWinner || correct ? 800 : 600,
+                fontSize: 14, fontWeight: correct ? 800 : 600,
                 display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-                color: showWinner ? t.accent : correct ? "#4ADE80" : wrongSlot ? "#F59E0B" : eliminated ? t.textMuted : t.text,
-                textDecoration: eliminated ? "line-through" : "none",
-                opacity: eliminated ? 0.6 : 1,
+                color: correct ? "#4ADE80" : t.text,
               }}>
-                {team.team}
+                {actualTeam!.team}
               </span>
-              {/* Case (b): right team, wrong slot — show who occupies this slot */}
-              {wrongSlot && actualTeam && (
+              {/* Show predicted team as secondary when it differs from actual */}
+              {!correct && team && (
                 <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 2 }}>
-                  <span style={{ fontSize: 8, fontWeight: 900, letterSpacing: "0.06em", color: t.textMuted, flexShrink: 0 }}>ACTUAL</span>
-                  <FlagImage emoji={actualTeam.flag} size={12} team={actualTeam.team} />
-                  <span style={{ fontSize: 10, color: t.textSec, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                    {actualTeam.team}
-                  </span>
-                </div>
-              )}
-              {/* Case (c): eliminated — show actual team that took this slot */}
-              {eliminated && actualTeam && (
-                <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 2 }}>
-                  <span style={{ fontSize: 8, fontWeight: 900, letterSpacing: "0.06em", color: t.textMuted, flexShrink: 0 }}>ACTUAL</span>
-                  <FlagImage emoji={actualTeam.flag} size={12} team={actualTeam.team} />
-                  <span style={{ fontSize: 10, color: t.textSec, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                    {actualTeam.team}
+                  <span style={{ fontSize: 8, fontWeight: 900, letterSpacing: "0.06em", color: t.textMuted, flexShrink: 0 }}>PRED</span>
+                  <FlagImage emoji={team.flag} size={12} team={team.team} />
+                  <span style={{ fontSize: 10, color: wrongSlot ? "#F59E0B" : t.textMuted, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {team.team}
                   </span>
                 </div>
               )}
@@ -1162,8 +1151,21 @@ function MobileMatchCard({
             {correct && <span style={{ fontSize: 12, color: "#4ADE80", flexShrink: 0 }}>✓</span>}
             {correct && <span style={{ fontSize: 10, fontWeight: 800, color: "#4ADE80", flexShrink: 0 }}>+2</span>}
             {wrongSlot && <span style={{ fontSize: 10, fontWeight: 800, color: "#F59E0B", flexShrink: 0 }}>+2</span>}
-            {showWinner && <span style={{ fontSize: 10, fontWeight: 800, color: t.accent, flexShrink: 0, letterSpacing: "0.05em" }}>{isFinal ? "🏆 Champion" : "advances →"}</span>}
             {correct && isFinal && <span style={{ fontSize: 10, fontWeight: 800, color: "#4ADE80", flexShrink: 0 }}>🏆 Champion</span>}
+          </>
+        ) : team ? (
+          <>
+            <FlagImage emoji={team.flag} size={20} team={team.team} />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <span style={{
+                fontSize: 14, fontWeight: showWinner ? 800 : 600,
+                display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                color: showWinner ? t.accent : t.text,
+              }}>
+                {team.team}
+              </span>
+            </div>
+            {showWinner && <span style={{ fontSize: 10, fontWeight: 800, color: t.accent, flexShrink: 0, letterSpacing: "0.05em" }}>{isFinal ? "🏆 Champion" : "advances →"}</span>}
           </>
         ) : (
           <span style={{ flex: 1, fontSize: 14, color: t.textMuted, fontStyle: "italic" }}>TBD</span>
