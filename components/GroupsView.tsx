@@ -206,10 +206,6 @@ function ThirdPlaceTable({
                     <span className="text-xs font-semibold truncate flex-1" style={{ color: predTeamQualified ? t.text : t.textMuted, opacity: predTeamQualified ? 1 : 0.5 }}>
                       {pred.row.team}
                     </span>
-                    {predTeamQualified
-                      ? <span className="text-[10px] flex-shrink-0" style={{ color: t.textSec }}>✓</span>
-                      : <span className="text-[10px] flex-shrink-0" style={{ color: t.textMuted }}>✗</span>
-                    }
                     <GdCell gd={pred.row.gd} />
                     <PtsCell pts={pred.row.pts} />
                   </>
@@ -328,10 +324,6 @@ function CompareCard({
                 >
                   {predRow.team}
                 </span>
-                {predTeamQualified
-                  ? <span className="text-[10px] flex-shrink-0" style={{ color: t.textSec }}>✓</span>
-                  : <span className="text-[10px] flex-shrink-0" style={{ color: t.textMuted }}>✗</span>
-                }
               </div>
 
               {/* Actual position (team at same rank slot) */}

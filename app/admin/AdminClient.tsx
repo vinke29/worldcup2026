@@ -251,8 +251,8 @@ export default function AdminClient({ matches, phases, initialScores, initialIll
         ? KO_SEED_PATTERNS[i % KO_SEED_PATTERNS.length]
         : SEED_PATTERNS[i % SEED_PATTERNS.length];
     });
-    // R16 → Final: use non-tied patterns so no penalty winner needed
-    const koIds = [...R16_LABELS, ...QF_LABELS, ...SF_LABELS, ...THIRD_LABELS, ...FINAL_LABELS].map(m => m.id);
+    // R32 → Final: use non-tied patterns so no penalty winner needed
+    const koIds = [...R32_LABELS, ...R16_LABELS, ...QF_LABELS, ...SF_LABELS, ...THIRD_LABELS, ...FINAL_LABELS].map(m => m.id);
     koIds.forEach((id, i) => {
       bulk[id] = KO_SEED_PATTERNS[i % KO_SEED_PATTERNS.length];
     });
