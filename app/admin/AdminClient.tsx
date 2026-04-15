@@ -8,6 +8,7 @@ import { saveBonusAnswer } from "@/app/actions/bonuses";
 import { BONUS_QUESTIONS, playerListForQuestion } from "@/lib/bonus-data";
 import {
   R32_LABELS, R16_IDS, QF_IDS, SF_IDS, THIRD_PLACE_ID, FINAL_ID,
+  TOP_R32_DEFS, BOT_R32_DEFS,
   resolveR32Pairs, resolveBracketTeams,
   type KnockoutMatchInfo,
 } from "@/lib/bracket";
@@ -186,14 +187,18 @@ export default function AdminClient({ matches, phases, initialScores, initialIll
       const { top, bot } = resolveR32Pairs(matches, scores, false);
       const b = resolveBracketTeams(top, bot, scores);
       const map: Record<string, { home: string | null; away: string | null }> = {};
+      // R32 — show qualified teams per slot
+      TOP_R32_DEFS.forEach((m, i) => { map[m.id] = { home: top[i]?.home?.team ?? null, away: top[i]?.away?.team ?? null }; });
+      BOT_R32_DEFS.forEach((m, i) => { map[m.id] = { home: bot[i]?.home?.team ?? null, away: bot[i]?.away?.team ?? null }; });
+      // R16 → Final — winners propagated through the bracket
       R16_IDS.slice(0, 4).forEach((id, i) => { map[id] = { home: b.r16Top[i]?.home?.team ?? null, away: b.r16Top[i]?.away?.team ?? null }; });
       R16_IDS.slice(4).forEach((id, i) => { map[id] = { home: b.r16Bot[i]?.home?.team ?? null, away: b.r16Bot[i]?.away?.team ?? null }; });
       QF_IDS.slice(0, 2).forEach((id, i) => { map[id] = { home: b.qfTop[i]?.home?.team ?? null, away: b.qfTop[i]?.away?.team ?? null }; });
       QF_IDS.slice(2).forEach((id, i) => { map[id] = { home: b.qfBot[i]?.home?.team ?? null, away: b.qfBot[i]?.away?.team ?? null }; });
-      map[SF_IDS[0]]    = { home: b.sfTop.home?.team ?? null,      away: b.sfTop.away?.team ?? null };
-      map[SF_IDS[1]]    = { home: b.sfBot.home?.team ?? null,      away: b.sfBot.away?.team ?? null };
-      map[THIRD_PLACE_ID] = { home: b.thirdPlace.home?.team ?? null, away: b.thirdPlace.away?.team ?? null };
-      map[FINAL_ID]     = { home: b.final.home?.team ?? null,      away: b.final.away?.team ?? null };
+      map[SF_IDS[0]]      = { home: b.sfTop.home?.team ?? null,       away: b.sfTop.away?.team ?? null };
+      map[SF_IDS[1]]      = { home: b.sfBot.home?.team ?? null,       away: b.sfBot.away?.team ?? null };
+      map[THIRD_PLACE_ID] = { home: b.thirdPlace.home?.team ?? null,  away: b.thirdPlace.away?.team ?? null };
+      map[FINAL_ID]       = { home: b.final.home?.team ?? null,       away: b.final.away?.team ?? null };
       return map;
     } catch { return {}; }
   }, [matches, scores]);
@@ -239,9 +244,12 @@ export default function AdminClient({ matches, phases, initialScores, initialIll
 
   function handleSeedScores() {
     const bulk: Record<string, { home: number; away: number }> = {};
-    // Group + R32 matches (all Match objects)
+    // Group stage matches — varied patterns (ties ok for group stage)
+    // R32 knockout matches — non-tied only so bracket can always resolve
     matches.forEach((m, i) => {
-      bulk[m.id] = SEED_PATTERNS[i % SEED_PATTERNS.length];
+      bulk[m.id] = m.phase === "r32"
+        ? KO_SEED_PATTERNS[i % KO_SEED_PATTERNS.length]
+        : SEED_PATTERNS[i % SEED_PATTERNS.length];
     });
     // R16 → Final: use non-tied patterns so no penalty winner needed
     const koIds = [...R16_LABELS, ...QF_LABELS, ...SF_LABELS, ...THIRD_LABELS, ...FINAL_LABELS].map(m => m.id);
