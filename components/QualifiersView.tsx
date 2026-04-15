@@ -278,6 +278,27 @@ export default function QualifiersView({ matches, scorePicks, actualScores, mono
     [actualTopR32Pairs, actualBotR32Pairs, actualScores]
   );
 
+  // Sets of actual teams per round — used to distinguish "right team wrong slot" from "wrong team"
+  const actualTeamSetByRound = useMemo(() => {
+    function teamSet(pairs: Array<{ home: TeamRow | null; away: TeamRow | null }>): Set<string> {
+      const s = new Set<string>();
+      for (const p of pairs) {
+        if (p.home?.team) s.add(p.home.team);
+        if (p.away?.team) s.add(p.away.team);
+      }
+      return s;
+    }
+    const sfSet = teamSet([bracketTeams.sfTop, bracketTeams.sfBot]);
+    return {
+      r32:   teamSet([...actualTopR32Pairs, ...actualBotR32Pairs]),
+      r16:   teamSet([...bracketTeams.r16Top, ...bracketTeams.r16Bot]),
+      qf:    teamSet([...bracketTeams.qfTop,  ...bracketTeams.qfBot]),
+      sf:    sfSet,
+      third: sfSet,
+      final: teamSet([bracketTeams.final]),
+    };
+  }, [actualTopR32Pairs, actualBotR32Pairs, bracketTeams]);
+
   // Match lists for mobile picker — grouped as pairs that feed the same next-round slot
   type MobileMatch = { id: string; homeTeam: TeamRow | null; awayTeam: TeamRow | null; homeLabel: string; awayLabel: string; actualHomeTeam?: TeamRow | null; actualAwayTeam?: TeamRow | null };
   type MobileGroup = { nextRoundLabel: string; matches: MobileMatch[] };
@@ -585,6 +606,7 @@ export default function QualifiersView({ matches, scorePicks, actualScores, mono
                         id={m.id} homeTeam={m.homeTeam} awayTeam={m.awayTeam}
                         homeLabel={m.homeLabel} awayLabel={m.awayLabel}
                         actualHomeTeam={m.actualHomeTeam} actualAwayTeam={m.actualAwayTeam}
+                        actualRoundTeams={actualTeamSetByRound[mobileRound]}
                         scorePicks={scorePicks} onScorePick={onScorePick} t={t} mono={mono}
                         grouped={isMulti}
                         isFinal={mobileRound === "final"}
@@ -719,7 +741,7 @@ export default function QualifiersView({ matches, scorePicks, actualScores, mono
                         )}
                         {group.matches.map((m, mi) => (
                           <div key={m.id}>
-                            <MobileMatchCard id={m.id} homeTeam={m.homeTeam} awayTeam={m.awayTeam} homeLabel={m.homeLabel} awayLabel={m.awayLabel} actualHomeTeam={m.actualHomeTeam} actualAwayTeam={m.actualAwayTeam} scorePicks={scorePicks} onScorePick={onScorePick} t={t} mono={mono} grouped />
+                            <MobileMatchCard id={m.id} homeTeam={m.homeTeam} awayTeam={m.awayTeam} homeLabel={m.homeLabel} awayLabel={m.awayLabel} actualHomeTeam={m.actualHomeTeam} actualAwayTeam={m.actualAwayTeam} actualRoundTeams={actualTeamSetByRound.r32} scorePicks={scorePicks} onScorePick={onScorePick} t={t} mono={mono} grouped />
                             {mi === 0 && (
                               <div style={{ height: 28, display: "flex", alignItems: "center", borderTop: `1px solid ${t.border}`, borderBottom: `1px solid ${t.border}`, backgroundColor: t.halfDivider }}>
                                 <div style={{ flex: 1, height: 1, backgroundColor: t.border }} />
@@ -743,7 +765,7 @@ export default function QualifiersView({ matches, scorePicks, actualScores, mono
                   {/* ── R16 ── */}
                   {r16F.map((m, i) => (
                     <div key={m.id} style={{ position: "absolute", top: HDR + (i + 0.5) * GH - HALF, left: cR16, width: CW, zIndex: r16F.length - i }}>
-                      <MobileMatchCard id={m.id} homeTeam={m.homeTeam} awayTeam={m.awayTeam} homeLabel="" awayLabel="" actualHomeTeam={m.actualHomeTeam} actualAwayTeam={m.actualAwayTeam} scorePicks={scorePicks} onScorePick={onScorePick} t={t} mono={mono} grouped={false} />
+                      <MobileMatchCard id={m.id} homeTeam={m.homeTeam} awayTeam={m.awayTeam} homeLabel="" awayLabel="" actualHomeTeam={m.actualHomeTeam} actualAwayTeam={m.actualAwayTeam} actualRoundTeams={actualTeamSetByRound.r16} scorePicks={scorePicks} onScorePick={onScorePick} t={t} mono={mono} grouped={false} />
                     </div>
                   ))}
 
@@ -757,7 +779,7 @@ export default function QualifiersView({ matches, scorePicks, actualScores, mono
                   {/* ── QF ── */}
                   {qfF.map((m, i) => (
                     <div key={m.id} style={{ position: "absolute", top: HDR + (i * 2 + 1) * GH - HALF, left: cQF, width: CW, zIndex: qfF.length - i }}>
-                      <MobileMatchCard id={m.id} homeTeam={m.homeTeam} awayTeam={m.awayTeam} homeLabel="" awayLabel="" actualHomeTeam={m.actualHomeTeam} actualAwayTeam={m.actualAwayTeam} scorePicks={scorePicks} onScorePick={onScorePick} t={t} mono={mono} grouped={false} />
+                      <MobileMatchCard id={m.id} homeTeam={m.homeTeam} awayTeam={m.awayTeam} homeLabel="" awayLabel="" actualHomeTeam={m.actualHomeTeam} actualAwayTeam={m.actualAwayTeam} actualRoundTeams={actualTeamSetByRound.qf} scorePicks={scorePicks} onScorePick={onScorePick} t={t} mono={mono} grouped={false} />
                     </div>
                   ))}
 
@@ -771,7 +793,7 @@ export default function QualifiersView({ matches, scorePicks, actualScores, mono
                   {/* ── SF ── */}
                   {sfF.map((m, i) => (
                     <div key={m.id} style={{ position: "absolute", top: HDR + (i * 4 + 2) * GH - HALF, left: cSF, width: CW, zIndex: sfF.length - i }}>
-                      <MobileMatchCard id={m.id} homeTeam={m.homeTeam} awayTeam={m.awayTeam} homeLabel="" awayLabel="" actualHomeTeam={m.actualHomeTeam} actualAwayTeam={m.actualAwayTeam} scorePicks={scorePicks} onScorePick={onScorePick} t={t} mono={mono} grouped={false} />
+                      <MobileMatchCard id={m.id} homeTeam={m.homeTeam} awayTeam={m.awayTeam} homeLabel="" awayLabel="" actualHomeTeam={m.actualHomeTeam} actualAwayTeam={m.actualAwayTeam} actualRoundTeams={actualTeamSetByRound.sf} scorePicks={scorePicks} onScorePick={onScorePick} t={t} mono={mono} grouped={false} />
                     </div>
                   ))}
 
@@ -782,7 +804,7 @@ export default function QualifiersView({ matches, scorePicks, actualScores, mono
 
                   {/* ── Final ── */}
                   <div style={{ position: "absolute", top: HDR + 4 * GH - HALF, left: cFin, width: CW }}>
-                    <MobileMatchCard id={finM.id} homeTeam={finM.homeTeam} awayTeam={finM.awayTeam} homeLabel="" awayLabel="" actualHomeTeam={finM.actualHomeTeam} actualAwayTeam={finM.actualAwayTeam} scorePicks={scorePicks} onScorePick={onScorePick} t={t} mono={mono} grouped={false} isFinal />
+                    <MobileMatchCard id={finM.id} homeTeam={finM.homeTeam} awayTeam={finM.awayTeam} homeLabel="" awayLabel="" actualHomeTeam={finM.actualHomeTeam} actualAwayTeam={finM.actualAwayTeam} actualRoundTeams={actualTeamSetByRound.final} scorePicks={scorePicks} onScorePick={onScorePick} t={t} mono={mono} grouped={false} isFinal />
                   </div>
 
                   {/* ── 3rd Place (below Final) ── */}
@@ -790,7 +812,7 @@ export default function QualifiersView({ matches, scorePicks, actualScores, mono
                     <div style={{ marginBottom: 6, textAlign: "center" }}>
                       <span style={{ fontSize: 9, fontWeight: 900, letterSpacing: "0.1em", textTransform: "uppercase", color: t.textMuted }}>3RD PLACE</span>
                     </div>
-                    <MobileMatchCard id={trdM.id} homeTeam={trdM.homeTeam} awayTeam={trdM.awayTeam} homeLabel="" awayLabel="" scorePicks={scorePicks} onScorePick={onScorePick} t={t} mono={mono} grouped={false} />
+                    <MobileMatchCard id={trdM.id} homeTeam={trdM.homeTeam} awayTeam={trdM.awayTeam} homeLabel="" awayLabel="" actualRoundTeams={actualTeamSetByRound.third} scorePicks={scorePicks} onScorePick={onScorePick} t={t} mono={mono} grouped={false} />
                   </div>
 
                 </div>
@@ -1032,7 +1054,7 @@ function TbdPod({ x, y, podW, t }: { x: number; y: number; podW: number; t: Reco
 
 // ── Mobile match card ─────────────────────────────────────────────────────────
 function MobileMatchCard({
-  id, homeTeam, awayTeam, homeLabel, awayLabel, actualHomeTeam, actualAwayTeam, scorePicks, onScorePick, t, mono, grouped, isFinal,
+  id, homeTeam, awayTeam, homeLabel, awayLabel, actualHomeTeam, actualAwayTeam, actualRoundTeams, scorePicks, onScorePick, t, mono, grouped, isFinal,
 }: {
   id: string;
   homeTeam: TeamRow | null;
@@ -1041,6 +1063,7 @@ function MobileMatchCard({
   awayLabel: string;
   actualHomeTeam?: TeamRow | null;
   actualAwayTeam?: TeamRow | null;
+  actualRoundTeams?: Set<string>;
   scorePicks: Record<string, ScoreEntry>;
   onScorePick?: (matchId: string, home: number, away: number, pens?: "home" | "away") => void;
   t: Record<string, string>;
@@ -1068,10 +1091,11 @@ function MobileMatchCard({
 
   const interactive = !!onScorePick && !!homeTeam && !!awayTeam;
 
-  function TeamRow_({ team, label, score, onMinus, onPlus, actualTeam, isWinner, isLoser }: {
+  function TeamRow_({ team, label, score, onMinus, onPlus, actualTeam, actualRoundTeams, isWinner, isLoser }: {
     team: TeamRow | null; label: string;
     score: number; onMinus?: () => void; onPlus?: () => void;
     actualTeam?: TeamRow | null;
+    actualRoundTeams?: Set<string>;
     isWinner?: boolean; isLoser?: boolean;
   }) {
     // actualTeam === undefined  → no comparison yet (group stage not complete)
@@ -1084,14 +1108,15 @@ function MobileMatchCard({
 
     // Always show YOUR PICK as primary; actual outcome is secondary
     const showWinner   = !isCompare && isWinner;  // winner highlight only before comparison
-    // When pick is eliminated: faded + strikethrough; when correct: accent highlight
-    const eliminated   = wrong;  // your pick didn't make it through
+    // Distinguish: wrong slot (team did advance elsewhere) vs eliminated (team didn't advance at all)
+    const wrongSlot    = wrong && !!team && !!actualRoundTeams && actualRoundTeams.has(team.team);
+    const eliminated   = wrong && !wrongSlot;  // your pick didn't make it through this round
 
     return (
       <div style={{
         display: "flex", alignItems: "center", gap: 10, padding: "13px 14px",
-        backgroundColor: showWinner ? (mono ? "rgba(26,18,8,0.05)" : "rgba(215,255,90,0.07)") : "transparent",
-        borderLeft: showWinner ? `3px solid ${t.accent}` : correct ? `3px solid #4ADE80` : "3px solid transparent",
+        backgroundColor: showWinner ? (mono ? "rgba(26,18,8,0.05)" : "rgba(215,255,90,0.07)") : wrongSlot ? "rgba(245,158,11,0.06)" : "transparent",
+        borderLeft: showWinner ? `3px solid ${t.accent}` : correct ? `3px solid #4ADE80` : wrongSlot ? `3px solid #F59E0B` : "3px solid transparent",
         opacity: (!isCompare && isLoser) ? 0.4 : 1,
         transition: "opacity 0.2s, background-color 0.2s",
       }}>
@@ -1104,20 +1129,27 @@ function MobileMatchCard({
                 fontSize: 14,
                 fontWeight: showWinner || correct ? 800 : 600,
                 display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-                color: showWinner ? t.accent : correct ? "#4ADE80" : eliminated ? t.textMuted : t.text,
+                color: showWinner ? t.accent : correct ? "#4ADE80" : wrongSlot ? "#F59E0B" : eliminated ? t.textMuted : t.text,
                 textDecoration: eliminated ? "line-through" : "none",
                 opacity: eliminated ? 0.6 : 1,
               }}>
                 {team.team}
               </span>
-              {/* Show actual team that advanced when pick was wrong */}
-              {wrong && actualTeam && (
+              {/* Case (b): right team, wrong slot — show who occupies this slot */}
+              {wrongSlot && actualTeam && (
+                <span style={{ fontSize: 10, color: "#F59E0B", opacity: 0.8, display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  → {actualTeam.team} in this slot
+                </span>
+              )}
+              {/* Case (c): eliminated — show who actually advanced */}
+              {eliminated && actualTeam && (
                 <span style={{ fontSize: 10, color: t.textSec, display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                   → {actualTeam.team} advanced
                 </span>
               )}
             </div>
             {correct && <span style={{ fontSize: 12, color: "#4ADE80", flexShrink: 0 }}>✓</span>}
+            {wrongSlot && <span style={{ fontSize: 10, fontWeight: 800, color: "#F59E0B", flexShrink: 0 }}>+2</span>}
             {showWinner && <span style={{ fontSize: 10, fontWeight: 800, color: t.accent, flexShrink: 0, letterSpacing: "0.05em" }}>{isFinal ? "🏆 Champion" : "advances →"}</span>}
             {correct && isFinal && <span style={{ fontSize: 10, fontWeight: 800, color: "#4ADE80", flexShrink: 0 }}>🏆 Champion</span>}
           </>
@@ -1175,14 +1207,14 @@ function MobileMatchCard({
       )}
 
       <TeamRow_
-        team={homeTeam} label={homeLabel} score={homeScore} actualTeam={actualHomeTeam}
+        team={homeTeam} label={homeLabel} score={homeScore} actualTeam={actualHomeTeam} actualRoundTeams={actualRoundTeams}
         onMinus={() => onScorePick!(id, Math.max(0, homeScore - 1), awayScore)}
         onPlus={() => onScorePick!(id, homeScore + 1, awayScore)}
         isWinner={homeWins} isLoser={awayWins && !homeWins}
       />
       <div style={{ height: 1, backgroundColor: t.border }} />
       <TeamRow_
-        team={awayTeam} label={awayLabel} score={awayScore} actualTeam={actualAwayTeam}
+        team={awayTeam} label={awayLabel} score={awayScore} actualTeam={actualAwayTeam} actualRoundTeams={actualRoundTeams}
         onMinus={() => onScorePick!(id, homeScore, Math.max(0, awayScore - 1))}
         onPlus={() => onScorePick!(id, homeScore, awayScore + 1)}
         isWinner={awayWins} isLoser={homeWins && !awayWins}
