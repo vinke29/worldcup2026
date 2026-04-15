@@ -401,6 +401,7 @@ export default function QualifiersView({ matches, scorePicks, actualScores, mono
 
   const BANNER_KEY   = `champion-banner-dismissed-${leagueCode ?? "default"}`;
   const CONFETTI_KEY = `confetti-fired-${leagueCode ?? "default"}`;
+  const bonusPromptRef = useRef<HTMLButtonElement>(null);
 
   // Persist dismissed state — resets if the champion changes
   const [championBannerDismissed, setChampionBannerDismissed] = useState(() => {
@@ -466,6 +467,16 @@ export default function QualifiersView({ matches, scorePicks, actualScores, mono
     if (!finalChampion) sessionStorage.removeItem(CONFETTI_KEY);
   }, [finalChampion, showPickers, mono, CONFETTI_KEY, BANNER_KEY]);
 
+  // Scroll bonus prompt into view when bracket becomes complete on the Final tab
+  useEffect(() => {
+    if (finalChampion && mobileRound === "final" && onGoToBonuses) {
+      const timer = setTimeout(() => {
+        bonusPromptRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      }, 600);
+      return () => clearTimeout(timer);
+    }
+  }, [finalChampion, mobileRound, onGoToBonuses]);
+
   return (
     <div>
       {/* Champion banner — slides down when Final winner is picked */}
@@ -492,7 +503,7 @@ export default function QualifiersView({ matches, scorePicks, actualScores, mono
                   {finalChampion?.team} wins it all
                 </p>
                 <p className="text-xs font-medium" style={{ color: mono ? "rgba(247,244,238,0.6)" : "rgba(11,30,13,0.6)" }}>
-                  Your bracket is complete ✓
+                  Bracket complete · Don&apos;t forget the bonus questions!
                 </p>
               </div>
             </div>
@@ -701,6 +712,7 @@ export default function QualifiersView({ matches, scorePicks, actualScores, mono
           {/* Bonus round prompt — shown on Final tab once bracket is complete */}
           {mobileRound === "final" && finalChampion && showPickers && onGoToBonuses && (
             <button
+              ref={bonusPromptRef}
               onClick={onGoToBonuses}
               className="max-w-2xl mx-auto w-full flex items-center justify-between px-5 py-4 rounded-2xl cursor-pointer mb-6"
               style={{
