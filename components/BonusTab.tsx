@@ -115,6 +115,23 @@ export default function BonusTab({
         )}
       </div>
 
+      {/* Locked banner */}
+      {isLocked && (
+        <div
+          className="flex items-center gap-3 px-4 py-3 rounded-xl"
+          style={{ backgroundColor: t.card, border: `1px solid ${t.border}` }}
+        >
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ flexShrink: 0 }}>
+            <rect x="1.5" y="6" width="11" height="7.5" rx="1.5" stroke={t.textMuted} strokeWidth="1.4" />
+            <path d="M4 6V4.5a3 3 0 0 1 6 0V6" stroke={t.textMuted} strokeWidth="1.4" strokeLinecap="round" />
+          </svg>
+          <p className="text-sm" style={{ color: t.textBody }}>
+            <span className="font-bold" style={{ color: t.textPrimary }}>Picks locked</span>
+            {" "}— the tournament has started, no more changes.
+          </p>
+        </div>
+      )}
+
       {/* Question cards */}
       {BONUS_QUESTIONS.map((q) => {
         const userAnswer = q.type === "auto" ? (worstGroupTeam ?? "") : (picks[q.key] ?? "");
