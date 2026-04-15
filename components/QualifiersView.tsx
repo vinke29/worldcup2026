@@ -19,6 +19,7 @@ interface QualifiersViewProps {
   mode?: LeagueMode;
   leagueCode?: string;
   onScorePick?: (matchId: string, home: number, away: number, pens?: "home" | "away") => void;
+  isLocked?: boolean;
   dismissedRounds?: Set<string>;
   onDismissRound?: (round: string) => void;
   bannersReady?: boolean;
@@ -136,7 +137,7 @@ const ROUND_LABEL: Record<MobileRound, string> = {
 };
 
 // ── Main component ────────────────────────────────────────────────────────────
-export default function QualifiersView({ matches, scorePicks, actualScores, mono, mode = "phase_by_phase", leagueCode, onScorePick, dismissedRounds: dismissedRoundsProp, onDismissRound, bannersReady = true }: QualifiersViewProps) {
+export default function QualifiersView({ matches, scorePicks, actualScores, mono, mode = "phase_by_phase", leagueCode, onScorePick, isLocked = false, dismissedRounds: dismissedRoundsProp, onDismissRound, bannersReady = true }: QualifiersViewProps) {
   const hasActual = useMemo(() => matches.some(m => m.homeScore !== null), [matches]);
   // R32 actual teams are only reliable once ALL group matches are finished
   const groupStageComplete = useMemo(() =>
@@ -504,6 +505,23 @@ export default function QualifiersView({ matches, scorePicks, actualScores, mono
       {/* Match list — visible on all screen sizes in entire_tournament mode */}
       {showMobileList && (
         <div>
+          {/* Locked banner */}
+          {isLocked && (
+            <div
+              className="flex items-center gap-3 px-4 py-3 rounded-xl mb-4"
+              style={{ backgroundColor: t.card, border: `1px solid ${t.border}` }}
+            >
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ flexShrink: 0 }}>
+                <rect x="1.5" y="6" width="11" height="7.5" rx="1.5" stroke={t.textMuted} strokeWidth="1.4" />
+                <path d="M4 6V4.5a3 3 0 0 1 6 0V6" stroke={t.textMuted} strokeWidth="1.4" strokeLinecap="round" />
+              </svg>
+              <p className="text-sm" style={{ color: t.textSec }}>
+                <span className="font-bold" style={{ color: t.text }}>Picks locked</span>
+                {" "}— the tournament has started, no more changes.
+              </p>
+            </div>
+          )}
+
           {/* Round tabs */}
           <div className="flex gap-2 mb-4 overflow-x-auto pb-1">
             {(["r32","r16","qf","sf","third","final"] as MobileRound[]).map((id) => {
@@ -549,6 +567,7 @@ export default function QualifiersView({ matches, scorePicks, actualScores, mono
                         actualHomeTeam={m.actualHomeTeam} actualAwayTeam={m.actualAwayTeam}
                         scorePicks={scorePicks} onScorePick={onScorePick} t={t} mono={mono}
                         grouped={isMulti}
+                        isFinal={mobileRound === "final"}
                       />
                       {/* "Winners meet" divider between the two matches */}
                       {mi === 0 && isMulti && (

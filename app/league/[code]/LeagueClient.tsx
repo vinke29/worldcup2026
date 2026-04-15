@@ -738,6 +738,7 @@ export default function LeagueClient({
           <QualifiersView
             matches={matches} scorePicks={scorePredictions} actualScores={actualScores}
             mono={mono} mode={mode} leagueCode={code} onScorePick={!isPreview && !isTournamentLocked ? handleScorePick : undefined}
+            isLocked={isTournamentLocked}
             dismissedRounds={dismissedDays}
             onDismissRound={(round) => setDismissedDays(prev => new Set([...prev, round]))}
             bannersReady={bannersHydrated}
