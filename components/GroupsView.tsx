@@ -44,7 +44,7 @@ export default function GroupsView({ matches, scorePicks, mono, mode = "phase_by
     <div>
 
       {/* Groups grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
         {GROUP_LETTERS.map((letter) => {
           const groupKey = `Group ${letter}`;
           const rows = activeTables[groupKey];
@@ -86,6 +86,156 @@ export default function GroupsView({ matches, scorePicks, mono, mode = "phase_by
           );
         })}
       </div>
+
+      {/* Third-place comparison table — shown when actuals exist */}
+      {hasActual && (
+        <ThirdPlaceTable
+          predictedTables={predictedTables}
+          actualTables={actualTables}
+          predictedQ3rds={predictedQ3rds}
+          actualQ3rds={actualQ3rds}
+          mono={mono}
+          t={t}
+        />
+      )}
+    </div>
+  );
+}
+
+// ── Third-place qualifiers table ──────────────────────────────────────────────
+
+function ThirdPlaceTable({
+  predictedTables, actualTables, predictedQ3rds, actualQ3rds, mono, t,
+}: {
+  predictedTables: Record<string, TeamRow[]>;
+  actualTables: Record<string, TeamRow[]>;
+  predictedQ3rds: Set<string>;
+  actualQ3rds: Set<string>;
+  mono: boolean;
+  t: Record<string, string>;
+}) {
+  const predRanked = rankThirdPlaceTeams(predictedTables);
+  const actualRanked = rankThirdPlaceTeams(actualTables);
+  // Only show the table once we have at least some actual 3rd-place data
+  if (actualRanked.length === 0) return null;
+
+  const colorGreen  = mono ? "#16A34A" : "#4ADE80";
+  const colorYellow = mono ? "#B45309" : "#FCD34D";
+
+  function GdCell({ gd }: { gd: number }) {
+    return (
+      <span className="text-xs tabular-nums w-8 text-right flex-shrink-0" style={{
+        color: gd > 0 ? colorGreen : gd < 0 ? "#F87171" : t.textMuted,
+      }}>
+        {gd > 0 ? `+${gd}` : gd}
+      </span>
+    );
+  }
+
+  function PtsCell({ pts }: { pts: number }) {
+    return (
+      <span className="text-xs font-black tabular-nums w-6 text-right flex-shrink-0" style={{ color: t.textMuted }}>
+        {pts}p
+      </span>
+    );
+  }
+
+  const rows = Math.max(predRanked.length, actualRanked.length);
+
+  return (
+    <div className="rounded-2xl overflow-hidden border" style={{ backgroundColor: t.card, borderColor: t.border }}>
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 py-3 border-b" style={{ borderColor: t.border }}>
+        <span className="text-xs font-black uppercase tracking-widest" style={{ color: t.textMuted }}>
+          3rd Place Qualifiers
+        </span>
+        <span className="text-[10px] font-bold" style={{ color: t.textSec }}>
+          Best 8 of 12 advance
+        </span>
+      </div>
+
+      {/* Column headers */}
+      <div className="grid grid-cols-2 gap-0 border-b" style={{ borderColor: t.border }}>
+        <div className="px-4 py-1.5 text-[9px] font-black uppercase tracking-widest" style={{ color: t.textMuted }}>Predicted</div>
+        <div className="px-4 py-1.5 text-[9px] font-black uppercase tracking-widest border-l" style={{ color: t.textMuted, borderColor: t.border }}>Actual</div>
+      </div>
+
+      {/* Rows */}
+      {Array.from({ length: rows }, (_, i) => {
+        const pred   = predRanked[i];
+        const actual = actualRanked[i];
+
+        // Divider after rank 8
+        const showDivider = i === 8;
+
+        const predQualifies   = i < 8;
+        const actualQualifies = i < 8;
+
+        // Colour for predicted row
+        const predInActualTop8  = pred   && actualQ3rds.has(pred.row.team);
+        const actualInPredTop8  = actual && predictedQ3rds.has(actual.row.team);
+        const predExact         = pred && actual && pred.row.team === actual.row.team;
+        const predColor = !pred ? t.textMuted
+          : predExact        ? colorGreen
+          : predInActualTop8 ? colorYellow
+          : predQualifies    ? "#F87171"   // predicted to qualify, didn't
+          : t.textMuted;
+
+        return (
+          <div key={i}>
+            {showDivider && (
+              <div className="flex items-center gap-2 px-4 py-1" style={{ backgroundColor: t.qualify3rd, borderTop: `1px solid ${t.qualify3rdBorder}`, borderBottom: `1px solid ${t.qualify3rdBorder}` }}>
+                <div style={{ flex: 1, height: 1, backgroundColor: t.qualify3rdBorder }} />
+                <span className="text-[9px] font-black uppercase tracking-widest" style={{ color: t.textMuted }}>eliminated</span>
+                <div style={{ flex: 1, height: 1, backgroundColor: t.qualify3rdBorder }} />
+              </div>
+            )}
+            <div
+              className="grid grid-cols-2 gap-0"
+              style={{ borderBottom: i < rows - 1 ? `1px solid ${t.border}` : "none" }}
+            >
+              {/* Predicted */}
+              <div
+                className="flex items-center gap-2 px-3 py-2"
+                style={{ backgroundColor: pred && predQualifies ? t.qualify : "transparent" }}
+              >
+                <span className="text-xs font-black w-4 text-center flex-shrink-0" style={{ color: predQualifies ? t.accent : t.textMuted }}>{i + 1}</span>
+                {pred ? (
+                  <>
+                    <span className="text-[10px] font-black w-4 text-center flex-shrink-0" style={{ color: t.textMuted }}>{pred.group}</span>
+                    <FlagImage emoji={pred.row.flag} size={14} team={pred.row.team} />
+                    <span className="text-xs font-semibold truncate flex-1" style={{ color: predColor, textDecoration: predQualifies && !predInActualTop8 && !predExact ? "line-through" : "none", opacity: predQualifies && !predInActualTop8 && !predExact ? 0.55 : 1 }}>
+                      {pred.row.team}
+                    </span>
+                    <GdCell gd={pred.row.gd} />
+                    <PtsCell pts={pred.row.pts} />
+                  </>
+                ) : <span className="text-xs italic flex-1" style={{ color: t.textMuted }}>TBD</span>}
+              </div>
+
+              {/* Actual */}
+              <div
+                className="flex items-center gap-2 px-3 py-2 border-l"
+                style={{ backgroundColor: actual && actualQualifies ? t.qualify : "transparent", borderColor: t.border }}
+              >
+                <span className="text-xs font-black w-4 text-center flex-shrink-0" style={{ color: actualQualifies ? t.accent : t.textMuted }}>{i + 1}</span>
+                {actual ? (
+                  <>
+                    <span className="text-[10px] font-black w-4 text-center flex-shrink-0" style={{ color: t.textMuted }}>{actual.group}</span>
+                    <FlagImage emoji={actual.row.flag} size={14} team={actual.row.team} />
+                    <span className="text-xs font-semibold truncate flex-1" style={{ color: actualInPredTop8 ? colorGreen : t.text }}>
+                      {actual.row.team}
+                    </span>
+                    {actualInPredTop8 && actualQualifies && <span className="text-[10px] flex-shrink-0" style={{ color: colorGreen }}>✓</span>}
+                    <GdCell gd={actual.row.gd} />
+                    <PtsCell pts={actual.row.pts} />
+                  </>
+                ) : <span className="text-xs italic flex-1" style={{ color: t.textMuted }}>TBD</span>}
+              </div>
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -215,6 +365,9 @@ function CompareCard({
                     {actualIs3rdQ && (
                       <span className="text-[9px] font-black flex-shrink-0 px-1 py-0.5 rounded" style={{ color: t.textMuted, border: `1px solid ${t.qualify3rdBorder}` }}>3Q</span>
                     )}
+                    <span className="text-xs tabular-nums flex-shrink-0" style={{ color: actualRow.gd > 0 ? (mono ? "#16A34A" : "#4ADE80") : actualRow.gd < 0 ? "#F87171" : t.textMuted }}>
+                      {actualRow.gd > 0 ? `+${actualRow.gd}` : actualRow.gd}
+                    </span>
                     <span className="text-xs font-black tabular-nums flex-shrink-0" style={{ color: t.textMuted }}>
                       {actualRow.pts}p
                     </span>
