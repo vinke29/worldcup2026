@@ -743,7 +743,7 @@ export default function QualifiersView({ matches, scorePicks, actualScores, mono
 
                   {/* ── Final ── */}
                   <div style={{ position: "absolute", top: HDR + 4 * GH - HALF, left: cFin, width: CW }}>
-                    <MobileMatchCard id={finM.id} homeTeam={finM.homeTeam} awayTeam={finM.awayTeam} homeLabel="" awayLabel="" scorePicks={scorePicks} onScorePick={onScorePick} t={t} mono={mono} grouped={false} />
+                    <MobileMatchCard id={finM.id} homeTeam={finM.homeTeam} awayTeam={finM.awayTeam} homeLabel="" awayLabel="" actualHomeTeam={finM.actualHomeTeam} actualAwayTeam={finM.actualAwayTeam} scorePicks={scorePicks} onScorePick={onScorePick} t={t} mono={mono} grouped={false} isFinal />
                   </div>
 
                   {/* ── 3rd Place (below Final) ── */}
@@ -993,7 +993,7 @@ function TbdPod({ x, y, podW, t }: { x: number; y: number; podW: number; t: Reco
 
 // ── Mobile match card ─────────────────────────────────────────────────────────
 function MobileMatchCard({
-  id, homeTeam, awayTeam, homeLabel, awayLabel, actualHomeTeam, actualAwayTeam, scorePicks, onScorePick, t, mono, grouped,
+  id, homeTeam, awayTeam, homeLabel, awayLabel, actualHomeTeam, actualAwayTeam, scorePicks, onScorePick, t, mono, grouped, isFinal,
 }: {
   id: string;
   homeTeam: TeamRow | null;
@@ -1007,6 +1007,7 @@ function MobileMatchCard({
   t: Record<string, string>;
   mono: boolean;
   grouped?: boolean;
+  isFinal?: boolean;
 }) {
   const homeScore = scorePicks[id]?.home ?? 0;
   const awayScore = scorePicks[id]?.away ?? 0;
@@ -1075,7 +1076,7 @@ function MobileMatchCard({
               )}
             </div>
             {correct && <span style={{ fontSize: 12, color: "#4ADE80", flexShrink: 0 }}>✓</span>}
-            {showWinner && <span style={{ fontSize: 10, fontWeight: 800, color: t.accent, flexShrink: 0, letterSpacing: "0.05em" }}>advances →</span>}
+            {showWinner && <span style={{ fontSize: 10, fontWeight: 800, color: t.accent, flexShrink: 0, letterSpacing: "0.05em" }}>{isFinal ? "🏆 Champion" : "advances →"}</span>}
           </>
         ) : (
           <span style={{ flex: 1, fontSize: 14, color: t.textMuted, fontStyle: "italic" }}>TBD</span>
