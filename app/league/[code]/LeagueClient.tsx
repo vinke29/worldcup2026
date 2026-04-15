@@ -303,9 +303,9 @@ export default function LeagueClient({
   }, [phases, activePhase, isGroupPhase, mode]);
 
   const nextDayBannerVisible = bannersHydrated && mode !== "entire_tournament" && isGroupPhase && !!nextDay && visibleMatches.length > 0 && mobileView === "matches" && dayPredicted === visibleMatches.length && !dismissedDays.has(activeDay);
-  const nextGroupBannerVisible = bannersHydrated && mode === "entire_tournament" && isGroupPhase && !!nextGroupPhase && phaseMatches.length > 0 && mobileView === "matches" && phasePredicted === phaseMatches.length && !dismissedDays.has(activePhase);
+  const nextGroupBannerVisible = bannersHydrated && !isTournamentLocked && mode === "entire_tournament" && isGroupPhase && !!nextGroupPhase && phaseMatches.length > 0 && mobileView === "matches" && phasePredicted === phaseMatches.length && !dismissedDays.has(activePhase);
   const isLastGroupPhase = mode === "entire_tournament" && isGroupPhase && !nextGroupPhase;
-  const playoffsStartBannerVisible = bannersHydrated && isLastGroupPhase && totalGroupMatches > 0 && totalGroupPredicted === totalGroupMatches && mobileView === "matches" && !dismissedDays.has("playoffs-start");
+  const playoffsStartBannerVisible = bannersHydrated && !isTournamentLocked && isLastGroupPhase && totalGroupMatches > 0 && totalGroupPredicted === totalGroupMatches && mobileView === "matches" && !dismissedDays.has("playoffs-start");
 
   const dayFirstKickoff = useMemo(() => {
     if (visibleMatches.length === 0) return null;
@@ -542,20 +542,21 @@ export default function LeagueClient({
                   const groupSlug = groupName.replace(" ", "-").toLowerCase();
 
                   // In entire_tournament mode there's one group per screen — use nextGroupPhase for the "continue" button
-                  const inlineNextName = mode === "entire_tournament"
+                  // Suppress all nudges once tournament is locked (picks are final, just browsing)
+                  const inlineNextName = !isTournamentLocked && mode === "entire_tournament"
                     ? (nextGroupPhase?.label ?? undefined)
-                    : groupNames[gi + 1];
-                  const inlineNextSlug = mode !== "entire_tournament"
+                    : !isTournamentLocked ? groupNames[gi + 1] : undefined;
+                  const inlineNextSlug = !isTournamentLocked && mode !== "entire_tournament"
                     ? groupNames[gi + 1]?.replace(" ", "-").toLowerCase()
                     : undefined;
 
-                  const handleNext = mode === "entire_tournament" && nextGroupPhase
+                  const handleNext = !isTournamentLocked && mode === "entire_tournament" && nextGroupPhase
                     ? () => {
                         setDismissedDays(prev => new Set([...prev, activePhase]));
                         handlePhaseChange(nextGroupPhase.id as PhaseId);
                         window.scrollTo({ top: 0, behavior: "smooth" });
                       }
-                    : inlineNextSlug
+                    : !isTournamentLocked && inlineNextSlug
                       ? () => { window.scrollTo({ top: 0, behavior: "smooth" }); }
                       : undefined;
 
@@ -588,7 +589,7 @@ export default function LeagueClient({
                       allGroupMatches={allGroupMatchesByGroup[groupName] ?? []}
                       scorePicks={scorePredictions}
                       mono={mono}
-                      onAllPicked={() => {
+                      onAllPicked={isTournamentLocked ? undefined : () => {
                         setTimeout(() => {
                           if (mode === "entire_tournament" || inlineNextSlug) {
                             // Scroll to standings — the inline "Continue" button handles navigation
@@ -715,8 +716,17 @@ export default function LeagueClient({
                   {/* Divider */}
                   <div style={{ height: 1, backgroundColor: t.borderInner }} />
 
+                  {/* Bonus questions */}
+                  <div className="flex justify-between items-center gap-2">
+                    <span className="text-xs" style={{ color: t.textBody }}>Bonus question (×7)</span>
+                    <span className="text-xs font-black whitespace-nowrap" style={{ color: t.accent }}>5 pts each</span>
+                  </div>
+
+                  {/* Divider */}
+                  <div style={{ height: 1, backgroundColor: t.borderInner }} />
+
                   <p className="text-[10px] leading-relaxed" style={{ color: t.textMuted }}>
-                    Points stack per round. Brazil reaches the Final = <span style={{ color: t.accent, fontWeight: 800 }}>27 pts</span>. Brazil wins the World Cup = <span style={{ color: t.accent, fontWeight: 800 }}>42 pts</span>.
+                    Points <span style={{ fontWeight: 700 }}>accumulate at every round</span> you predict correctly — you don&apos;t just get points at the end. Pick Brazil to go all the way: R32 <span style={{ color: t.accent, fontWeight: 800 }}>+2</span> · R16 <span style={{ color: t.accent, fontWeight: 800 }}>+3</span> · QF <span style={{ color: t.accent, fontWeight: 800 }}>+5</span> · SF <span style={{ color: t.accent, fontWeight: 800 }}>+7</span> · Final <span style={{ color: t.accent, fontWeight: 800 }}>+10</span> · Champion <span style={{ color: t.accent, fontWeight: 800 }}>+15</span> = <span style={{ color: t.accent, fontWeight: 800 }}>42 pts</span> total.
                   </p>
                 </div>
               </div>
