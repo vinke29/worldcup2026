@@ -299,81 +299,18 @@ export default function MatchCard({
           <div className="flex-shrink-0 px-2 pt-1">
             {isFinished ? (
               (() => {
-                const hasPick = scoreHome !== "" && scoreAway !== "";
-                const pickedH = hasPick ? parseInt(scoreHome) : null;
-                const pickedA = hasPick ? parseInt(scoreAway) : null;
+                const pickedH = scoreHome !== "" ? parseInt(scoreHome) : null;
+                const pickedA = scoreAway !== "" ? parseInt(scoreAway) : null;
                 const actualH = match.homeScore!;
                 const actualA = match.awayScore!;
-                const isExact = hasPick && pickedH === actualH && pickedA === actualA;
-                const homeMatch = hasPick && pickedH === actualH;
-                const awayMatch = hasPick && pickedA === actualA;
-
-                if (!hasPick) {
-                  // No pick — just show actual score
-                  return (
-                    <span className="text-2xl font-black tabular-nums leading-none" style={{ color: isMono ? "#1A1208" : "#F0EDE6" }}>
-                      {actualH}–{actualA}
-                    </span>
-                  );
-                }
-
-                if (isExact) {
-                  // Perfect — single green score
-                  return (
-                    <span className="text-2xl font-black tabular-nums leading-none" style={{ color: "#4ADE80" }}>
-                      {actualH}–{actualA}
-                    </span>
-                  );
-                }
-
-                if (isWrong) {
-                  // Wrong winner — strike entire prediction, show actual below
-                  return (
-                    <div className="flex flex-col items-center gap-0.5">
-                      <span
-                        className="text-lg font-black tabular-nums leading-none"
-                        style={{
-                          color: isMono ? "#A89E8E" : "#4A6B50",
-                          textDecoration: "line-through",
-                          textDecorationColor: "#F87171",
-                          textDecorationThickness: "2px",
-                          opacity: 0.55,
-                        }}
-                      >
-                        {scoreHome}–{scoreAway}
-                      </span>
-                      <span className="text-sm font-black tabular-nums leading-none" style={{ color: isMono ? "#1A1208" : "#F0EDE6" }}>
-                        {actualH}–{actualA}
-                      </span>
-                    </div>
-                  );
-                }
-
-                // Correct winner, wrong score — digit-level comparison
-                // e.g. predicted 0-1, actual 0-2 → "0 – ~~1~~2"
+                const isExact = pickedH === actualH && pickedA === actualA && pickedH !== null;
                 return (
-                  <div className="flex items-center gap-0.5 leading-none">
-                    {/* Home digit */}
-                    {homeMatch ? (
-                      <span className="text-xl font-black tabular-nums" style={{ color: "#4ADE80" }}>{pickedH}</span>
-                    ) : (
-                      <span className="flex items-baseline gap-0.5">
-                        <span className="text-xl font-black tabular-nums" style={{ color: "#F87171", textDecoration: "line-through", textDecorationThickness: "2px", opacity: 0.7 }}>{pickedH}</span>
-                        <span className="text-sm font-black tabular-nums" style={{ color: isMono ? "#1A1208" : "#F0EDE6" }}>{actualH}</span>
-                      </span>
-                    )}
-                    {/* Separator */}
-                    <span className="text-xl font-black mx-0.5" style={{ color: isMono ? "#C8C0B0" : "#4A6B50" }}>–</span>
-                    {/* Away digit */}
-                    {awayMatch ? (
-                      <span className="text-xl font-black tabular-nums" style={{ color: "#4ADE80" }}>{pickedA}</span>
-                    ) : (
-                      <span className="flex items-baseline gap-0.5">
-                        <span className="text-xl font-black tabular-nums" style={{ color: "#F87171", textDecoration: "line-through", textDecorationThickness: "2px", opacity: 0.7 }}>{pickedA}</span>
-                        <span className="text-sm font-black tabular-nums" style={{ color: isMono ? "#1A1208" : "#F0EDE6" }}>{actualA}</span>
-                      </span>
-                    )}
-                  </div>
+                  <span
+                    className="text-2xl font-black tabular-nums leading-none"
+                    style={{ color: isExact ? "#4ADE80" : isMono ? "#1A1208" : "#F0EDE6" }}
+                  >
+                    {actualH}–{actualA}
+                  </span>
                 );
               })()
             ) : (
