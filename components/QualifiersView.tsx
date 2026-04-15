@@ -23,6 +23,7 @@ interface QualifiersViewProps {
   dismissedRounds?: Set<string>;
   onDismissRound?: (round: string) => void;
   bannersReady?: boolean;
+  onGoToBonuses?: () => void;
 }
 
 // ── Layout constants ──────────────────────────────────────────────────────────
@@ -137,7 +138,7 @@ const ROUND_LABEL: Record<MobileRound, string> = {
 };
 
 // ── Main component ────────────────────────────────────────────────────────────
-export default function QualifiersView({ matches, scorePicks, actualScores, mono, mode = "phase_by_phase", leagueCode, onScorePick, isLocked = false, dismissedRounds: dismissedRoundsProp, onDismissRound, bannersReady = true }: QualifiersViewProps) {
+export default function QualifiersView({ matches, scorePicks, actualScores, mono, mode = "phase_by_phase", leagueCode, onScorePick, isLocked = false, dismissedRounds: dismissedRoundsProp, onDismissRound, bannersReady = true, onGoToBonuses }: QualifiersViewProps) {
   // Actual scores live in the actual_scores table (actualScores prop), not on match objects.
   // Fall back to checking match objects for backwards compatibility.
   const hasActual = useMemo(() =>
@@ -392,8 +393,9 @@ export default function QualifiersView({ matches, scorePicks, actualScores, mono
     const home = predictedBracketTeams.final.home;
     const away = predictedBracketTeams.final.away;
     if (!home || !away) return null;
-    if (pick.home > pick.away || pick.pens === "home") return home;
-    if (pick.away > pick.home || pick.pens === "away") return away;
+    const tied = pick.home === pick.away;
+    if (pick.home > pick.away || (tied && pick.pens === "home")) return home;
+    if (pick.away > pick.home || (tied && pick.pens === "away")) return away;
     return null; // tied, no pens pick yet
   }, [scorePicks, predictedBracketTeams]);
 
@@ -694,6 +696,32 @@ export default function QualifiersView({ matches, scorePicks, actualScores, mono
                 </span>
               </div>
             </div>
+          )}
+
+          {/* Bonus round prompt — shown on Final tab once bracket is complete */}
+          {mobileRound === "final" && finalChampion && showPickers && onGoToBonuses && (
+            <button
+              onClick={onGoToBonuses}
+              className="max-w-2xl mx-auto w-full flex items-center justify-between px-5 py-4 rounded-2xl cursor-pointer mb-6"
+              style={{
+                backgroundColor: t.card,
+                border: `1px solid ${t.border}`,
+                boxShadow: "none",
+              }}
+            >
+              <div className="flex items-center gap-3">
+                <span className="text-base" style={{ color: t.accent }}>★</span>
+                <div className="text-left">
+                  <p className="text-sm font-black" style={{ color: t.text }}>
+                    Don&apos;t forget the bonus questions
+                  </p>
+                  <p className="text-xs font-medium" style={{ color: t.textSec }}>
+                    Extra points up for grabs in the Bonuses tab
+                  </p>
+                </div>
+              </div>
+              <span className="text-sm font-bold" style={{ color: t.textSec }}>→</span>
+            </button>
           )}
 
           {/* Full desktop bracket — all rounds side by side, horizontally scrollable */}

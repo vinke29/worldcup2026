@@ -742,6 +742,7 @@ export default function LeagueClient({
             dismissedRounds={dismissedDays}
             onDismissRound={(round) => setDismissedDays(prev => new Set([...prev, round]))}
             bannersReady={bannersHydrated}
+            onGoToBonuses={() => setMobileView("bonuses")}
           />
         )}
 
