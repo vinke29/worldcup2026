@@ -64,8 +64,11 @@ export default function BonusTab({
   const [picks, setPicks] = useState<Record<string, string>>(initialPicks);
   const [, startTransition] = useTransition();
 
+  // Bonus picks lock at the first tournament kickoff (Jun 11 2026 at 20:00 UTC)
+  const isLocked = !isPreview && Date.now() >= Date.UTC(2026, 5, 11, 20, 0);
+
   function handlePick(key: string, value: string) {
-    if (isPreview) return;
+    if (isPreview || isLocked) return;
     setPicks((prev) => ({ ...prev, [key]: value }));
     onPickChange?.(key, value);
     startTransition(() => {
@@ -98,7 +101,7 @@ export default function BonusTab({
             Bonus Questions
           </p>
           <p className="text-xs mt-0.5" style={{ color: t.textSec }}>
-            {answeredCount}/{BONUS_QUESTIONS.length} answered · 5 pts each · Locks Jun 11
+            {answeredCount}/{BONUS_QUESTIONS.length} answered · 5 pts each · {isLocked ? "Locked" : "Locks Jun 11"}
           </p>
         </div>
         {hasAnyAnswers && (
@@ -200,24 +203,27 @@ export default function BonusTab({
 
             {/* Answer area */}
             <div className="px-4 py-3 flex flex-col gap-2">
-              {q.type === "auto" ? (
-                <AutoAnswer team={worstGroupTeam} t={t} />
-              ) : q.type === "player" ? (
-                <PlayerPicker
-                  questionKey={q.key}
-                  players={playerListForQuestion(q.key)}
-                  value={picks[q.key] ?? ""}
-                  onChange={(v) => handlePick(q.key, v)}
-                  disabled={isPreview}
-                  t={t}
-                />
-              ) : (
-                <NumberPicker
-                  value={picks[q.key] ?? ""}
-                  onChange={(v) => handlePick(q.key, v)}
-                  disabled={isPreview}
-                  t={t}
-                />
+              {/* Hide picker once answer is revealed — result row below replaces it */}
+              {!isRevealed && (
+                q.type === "auto" ? (
+                  <AutoAnswer team={worstGroupTeam} t={t} />
+                ) : q.type === "player" ? (
+                  <PlayerPicker
+                    questionKey={q.key}
+                    players={playerListForQuestion(q.key)}
+                    value={picks[q.key] ?? ""}
+                    onChange={(v) => handlePick(q.key, v)}
+                    disabled={isPreview || isLocked}
+                    t={t}
+                  />
+                ) : (
+                  <NumberPicker
+                    value={picks[q.key] ?? ""}
+                    onChange={(v) => handlePick(q.key, v)}
+                    disabled={isPreview || isLocked}
+                    t={t}
+                  />
+                )
               )}
 
               {/* Result row — show after admin reveals answers */}
