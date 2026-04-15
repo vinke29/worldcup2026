@@ -156,8 +156,16 @@ function ThirdPlaceTable({
 
       {/* Column headers */}
       <div className="grid grid-cols-2 gap-0 border-b" style={{ borderColor: t.border }}>
-        <div className="px-4 py-1.5 text-[9px] font-black uppercase tracking-widest" style={{ color: t.textMuted }}>Predicted</div>
-        <div className="px-4 py-1.5 text-[9px] font-black uppercase tracking-widest border-l" style={{ color: t.textMuted, borderColor: t.border }}>Actual</div>
+        <div className="flex items-center px-4 py-1.5 gap-1">
+          <span className="flex-1 text-[9px] font-black uppercase tracking-widest" style={{ color: t.textMuted }}>Predicted</span>
+          <span className="text-[9px] font-black uppercase tracking-widest w-8 text-right" style={{ color: t.textMuted }}>GD</span>
+          <span className="text-[9px] font-black uppercase tracking-widest w-6 text-right" style={{ color: t.textMuted }}>Pts</span>
+        </div>
+        <div className="flex items-center px-4 py-1.5 border-l gap-1" style={{ borderColor: t.border }}>
+          <span className="flex-1 text-[9px] font-black uppercase tracking-widest" style={{ color: t.textMuted }}>Actual</span>
+          <span className="text-[9px] font-black uppercase tracking-widest w-8 text-right" style={{ color: t.textMuted }}>GD</span>
+          <span className="text-[9px] font-black uppercase tracking-widest w-6 text-right" style={{ color: t.textMuted }}>Pts</span>
+        </div>
       </div>
 
       {/* Rows */}
@@ -287,8 +295,10 @@ function CompareCard({
         <div className="px-4 py-1.5 text-[9px] font-black uppercase tracking-widest" style={{ color: t.textMuted }}>
           Predicted
         </div>
-        <div className="px-4 py-1.5 text-[9px] font-black uppercase tracking-widest border-l" style={{ color: t.textMuted, borderColor: t.border }}>
-          Actual
+        <div className="flex items-center px-4 py-1.5 border-l gap-1" style={{ borderColor: t.border }}>
+          <span className="flex-1 text-[9px] font-black uppercase tracking-widest" style={{ color: t.textMuted }}>Actual</span>
+          <span className="text-[9px] font-black uppercase tracking-widest w-8 text-right" style={{ color: t.textMuted }}>GD</span>
+          <span className="text-[9px] font-black uppercase tracking-widest w-6 text-right" style={{ color: t.textMuted }}>Pts</span>
         </div>
       </div>
 
