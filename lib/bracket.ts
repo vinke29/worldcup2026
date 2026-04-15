@@ -1,5 +1,6 @@
 import type { Match } from "./mock-data";
 import type { TeamRow } from "./group-standings";
+import { computeGroupTables, rankThirdPlaceTeams } from "./group-standings";
 
 // ── Knockout match IDs ────────────────────────────────────────────────────────
 // These are used consistently in: admin score entry, QualifiersView, phase unlocking.
@@ -94,6 +95,110 @@ export const R32_LABELS: KnockoutMatchInfo[] = [
   { id: "m85", homeLabel: "1B",  awayLabel: "3rd EFGIJ" },
   { id: "m87", homeLabel: "1K",  awayLabel: "3rd DEIJL" },
 ];
+
+// ── R32 slot definitions ──────────────────────────────────────────────────────
+// Defines which group position occupies each side of every R32 match.
+// Shared between QualifiersView (display) and scoring (team-based KO points).
+
+export type WinnerSlot   = { kind: "winner"; group: string };
+export type RunnerUpSlot = { kind: "runner"; group: string };
+export type ThirdSlot    = { kind: "third";  eligible: string[] };
+export type BracketSlot  = WinnerSlot | RunnerUpSlot | ThirdSlot;
+export interface R32MatchDef { id: string; home: BracketSlot; away: BracketSlot }
+
+export const TOP_R32_DEFS: R32MatchDef[] = [
+  { id: "m74", home: { kind: "winner", group: "E" }, away: { kind: "third",  eligible: ["A","B","C","D","F"] } },
+  { id: "m77", home: { kind: "winner", group: "I" }, away: { kind: "third",  eligible: ["C","D","F","G","H"] } },
+  { id: "m73", home: { kind: "runner", group: "A" }, away: { kind: "runner", group: "B" } },
+  { id: "m75", home: { kind: "winner", group: "F" }, away: { kind: "runner", group: "C" } },
+  { id: "m83", home: { kind: "runner", group: "K" }, away: { kind: "runner", group: "L" } },
+  { id: "m84", home: { kind: "winner", group: "H" }, away: { kind: "runner", group: "J" } },
+  { id: "m81", home: { kind: "winner", group: "D" }, away: { kind: "third",  eligible: ["B","E","F","I","J"] } },
+  { id: "m82", home: { kind: "winner", group: "G" }, away: { kind: "third",  eligible: ["A","E","H","I","J"] } },
+];
+
+export const BOT_R32_DEFS: R32MatchDef[] = [
+  { id: "m76", home: { kind: "winner", group: "C" }, away: { kind: "runner", group: "F" } },
+  { id: "m78", home: { kind: "runner", group: "E" }, away: { kind: "runner", group: "I" } },
+  { id: "m79", home: { kind: "winner", group: "A" }, away: { kind: "third",  eligible: ["C","E","F","H","I"] } },
+  { id: "m80", home: { kind: "winner", group: "L" }, away: { kind: "third",  eligible: ["E","H","I","J","K"] } },
+  { id: "m86", home: { kind: "winner", group: "J" }, away: { kind: "runner", group: "H" } },
+  { id: "m88", home: { kind: "runner", group: "D" }, away: { kind: "runner", group: "G" } },
+  { id: "m85", home: { kind: "winner", group: "B" }, away: { kind: "third",  eligible: ["E","F","G","I","J"] } },
+  { id: "m87", home: { kind: "winner", group: "K" }, away: { kind: "third",  eligible: ["D","E","I","J","L"] } },
+];
+
+export const THIRD_SLOT_ASSIGNMENTS: Array<{ matchId: string; eligible: string[] }> = [
+  { matchId: "m74", eligible: ["A","B","C","D","F"] },
+  { matchId: "m77", eligible: ["C","D","F","G","H"] },
+  { matchId: "m79", eligible: ["C","E","F","H","I"] },
+  { matchId: "m80", eligible: ["E","H","I","J","K"] },
+  { matchId: "m81", eligible: ["B","E","F","I","J"] },
+  { matchId: "m82", eligible: ["A","E","H","I","J"] },
+  { matchId: "m85", eligible: ["E","F","G","I","J"] },
+  { matchId: "m87", eligible: ["D","E","I","J","L"] },
+];
+
+export function assignThirdPlaceGroups(qualifyingGroups: string[]): Record<string, string> {
+  const assignment: Record<string, string> = {};
+  const used = new Set<string>();
+  function bt(idx: number): boolean {
+    if (idx === THIRD_SLOT_ASSIGNMENTS.length) return true;
+    const slot = THIRD_SLOT_ASSIGNMENTS[idx];
+    for (const g of qualifyingGroups) {
+      if (used.has(g) || !slot.eligible.includes(g)) continue;
+      assignment[slot.matchId] = g;
+      used.add(g);
+      if (bt(idx + 1)) return true;
+      delete assignment[slot.matchId];
+      used.delete(g);
+    }
+    return false;
+  }
+  bt(0);
+  return assignment;
+}
+
+/** Resolve a single bracket slot to the actual team, given group tables. */
+export function resolveSlotTeam(
+  slot: BracketSlot,
+  tables: Record<string, TeamRow[]>,
+  matchId: string,
+  thirdAssign: Record<string, string>,
+  byGroup: Record<string, TeamRow>,
+): TeamRow | null {
+  if (slot.kind === "winner") return tables[`Group ${slot.group}`]?.[0] ?? null;
+  if (slot.kind === "runner") return tables[`Group ${slot.group}`]?.[1] ?? null;
+  const g = thirdAssign[matchId];
+  return g ? (byGroup[g] ?? null) : null;
+}
+
+/**
+ * Resolve all R32 team pairs from group stage data.
+ * Pass useActual=true to use actual match scores; false to use scorePicks.
+ */
+export function resolveR32Pairs(
+  matches: Match[],
+  scorePicks: Record<string, ScoreEntry>,
+  useActual: boolean,
+): { top: Pair[]; bot: Pair[] } {
+  const tables = computeGroupTables(matches, scorePicks, useActual);
+  const ranked3rd = rankThirdPlaceTeams(tables);
+  const top8 = ranked3rd.slice(0, 8);
+  const byGroup: Record<string, TeamRow> = {};
+  for (const { group, row } of ranked3rd) byGroup[group] = row;
+  const thirdAssign = assignThirdPlaceGroups(top8.map(t => t.group));
+
+  const top = TOP_R32_DEFS.map(m => ({
+    home: resolveSlotTeam(m.home, tables, m.id, thirdAssign, byGroup),
+    away: resolveSlotTeam(m.away, tables, m.id, thirdAssign, byGroup),
+  }));
+  const bot = BOT_R32_DEFS.map(m => ({
+    home: resolveSlotTeam(m.home, tables, m.id, thirdAssign, byGroup),
+    away: resolveSlotTeam(m.away, tables, m.id, thirdAssign, byGroup),
+  }));
+  return { top, bot };
+}
 
 // ── Bracket team resolution ───────────────────────────────────────────────────
 

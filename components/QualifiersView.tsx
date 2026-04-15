@@ -3,7 +3,11 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import type { Match, LeagueMode } from "@/lib/mock-data";
 import { computeGroupTables, rankThirdPlaceTeams, type TeamRow } from "@/lib/group-standings";
-import { resolveBracketTeams, TOP_R32_IDS, BOT_R32_IDS, R16_IDS, QF_IDS, SF_IDS, THIRD_PLACE_ID, FINAL_ID, KNOCKOUT_MATCH_META } from "@/lib/bracket";
+import {
+  resolveBracketTeams, TOP_R32_IDS, BOT_R32_IDS, R16_IDS, QF_IDS, SF_IDS, THIRD_PLACE_ID, FINAL_ID,
+  KNOCKOUT_MATCH_META, TOP_R32_DEFS, BOT_R32_DEFS, THIRD_SLOT_ASSIGNMENTS, assignThirdPlaceGroups, resolveSlotTeam,
+  type BracketSlot, type R32MatchDef,
+} from "@/lib/bracket";
 import type { ScoreEntry } from "@/lib/bracket";
 import FlagImage from "@/lib/flag-image";
 
@@ -33,63 +37,10 @@ function slotHeight(r: number) { return SLOT_H * Math.pow(2, r); }
 function podTop(r: number, i: number) { const sh = slotHeight(r); return i * sh + (sh - POD_H) / 2; }
 function podCenter(r: number, i: number) { return podTop(r, i) + POD_H / 2; }
 
-// ── Bracket slot types ────────────────────────────────────────────────────────
-type WinnerSlot   = { kind: "winner";  group: string };
-type RunnerUpSlot = { kind: "runner";  group: string };
-type ThirdSlot    = { kind: "third";   eligible: string[] };
-type BracketSlot  = WinnerSlot | RunnerUpSlot | ThirdSlot;
-interface R32Match { id: string; home: BracketSlot; away: BracketSlot }
-
-const TOP_R32: R32Match[] = [
-  { id: "m74", home: { kind: "winner", group: "E" },  away: { kind: "third",  eligible: ["A","B","C","D","F"] } },
-  { id: "m77", home: { kind: "winner", group: "I" },  away: { kind: "third",  eligible: ["C","D","F","G","H"] } },
-  { id: "m73", home: { kind: "runner", group: "A" },  away: { kind: "runner", group: "B" } },
-  { id: "m75", home: { kind: "winner", group: "F" },  away: { kind: "runner", group: "C" } },
-  { id: "m83", home: { kind: "runner", group: "K" },  away: { kind: "runner", group: "L" } },
-  { id: "m84", home: { kind: "winner", group: "H" },  away: { kind: "runner", group: "J" } },
-  { id: "m81", home: { kind: "winner", group: "D" },  away: { kind: "third",  eligible: ["B","E","F","I","J"] } },
-  { id: "m82", home: { kind: "winner", group: "G" },  away: { kind: "third",  eligible: ["A","E","H","I","J"] } },
-];
-const BOTTOM_R32: R32Match[] = [
-  { id: "m76", home: { kind: "winner", group: "C" },  away: { kind: "runner", group: "F" } },
-  { id: "m78", home: { kind: "runner", group: "E" },  away: { kind: "runner", group: "I" } },
-  { id: "m79", home: { kind: "winner", group: "A" },  away: { kind: "third",  eligible: ["C","E","F","H","I"] } },
-  { id: "m80", home: { kind: "winner", group: "L" },  away: { kind: "third",  eligible: ["E","H","I","J","K"] } },
-  { id: "m86", home: { kind: "winner", group: "J" },  away: { kind: "runner", group: "H" } },
-  { id: "m88", home: { kind: "runner", group: "D" },  away: { kind: "runner", group: "G" } },
-  { id: "m85", home: { kind: "winner", group: "B" },  away: { kind: "third",  eligible: ["E","F","G","I","J"] } },
-  { id: "m87", home: { kind: "winner", group: "K" },  away: { kind: "third",  eligible: ["D","E","I","J","L"] } },
-];
-const THIRD_SLOTS: Array<{ matchId: string; eligible: string[] }> = [
-  { matchId: "m74", eligible: ["A","B","C","D","F"] },
-  { matchId: "m77", eligible: ["C","D","F","G","H"] },
-  { matchId: "m79", eligible: ["C","E","F","H","I"] },
-  { matchId: "m80", eligible: ["E","H","I","J","K"] },
-  { matchId: "m81", eligible: ["B","E","F","I","J"] },
-  { matchId: "m82", eligible: ["A","E","H","I","J"] },
-  { matchId: "m85", eligible: ["E","F","G","I","J"] },
-  { matchId: "m87", eligible: ["D","E","I","J","L"] },
-];
-
-function assignThirdPlaceGroups(qualifyingGroups: string[]): Record<string, string> {
-  const assignment: Record<string, string> = {};
-  const used = new Set<string>();
-  function bt(idx: number): boolean {
-    if (idx === THIRD_SLOTS.length) return true;
-    const slot = THIRD_SLOTS[idx];
-    for (const g of qualifyingGroups) {
-      if (used.has(g) || !slot.eligible.includes(g)) continue;
-      assignment[slot.matchId] = g;
-      used.add(g);
-      if (bt(idx + 1)) return true;
-      delete assignment[slot.matchId];
-      used.delete(g);
-    }
-    return false;
-  }
-  bt(0);
-  return assignment;
-}
+// TOP_R32, BOTTOM_R32, THIRD_SLOTS, assignThirdPlaceGroups are now imported from @/lib/bracket
+// Local aliases to match the old names used throughout this file:
+const TOP_R32    = TOP_R32_DEFS;
+const BOTTOM_R32 = BOT_R32_DEFS;
 
 // Convert ET kickoff time to a local Date (same logic as MatchCard.tsx)
 function knockoutKickoff(dateStr: string, timeStr: string): Date {
@@ -133,7 +84,7 @@ function resolveTeam(
     return tables[`Group ${slot.group}`]?.[1] ?? null;
   }
   // Third-place: all eligible groups must have at least one pick before resolving
-  if (pickedGroups && !(slot as ThirdSlot).eligible.every(g => pickedGroups.has(g))) return null;
+  if (pickedGroups && !(slot as { kind: "third"; eligible: string[] }).eligible.every(g => pickedGroups.has(g))) return null;
   return thirdMap[matchId] ?? null;
 }
 
@@ -187,6 +138,11 @@ const ROUND_LABEL: Record<MobileRound, string> = {
 // ── Main component ────────────────────────────────────────────────────────────
 export default function QualifiersView({ matches, scorePicks, actualScores, mono, mode = "phase_by_phase", leagueCode, onScorePick, dismissedRounds: dismissedRoundsProp, onDismissRound, bannersReady = true }: QualifiersViewProps) {
   const hasActual = useMemo(() => matches.some(m => m.homeScore !== null), [matches]);
+  // R32 actual teams are only reliable once ALL group matches are finished
+  const groupStageComplete = useMemo(() =>
+    matches.filter(m => m.group?.startsWith("Group")).every(m => m.homeScore !== null && m.awayScore !== null),
+    [matches]
+  );
   const defaultView = hasActual ? "compare" : "predicted";
   const [view, setView] = useState<"predicted" | "actual" | "compare">(defaultView);
   const [mobileRound, setMobileRound] = useState<MobileRound>("r32");
@@ -221,7 +177,7 @@ export default function QualifiersView({ matches, scorePicks, actualScores, mono
     const qualGroups  = top8.map(t => t.group);
     const groupAssign = assignThirdPlaceGroups(qualGroups);
     const result: Record<string, TeamRow | null> = {};
-    for (const { matchId } of THIRD_SLOTS) {
+    for (const { matchId } of THIRD_SLOT_ASSIGNMENTS) {
       const g = groupAssign[matchId];
       result[matchId] = g ? (byGroup[g] ?? null) : null;
     }
@@ -277,7 +233,7 @@ export default function QualifiersView({ matches, scorePicks, actualScores, mono
     const qualGroups  = top8.map(t => t.group);
     const groupAssign = assignThirdPlaceGroups(qualGroups);
     const result: Record<string, TeamRow | null> = {};
-    for (const { matchId } of THIRD_SLOTS) {
+    for (const { matchId } of THIRD_SLOT_ASSIGNMENTS) {
       const g = groupAssign[matchId];
       result[matchId] = g ? (byGroup[g] ?? null) : null;
     }
@@ -311,15 +267,16 @@ export default function QualifiersView({ matches, scorePicks, actualScores, mono
         id: m.id, homeTeam: topR32Pairs[i].home, awayTeam: topR32Pairs[i].away,
         homeLabel: slotLabel(m.home, m.home.kind === "third" ? thirdGroupAssign[m.id] : undefined),
         awayLabel: slotLabel(m.away, m.away.kind === "third" ? thirdGroupAssign[m.id] : undefined),
-        actualHomeTeam: hasActual ? (actualR32ByMatchId[m.id]?.home ?? null) : undefined,
-        actualAwayTeam: hasActual ? (actualR32ByMatchId[m.id]?.away ?? null) : undefined,
+        // Only show actual R32 teams once ALL group matches are finished
+        actualHomeTeam: groupStageComplete ? (actualR32ByMatchId[m.id]?.home ?? null) : undefined,
+        actualAwayTeam: groupStageComplete ? (actualR32ByMatchId[m.id]?.away ?? null) : undefined,
       })),
       ...BOTTOM_R32.map((m, i) => ({
         id: m.id, homeTeam: botR32Pairs[i].home, awayTeam: botR32Pairs[i].away,
         homeLabel: slotLabel(m.home, m.home.kind === "third" ? thirdGroupAssign[m.id] : undefined),
         awayLabel: slotLabel(m.away, m.away.kind === "third" ? thirdGroupAssign[m.id] : undefined),
-        actualHomeTeam: hasActual ? (actualR32ByMatchId[m.id]?.home ?? null) : undefined,
-        actualAwayTeam: hasActual ? (actualR32ByMatchId[m.id]?.away ?? null) : undefined,
+        actualHomeTeam: groupStageComplete ? (actualR32ByMatchId[m.id]?.home ?? null) : undefined,
+        actualAwayTeam: groupStageComplete ? (actualR32ByMatchId[m.id]?.away ?? null) : undefined,
       })),
     ];
     const r32: MobileGroup[] = Array.from({ length: 8 }, (_, i) => ({
@@ -364,7 +321,7 @@ export default function QualifiersView({ matches, scorePicks, actualScores, mono
     }];
 
     return { r32, r16, qf, sf, third, final };
-  }, [topR32Pairs, botR32Pairs, predictedBracketTeams, bracketTeams, actualR32ByMatchId, hasActual, thirdGroupAssign]);
+  }, [topR32Pairs, botR32Pairs, predictedBracketTeams, bracketTeams, actualR32ByMatchId, hasActual, groupStageComplete, thirdGroupAssign]);
 
   const connectorPaths = [
     ...halfConnectors(0, 0, colX, POD_W), ...halfConnectors(0, 1, colX, POD_W), ...halfConnectors(0, 2, colX, POD_W),
@@ -1077,36 +1034,48 @@ function MobileMatchCard({
     actualTeam?: TeamRow | null;
     isWinner?: boolean; isLoser?: boolean;
   }) {
-    const isCompare = actualTeam !== undefined;
-    const correct = isCompare && team && actualTeam && team.team === actualTeam.team;
-    const wrong   = isCompare && team && actualTeam && team.team !== actualTeam.team;
+    // actualTeam === undefined  → no comparison yet (group stage not complete)
+    // actualTeam === null       → comparison active but this slot still unresolved
+    // actualTeam !== null       → actual team is known
+    const isCompare    = actualTeam !== undefined;
+    const actualKnown  = isCompare && actualTeam !== null;
+    const correct      = actualKnown && !!team && team.team === actualTeam!.team;
+    const wrong        = actualKnown && !!team && team.team !== actualTeam!.team;
+
+    // When actual is known: show actual team prominently
+    const displayTeam  = actualKnown ? actualTeam! : team;
+    const showWinner   = !actualKnown && isWinner;  // winner highlight only before comparison
 
     return (
       <div style={{
         display: "flex", alignItems: "center", gap: 10, padding: "13px 14px",
-        backgroundColor: isWinner ? (mono ? "rgba(26,18,8,0.05)" : "rgba(215,255,90,0.07)") : "transparent",
-        borderLeft: isWinner ? `3px solid ${t.accent}` : "3px solid transparent",
-        opacity: isLoser ? 0.4 : 1,
+        backgroundColor: showWinner ? (mono ? "rgba(26,18,8,0.05)" : "rgba(215,255,90,0.07)") : "transparent",
+        borderLeft: showWinner ? `3px solid ${t.accent}` : "3px solid transparent",
+        opacity: (!actualKnown && isLoser) ? 0.4 : 1,
         transition: "opacity 0.2s, background-color 0.2s",
       }}>
         {label && <span style={{ fontSize: 9, color: t.textMuted, fontWeight: 900, width: 22, flexShrink: 0 }}>{label}</span>}
-        {team ? (
+        {displayTeam ? (
           <>
-            <FlagImage emoji={team.flag} size={20} team={team.team} />
-            <span style={{ flex: 1, fontSize: 14, fontWeight: isWinner ? 800 : 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-              color: isWinner ? t.accent : correct ? "#4ADE80" : t.text,
-              textDecoration: wrong ? "line-through" : "none",
-              opacity: wrong ? 0.5 : 1,
-            }}>
-              {team.team}
-            </span>
-            {isWinner && !isCompare && <span style={{ fontSize: 10, fontWeight: 800, color: t.accent, flexShrink: 0, letterSpacing: "0.05em" }}>advances →</span>}
-            {correct && <span style={{ fontSize: 12, color: "#4ADE80", flexShrink: 0 }}>✓</span>}
-            {wrong && actualTeam && (
-              <span style={{ fontSize: 13, fontWeight: 700, color: t.text, flexShrink: 0, maxWidth: 90, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                {actualTeam.team}
+            <FlagImage emoji={displayTeam.flag} size={20} team={displayTeam.team} />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <span style={{
+                fontSize: 14,
+                fontWeight: showWinner ? 800 : 600,
+                display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                color: showWinner ? t.accent : correct ? "#4ADE80" : t.text,
+              }}>
+                {displayTeam.team}
               </span>
-            )}
+              {/* Case 2/3: show user's predicted team as secondary line */}
+              {wrong && team && (
+                <span style={{ fontSize: 10, color: t.textMuted, display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  you had {team.team}
+                </span>
+              )}
+            </div>
+            {correct && <span style={{ fontSize: 12, color: "#4ADE80", flexShrink: 0 }}>✓</span>}
+            {showWinner && <span style={{ fontSize: 10, fontWeight: 800, color: t.accent, flexShrink: 0, letterSpacing: "0.05em" }}>advances →</span>}
           </>
         ) : (
           <span style={{ flex: 1, fontSize: 14, color: t.textMuted, fontStyle: "italic" }}>TBD</span>

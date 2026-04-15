@@ -1,6 +1,11 @@
 import type { Match, Member, Outcome } from "./mock-data";
-import { TOP_R32_IDS, BOT_R32_IDS, R16_IDS, QF_IDS, SF_IDS, THIRD_PLACE_ID, FINAL_ID } from "./bracket";
+import {
+  TOP_R32_IDS, BOT_R32_IDS, R16_IDS, QF_IDS, SF_IDS, THIRD_PLACE_ID, FINAL_ID,
+  TOP_R32_DEFS, BOT_R32_DEFS,
+  resolveR32Pairs, resolveBracketTeams,
+} from "./bracket";
 import type { ScoreEntry } from "./bracket";
+import type { TeamRow } from "./group-standings";
 
 function actualOutcome(match: Match): Outcome | null {
   if (match.homeScore === null || match.awayScore === null) return null;
@@ -93,26 +98,122 @@ export function computeStandings(
       points += pts;
     }
 
-    // ── Knockout stage (score-pick-based) ────────────────────────────────────
-    for (const [matchId, actualScore] of Object.entries(actualScores)) {
-      const phase = KNOCKOUT_PHASE[matchId];
-      if (!phase) continue;
+    // ── Knockout stage (team-based scoring) ──────────────────────────────────
+    // Points require the actual winning team to appear in the member's predicted
+    // bracket for that round. Exact-score bonus requires BOTH teams to be in the
+    // correct slots (same match ID) in addition to the score matching.
+    if (Object.keys(actualScores).length > 0) {
+      // Resolve actual R32 teams once per member (actual data is the same for everyone,
+      // but we need predicted per-member, so both are computed here).
+      const { top: actualTop, bot: actualBot } = resolveR32Pairs(matches, {}, true);
+      const actualBracket = resolveBracketTeams(actualTop, actualBot, actualScores);
 
-      const userPick = scorePicks[matchId];
-      if (!userPick) continue;
+      // Predicted R32 teams for this member
+      const { top: predTop, bot: predBot } = resolveR32Pairs(matches, scorePicks, false);
+      const predBracket = resolveBracketTeams(predTop, predBot, scorePicks);
 
-      const actualWinner = knockoutWinner(actualScore);
-      const pickedWinner = knockoutWinner(userPick);
-      if (!actualWinner || !pickedWinner) continue;
+      // Build predicted team sets per phase (which teams did this member predict
+      // would be present in each round, regardless of which slot).
+      function teamSet(...pairs: Array<{ home: TeamRow | null; away: TeamRow | null }>): Set<string> {
+        const s = new Set<string>();
+        for (const p of pairs) {
+          if (p.home?.team) s.add(p.home.team);
+          if (p.away?.team) s.add(p.away.team);
+        }
+        return s;
+      }
+      const predR32Teams  = teamSet(...predTop, ...predBot);
+      const predR16Teams  = teamSet(...predBracket.r16Top, ...predBracket.r16Bot);
+      const predQFTeams   = teamSet(...predBracket.qfTop,  ...predBracket.qfBot);
+      const predSFTeams   = teamSet(predBracket.sfTop, predBracket.sfBot);
+      const predFinTeams  = teamSet(predBracket.final);
 
-      total++;
-      if (pickedWinner === actualWinner) {
+      const phaseTeamSets: Record<string, Set<string>> = {
+        r32: predR32Teams, r16: predR16Teams, qf: predQFTeams,
+        sf: predSFTeams, final: predFinTeams, third: predSFTeams,
+      };
+
+      // Helper: get actual home/away teams for a completed KO match
+      function actualTeamsFor(matchId: string): { home: TeamRow | null; away: TeamRow | null } | null {
+        const ti = TOP_R32_IDS.indexOf(matchId);
+        if (ti >= 0) return { home: actualTop[ti].home, away: actualTop[ti].away };
+        const bi = BOT_R32_IDS.indexOf(matchId);
+        if (bi >= 0) return { home: actualBot[bi].home, away: actualBot[bi].away };
+        const r16ti = R16_IDS.slice(0,4).indexOf(matchId);
+        if (r16ti >= 0) return { home: actualBracket.r16Top[r16ti]?.home ?? null, away: actualBracket.r16Top[r16ti]?.away ?? null };
+        const r16bi = R16_IDS.slice(4).indexOf(matchId);
+        if (r16bi >= 0) return { home: actualBracket.r16Bot[r16bi]?.home ?? null, away: actualBracket.r16Bot[r16bi]?.away ?? null };
+        const qfti = QF_IDS.slice(0,2).indexOf(matchId);
+        if (qfti >= 0) return { home: actualBracket.qfTop[qfti]?.home ?? null, away: actualBracket.qfTop[qfti]?.away ?? null };
+        const qfbi = QF_IDS.slice(2).indexOf(matchId);
+        if (qfbi >= 0) return { home: actualBracket.qfBot[qfbi]?.home ?? null, away: actualBracket.qfBot[qfbi]?.away ?? null };
+        if (matchId === SF_IDS[0])      return { home: actualBracket.sfTop.home ?? null, away: actualBracket.sfTop.away ?? null };
+        if (matchId === SF_IDS[1])      return { home: actualBracket.sfBot.home ?? null, away: actualBracket.sfBot.away ?? null };
+        if (matchId === THIRD_PLACE_ID) return { home: actualBracket.thirdPlace.home ?? null, away: actualBracket.thirdPlace.away ?? null };
+        if (matchId === FINAL_ID)       return { home: actualBracket.final.home ?? null, away: actualBracket.final.away ?? null };
+        return null;
+      }
+
+      // Helper: get predicted home/away teams for a match slot
+      function predTeamsFor(matchId: string): { home: TeamRow | null; away: TeamRow | null } | null {
+        const ti = TOP_R32_IDS.indexOf(matchId);
+        if (ti >= 0) return { home: predTop[ti].home, away: predTop[ti].away };
+        const bi = BOT_R32_IDS.indexOf(matchId);
+        if (bi >= 0) return { home: predBot[bi].home, away: predBot[bi].away };
+        const r16ti = R16_IDS.slice(0,4).indexOf(matchId);
+        if (r16ti >= 0) return { home: predBracket.r16Top[r16ti]?.home ?? null, away: predBracket.r16Top[r16ti]?.away ?? null };
+        const r16bi = R16_IDS.slice(4).indexOf(matchId);
+        if (r16bi >= 0) return { home: predBracket.r16Bot[r16bi]?.home ?? null, away: predBracket.r16Bot[r16bi]?.away ?? null };
+        const qfti = QF_IDS.slice(0,2).indexOf(matchId);
+        if (qfti >= 0) return { home: predBracket.qfTop[qfti]?.home ?? null, away: predBracket.qfTop[qfti]?.away ?? null };
+        const qfbi = QF_IDS.slice(2).indexOf(matchId);
+        if (qfbi >= 0) return { home: predBracket.qfBot[qfbi]?.home ?? null, away: predBracket.qfBot[qfbi]?.away ?? null };
+        if (matchId === SF_IDS[0])      return { home: predBracket.sfTop.home ?? null, away: predBracket.sfTop.away ?? null };
+        if (matchId === SF_IDS[1])      return { home: predBracket.sfBot.home ?? null, away: predBracket.sfBot.away ?? null };
+        if (matchId === THIRD_PLACE_ID) return { home: predBracket.thirdPlace.home ?? null, away: predBracket.thirdPlace.away ?? null };
+        if (matchId === FINAL_ID)       return { home: predBracket.final.home ?? null, away: predBracket.final.away ?? null };
+        return null;
+      }
+
+      for (const [matchId, actualScore] of Object.entries(actualScores)) {
+        const phase = KNOCKOUT_PHASE[matchId];
+        if (!phase) continue;
+
+        const userPick = scorePicks[matchId];
+        if (!userPick) continue;
+
+        const actualTeams = actualTeamsFor(matchId);
+        if (!actualTeams) continue;
+
+        const actualWinnerSide = knockoutWinner(actualScore);
+        const pickedWinnerSide = knockoutWinner(userPick);
+        if (!actualWinnerSide || !pickedWinnerSide) continue;
+
+        // Which team actually won?
+        const actualWinnerTeam = actualWinnerSide === "home" ? actualTeams.home : actualTeams.away;
+        if (!actualWinnerTeam?.team) continue;
+
+        // Condition 1: actual winner must be in member's predicted team set for this phase
+        const phaseTeams = phaseTeamSets[phase];
+        if (!phaseTeams?.has(actualWinnerTeam.team)) continue;
+
+        // Condition 2: member's score pick must also identify the same side as winner
+        if (pickedWinnerSide !== actualWinnerSide) continue;
+
+        total++;
         correct++;
         const [outcomePts, exactPts] = phasePoints(phase);
-        const isExact =
+
+        // Exact score: both teams must be in correct slots AND score must match
+        const predTeams = predTeamsFor(matchId);
+        const bothSlotsCorrect = !!predTeams &&
+          predTeams.home?.team === actualTeams.home?.team &&
+          predTeams.away?.team === actualTeams.away?.team;
+        const isExact = bothSlotsCorrect &&
           userPick.home === actualScore.home &&
           userPick.away === actualScore.away &&
           (!actualScore.pens || userPick.pens === actualScore.pens);
+
         if (isExact) { exact++; points += exactPts; }
         else { points += outcomePts; }
       }
