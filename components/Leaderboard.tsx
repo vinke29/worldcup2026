@@ -24,8 +24,9 @@ export default function Leaderboard({ members, currentUserId, mono = false, vari
           <div className="w-8 flex-shrink-0" />
           <span className="flex-1 text-[10px] font-black uppercase tracking-widest" style={{ color: t.textMuted }}>Player</span>
           <span className="w-14 text-right text-[10px] font-black uppercase tracking-widest" style={{ color: t.textMuted }}>Pts</span>
-          <span className="w-16 text-right text-[10px] font-black uppercase tracking-widest hidden sm:block" style={{ color: t.textMuted }}>Correct</span>
-          <span className="w-14 text-right text-[10px] font-black uppercase tracking-widest hidden sm:block" style={{ color: t.textMuted }}>Exact</span>
+          <span className="w-14 text-right text-[10px] font-black uppercase tracking-widest hidden sm:block" style={{ color: t.textMuted }}>Group</span>
+          <span className="w-10 text-right text-[10px] font-black uppercase tracking-widest hidden sm:block" style={{ color: t.textMuted }}>KO</span>
+          <span className="w-14 text-right text-[10px] font-black uppercase tracking-widest hidden sm:block" style={{ color: t.textMuted }}>Bonus</span>
           <div className="w-4 flex-shrink-0" />
         </div>
 
@@ -80,21 +81,28 @@ export default function Leaderboard({ members, currentUserId, mono = false, vari
                 <span className="text-[10px] ml-0.5" style={{ color: t.textMuted }}>pts</span>
               </div>
 
-              {/* Correct */}
-              <div className="w-16 text-right hidden sm:block">
-                <span className="text-sm font-bold tabular-nums" style={{ color: member.correct > 0 ? (mono ? "#1A1208" : "#4ADE80") : t.textMuted }}>
-                  {member.correct}
+              {/* Group pts */}
+              <div className="w-14 text-right hidden sm:block">
+                <span className="text-sm font-bold tabular-nums" style={{ color: member.groupPts > 0 ? (mono ? "#1A1208" : "#4ADE80") : t.textMuted }}>
+                  {member.groupPts}
                 </span>
-                {member.total > 0 && (
-                  <span className="text-[10px]" style={{ color: t.textMuted }}>/{member.total}</span>
-                )}
+                <span className="text-[10px] ml-0.5" style={{ color: t.textMuted }}>pts</span>
               </div>
 
-              {/* Exact */}
-              <div className="w-14 text-right hidden sm:block">
-                <span className="text-sm font-bold tabular-nums" style={{ color: member.exact > 0 ? (mono ? "#1A1208" : "#D7FF5A") : t.textMuted }}>
-                  {member.exact}
+              {/* KO pts */}
+              <div className="w-10 text-right hidden sm:block">
+                <span className="text-sm font-bold tabular-nums" style={{ color: member.koPts > 0 ? (mono ? "#1A1208" : "#D7FF5A") : t.textMuted }}>
+                  {member.koPts}
                 </span>
+                <span className="text-[10px] ml-0.5" style={{ color: t.textMuted }}>pts</span>
+              </div>
+
+              {/* Bonus pts */}
+              <div className="w-14 text-right hidden sm:block">
+                <span className="text-sm font-bold tabular-nums" style={{ color: member.bonusPts > 0 ? (mono ? "#1A1208" : "#D7FF5A") : t.textMuted }}>
+                  {member.bonusPts}
+                </span>
+                <span className="text-[10px] ml-0.5" style={{ color: t.textMuted }}>pts</span>
               </div>
 
               <div className="w-4 flex-shrink-0 text-center">

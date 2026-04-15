@@ -128,6 +128,9 @@ export default async function LeaguePage({
       exact: 0,
       total: 0,
       picked: 0,
+      groupPts: 0,
+      koPts: 0,
+      bonusPts: 0,
       predictions: preds,
       scorePicks: picks,
     };

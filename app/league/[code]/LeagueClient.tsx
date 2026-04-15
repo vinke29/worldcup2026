@@ -628,7 +628,7 @@ export default function LeagueClient({
                 const memberBonusPicks = m.id === currentUserId ? bonusPicks : (allMemberBonusPicks[m.id] ?? {});
                 const memberWorstTeam = m.id === currentUserId ? worstGroupTeam : computeWorstGroupTeam(MATCHES, m.scorePicks ?? {});
                 const bonusPts = computeBonusPoints(memberBonusPicks, bonusAnswers, memberWorstTeam);
-                return { ...m, points: m.points + bonusPts };
+                return { ...m, points: m.points + bonusPts, bonusPts };
               })}
               currentUserId={currentUserId}
               mono={mono}

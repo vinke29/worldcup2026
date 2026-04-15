@@ -79,7 +79,7 @@ export function computeStandings(
     const predictions = isCurrentUser ? livePredictions : member.predictions;
     const scorePicks  = isCurrentUser ? liveScorePicks  : (member.scorePicks ?? {});
 
-    let points = 0, correct = 0, exact = 0, total = 0;
+    let groupPts = 0, koPts = 0, correct = 0, exact = 0, total = 0;
 
     // All unique match IDs where any pick was made
     const picked = new Set([...Object.keys(predictions), ...Object.keys(scorePicks)]).size;
@@ -95,7 +95,7 @@ export function computeStandings(
         correct++;
         if (sp && sp.home === match.homeScore && sp.away === match.awayScore) exact++;
       }
-      points += pts;
+      groupPts += pts;
     }
 
     // ── Knockout stage (team-based scoring) ──────────────────────────────────
@@ -214,11 +214,11 @@ export function computeStandings(
           userPick.away === actualScore.away &&
           (!actualScore.pens || userPick.pens === actualScore.pens);
 
-        if (isExact) { exact++; points += exactPts; }
-        else { points += outcomePts; }
+        if (isExact) { exact++; koPts += exactPts; }
+        else { koPts += outcomePts; }
       }
     }
 
-    return { ...member, points, correct, exact, total, picked };
+    return { ...member, points: groupPts + koPts, groupPts, koPts, bonusPts: 0, correct, exact, total, picked };
   });
 }
