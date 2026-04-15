@@ -1062,40 +1062,44 @@ function MobileMatchCard({
     const correct      = actualKnown && !!team && team.team === actualTeam!.team;
     const wrong        = actualKnown && !!team && team.team !== actualTeam!.team;
 
-    // When actual is known: show actual team prominently
-    const displayTeam  = actualKnown ? actualTeam! : team;
-    const showWinner   = !actualKnown && isWinner;  // winner highlight only before comparison
+    // Always show YOUR PICK as primary; actual outcome is secondary
+    const showWinner   = !isCompare && isWinner;  // winner highlight only before comparison
+    // When pick is eliminated: faded + strikethrough; when correct: accent highlight
+    const eliminated   = wrong;  // your pick didn't make it through
 
     return (
       <div style={{
         display: "flex", alignItems: "center", gap: 10, padding: "13px 14px",
         backgroundColor: showWinner ? (mono ? "rgba(26,18,8,0.05)" : "rgba(215,255,90,0.07)") : "transparent",
-        borderLeft: showWinner ? `3px solid ${t.accent}` : "3px solid transparent",
-        opacity: (!actualKnown && isLoser) ? 0.4 : 1,
+        borderLeft: showWinner ? `3px solid ${t.accent}` : correct ? `3px solid #4ADE80` : "3px solid transparent",
+        opacity: (!isCompare && isLoser) ? 0.4 : 1,
         transition: "opacity 0.2s, background-color 0.2s",
       }}>
         {label && <span style={{ fontSize: 9, color: t.textMuted, fontWeight: 900, width: 22, flexShrink: 0 }}>{label}</span>}
-        {displayTeam ? (
+        {team ? (
           <>
-            <FlagImage emoji={displayTeam.flag} size={20} team={displayTeam.team} />
+            <FlagImage emoji={team.flag} size={20} team={team.team} />
             <div style={{ flex: 1, minWidth: 0 }}>
               <span style={{
                 fontSize: 14,
-                fontWeight: showWinner ? 800 : 600,
+                fontWeight: showWinner || correct ? 800 : 600,
                 display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-                color: showWinner ? t.accent : correct ? "#4ADE80" : t.text,
+                color: showWinner ? t.accent : correct ? "#4ADE80" : eliminated ? t.textMuted : t.text,
+                textDecoration: eliminated ? "line-through" : "none",
+                opacity: eliminated ? 0.6 : 1,
               }}>
-                {displayTeam.team}
+                {team.team}
               </span>
-              {/* Case 2/3: show user's predicted team as secondary line */}
-              {wrong && team && (
-                <span style={{ fontSize: 10, color: t.textMuted, display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                  you had {team.team}
+              {/* Show actual team that advanced when pick was wrong */}
+              {wrong && actualTeam && (
+                <span style={{ fontSize: 10, color: t.textSec, display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  → {actualTeam.team} advanced
                 </span>
               )}
             </div>
             {correct && <span style={{ fontSize: 12, color: "#4ADE80", flexShrink: 0 }}>✓</span>}
             {showWinner && <span style={{ fontSize: 10, fontWeight: 800, color: t.accent, flexShrink: 0, letterSpacing: "0.05em" }}>{isFinal ? "🏆 Champion" : "advances →"}</span>}
+            {correct && isFinal && <span style={{ fontSize: 10, fontWeight: 800, color: "#4ADE80", flexShrink: 0 }}>🏆 Champion</span>}
           </>
         ) : (
           <span style={{ flex: 1, fontSize: 14, color: t.textMuted, fontStyle: "italic" }}>TBD</span>
