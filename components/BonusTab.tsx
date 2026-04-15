@@ -254,87 +254,28 @@ function PlayerPicker({
   disabled: boolean;
   t: typeof T_DARK;
 }) {
-  const [search, setSearch] = useState("");
-  const [open, setOpen] = useState(false);
-
-  const filtered = search.trim()
-    ? players.filter((p) => p.toLowerCase().includes(search.toLowerCase()))
-    : players;
-
   return (
-    <div className="relative">
-      {/* Selected value / search input */}
-      <div
-        className="flex items-center gap-2 px-3 py-2.5 rounded-xl cursor-pointer"
-        style={{
-          backgroundColor: t.inner,
-          border: `1px solid ${open ? t.accent : t.border}`,
-          opacity: disabled ? 0.5 : 1,
-        }}
-        onClick={() => !disabled && setOpen((v) => !v)}
-      >
-        {open ? (
-          <input
-            autoFocus
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            onClick={(e) => e.stopPropagation()}
-            placeholder="Search player…"
-            className="flex-1 bg-transparent outline-none text-sm"
-            style={{ color: t.textPrimary }}
-          />
-        ) : (
-          <span
-            className="flex-1 text-sm font-bold"
-            style={{ color: value ? t.textPrimary : t.textMuted }}
-          >
-            {value || "Select a player…"}
-          </span>
-        )}
-        <svg
-          width="12" height="12" viewBox="0 0 12 12" fill="none"
-          style={{ color: t.textMuted, flexShrink: 0, transform: open ? "rotate(180deg)" : "none", transition: "transform 0.15s" }}
-        >
-          <path d="M2 4l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-        </svg>
-      </div>
-
-      {/* Dropdown */}
-      {open && (
-        <div
-          className="absolute z-30 w-full mt-1 rounded-xl overflow-hidden shadow-xl"
-          style={{
-            backgroundColor: t.card,
-            border: `1px solid ${t.border}`,
-            maxHeight: 240,
-            overflowY: "auto",
-          }}
-        >
-          {filtered.length === 0 ? (
-            <div className="px-3 py-3 text-xs" style={{ color: t.textMuted }}>No results</div>
-          ) : filtered.map((player) => (
-            <button
-              key={player}
-              type="button"
-              className="w-full text-left px-3 py-2.5 text-sm hover:opacity-80 transition-opacity cursor-pointer"
-              style={{
-                backgroundColor: player === value ? t.inner : "transparent",
-                color: player === value ? t.accent : t.textBody,
-                fontWeight: player === value ? 700 : 400,
-                borderBottom: `1px solid ${t.inner}`,
-              }}
-              onClick={() => {
-                onChange(player);
-                setSearch("");
-                setOpen(false);
-              }}
-            >
-              {player}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
+    <select
+      value={value}
+      disabled={disabled}
+      onChange={(e) => onChange(e.target.value)}
+      className="w-full px-3 py-2.5 rounded-xl text-sm font-bold outline-none cursor-pointer appearance-none"
+      style={{
+        backgroundColor: t.inner,
+        border: `1px solid ${t.border}`,
+        color: value ? t.textPrimary : t.textMuted,
+        opacity: disabled ? 0.5 : 1,
+        backgroundImage: `url("data:image/svg+xml,%3Csvg width='12' height='12' viewBox='0 0 12 12' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M2 4l4 4 4-4' stroke='%234A6B50' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")`,
+        backgroundRepeat: "no-repeat",
+        backgroundPosition: "right 12px center",
+        paddingRight: "32px",
+      }}
+    >
+      <option value="" disabled>Select a player…</option>
+      {players.map((player) => (
+        <option key={player} value={player}>{player}</option>
+      ))}
+    </select>
   );
 }
 
@@ -358,13 +299,14 @@ function NumberPicker({
   }
 
   const btnStyle: React.CSSProperties = {
-    width: 36,
     height: 36,
-    borderRadius: 10,
+    paddingLeft: 10,
+    paddingRight: 10,
+    borderRadius: 8,
     border: `1px solid ${t.border}`,
     backgroundColor: "transparent",
     color: t.textSec,
-    fontSize: 18,
+    fontSize: 13,
     fontWeight: 800,
     cursor: disabled ? "not-allowed" : "pointer",
     display: "flex",
@@ -372,25 +314,41 @@ function NumberPicker({
     justifyContent: "center",
     flexShrink: 0,
     userSelect: "none",
+    whiteSpace: "nowrap",
   };
 
   return (
     <div
-      className="flex items-center gap-3 px-3 py-2.5 rounded-xl"
+      className="flex items-center gap-2 px-3 py-2.5 rounded-xl"
       style={{
         backgroundColor: t.inner,
         border: `1px solid ${t.border}`,
         opacity: disabled ? 0.5 : 1,
       }}
     >
-      <button type="button" style={btnStyle} onClick={() => !disabled && adjust(-1)}>−</button>
-      <span
-        className="flex-1 text-center text-2xl font-black tabular-nums"
-        style={{ color: num !== null ? t.textPrimary : t.textMuted }}
-      >
-        {num !== null ? num : "—"}
-      </span>
-      <button type="button" style={btnStyle} onClick={() => !disabled && adjust(1)}>+</button>
+      <button type="button" style={btnStyle} onClick={() => !disabled && adjust(-10)}>−10</button>
+      <button type="button" style={btnStyle} onClick={() => !disabled && adjust(-1)}>−1</button>
+      <input
+        type="number"
+        min={0}
+        max={999}
+        value={num ?? ""}
+        disabled={disabled}
+        placeholder="—"
+        onChange={(e) => {
+          const v = parseInt(e.target.value);
+          onChange(isNaN(v) ? "" : String(Math.max(0, v)));
+        }}
+        className="flex-1 text-center text-xl font-black tabular-nums bg-transparent outline-none"
+        style={{
+          color: num !== null ? t.textPrimary : t.textMuted,
+          minWidth: 0,
+          WebkitAppearance: "none",
+          MozAppearance: "textfield",
+        }}
+      />
+      <button type="button" style={btnStyle} onClick={() => !disabled && adjust(1)}>+1</button>
+      <button type="button" style={btnStyle} onClick={() => !disabled && adjust(10)}>+10</button>
     </div>
   );
 }

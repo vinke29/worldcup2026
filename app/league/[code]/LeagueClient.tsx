@@ -168,6 +168,12 @@ export default function LeagueClient({
   const isGroupPhase = activePhase.startsWith("group");
   const isLocked = currentPhase.status === "locked";
 
+  // In entire_tournament mode all picks freeze at tournament kickoff OR as soon as any score is set
+  const TOURNAMENT_START_UTC = Date.UTC(2026, 5, 11, 23, 0);
+  const isTournamentLocked = mode === "entire_tournament" &&
+    (Date.now() >= TOURNAMENT_START_UTC || Object.keys(actualScores).length > 0);
+  const effectiveLocked = isLocked || isTournamentLocked;
+
   // For group-a…group-l virtual phases, filter by group name instead of phase ID
   const isVirtualGroupPhase = isGroupPhase && mode === "entire_tournament";
   const activeGroupName = isVirtualGroupPhase
@@ -416,7 +422,7 @@ export default function LeagueClient({
           <div className={`flex-1 min-w-0 ${mobileView !== "matches" ? "hidden" : "block"}`}>
 
             {/* Phase / day header */}
-            {isLocked ? (
+            {effectiveLocked ? (
               <div
                 className="flex items-center gap-3 mb-5 px-4 py-3 rounded-xl border"
                 style={{ backgroundColor: t.cardBg, borderColor: t.border }}
@@ -426,8 +432,10 @@ export default function LeagueClient({
                   <path d="M4 6V4.5a3 3 0 0 1 6 0V6" stroke={t.textMuted} strokeWidth="1.4" strokeLinecap="round" />
                 </svg>
                 <p className="text-sm" style={{ color: t.textBody }}>
-                  <span className="font-bold" style={{ color: t.textPrimary }}>{currentPhase.label}</span>
-                  {" "}— opens once the previous round ends.
+                  <span className="font-bold" style={{ color: t.textPrimary }}>
+                    {isTournamentLocked ? "Picks locked" : currentPhase.label}
+                  </span>
+                  {" "}— {isTournamentLocked ? "the tournament has started, no more changes." : "opens once the previous round ends."}
                 </p>
               </div>
             ) : isGroupPhase ? (
@@ -470,7 +478,7 @@ export default function LeagueClient({
             )}
 
             {/* Missing picks banner */}
-            {!isLocked && currentPhase.status !== "completed" && visibleMatches.length > 0 && dayPredicted < visibleMatches.length && (
+            {!effectiveLocked && currentPhase.status !== "completed" && visibleMatches.length > 0 && dayPredicted < visibleMatches.length && (
               <button
                 onClick={scrollToFirstUnpicked}
                 className="flex items-center gap-3 mb-4 pl-4 pr-3 py-3 rounded-2xl w-full text-left cursor-pointer"
@@ -524,7 +532,7 @@ export default function LeagueClient({
             {/* Matches */}
             {visibleMatches.length === 0 ? (
               <div className="text-center py-16 text-sm" style={{ color: t.textMuted }}>
-                {isLocked ? "Matches will appear once this phase opens."
+                {effectiveLocked ? "Matches will appear once this phase opens."
                   : mode === "entire_tournament" && !isGroupPhase ? "Bracket picks are in the Qualifiers tab."
                   : "No matches on this day."}
               </div>
@@ -568,7 +576,7 @@ export default function LeagueClient({
                           savedScorePick={scorePredictions[match.id]}
                           onPredict={handlePredict}
                           onScorePick={handleScorePick}
-                          lockedByPhase={isLocked}
+                          lockedByPhase={effectiveLocked}
                           illustrationStyle={mono ? "mono" : "color"}
                           illustrationSetting={illustrationSettings[match.id]}
                         />
@@ -725,7 +733,7 @@ export default function LeagueClient({
         {mobileView === "qualifiers" && (
           <QualifiersView
             matches={matches} scorePicks={scorePredictions} actualScores={actualScores}
-            mono={mono} mode={mode} leagueCode={code} onScorePick={!isPreview ? handleScorePick : undefined}
+            mono={mono} mode={mode} leagueCode={code} onScorePick={!isPreview && !isTournamentLocked ? handleScorePick : undefined}
             dismissedRounds={dismissedDays}
             onDismissRound={(round) => setDismissedDays(prev => new Set([...prev, round]))}
             bannersReady={bannersHydrated}
