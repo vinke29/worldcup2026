@@ -215,10 +215,19 @@ export default function AdminClient({ matches, phases, initialScores, initialIll
     { home: 2, away: 2 }, { home: 1, away: 3 }, { home: 3, away: 0 },
   ];
 
+  // Non-tied patterns (home ≠ away) so knockout seeds always produce a clear winner
+  const KO_SEED_PATTERNS = SEED_PATTERNS.filter(p => p.home !== p.away);
+
   function handleSeedScores() {
     const bulk: Record<string, { home: number; away: number }> = {};
+    // Group + R32 matches (all Match objects)
     matches.forEach((m, i) => {
       bulk[m.id] = SEED_PATTERNS[i % SEED_PATTERNS.length];
+    });
+    // R16 → Final: use non-tied patterns so no penalty winner needed
+    const koIds = [...R16_LABELS, ...QF_LABELS, ...SF_LABELS, ...THIRD_LABELS, ...FINAL_LABELS].map(m => m.id);
+    koIds.forEach((id, i) => {
+      bulk[id] = KO_SEED_PATTERNS[i % KO_SEED_PATTERNS.length];
     });
     // Flatten local state
     setScores(prev => ({ ...prev, ...bulk }));
