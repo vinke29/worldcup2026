@@ -20,6 +20,7 @@ interface BonusTabProps {
   bonusAnswers: Record<string, string>;         // admin-set actual answers (empty if not revealed)
   worstGroupTeam: string | null;               // auto-calculated from user's score picks
   isPreview?: boolean;
+  tournamentStarted?: boolean;                  // true once any match score is set or past Jun 11
   mono?: boolean;
   onPickChange?: (key: string, value: string) => void;
 }
@@ -57,6 +58,7 @@ export default function BonusTab({
   bonusAnswers,
   worstGroupTeam,
   isPreview = false,
+  tournamentStarted = false,
   mono = false,
   onPickChange,
 }: BonusTabProps) {
@@ -64,8 +66,7 @@ export default function BonusTab({
   const [picks, setPicks] = useState<Record<string, string>>(initialPicks);
   const [, startTransition] = useTransition();
 
-  // Bonus picks lock at the first tournament kickoff (Jun 11 2026 at 20:00 UTC)
-  const isLocked = !isPreview && Date.now() >= Date.UTC(2026, 5, 11, 20, 0);
+  const isLocked = !isPreview && tournamentStarted;
 
   function handlePick(key: string, value: string) {
     if (isPreview || isLocked) return;

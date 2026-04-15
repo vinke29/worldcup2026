@@ -751,6 +751,7 @@ export default function LeagueClient({
             bonusAnswers={bonusAnswers}
             worstGroupTeam={worstGroupTeam}
             isPreview={isPreview}
+            tournamentStarted={Object.keys(actualScores).length > 0 || Date.now() >= Date.UTC(2026, 5, 11, 20, 0)}
             mono={mono}
             onPickChange={(key, value) => setBonusPicks(prev => ({ ...prev, [key]: value }))}
           />
