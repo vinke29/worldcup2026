@@ -148,7 +148,9 @@ function CompareCard({
           //   muted  = predicted to advance but didn't (or vice versa)
           const qualifiedWrongSlot = predQualifies && actualQualifies && !correct;
           const missedQualify = predQualifies && actualIdx >= 0 && !actualQualifies;
-          const predColor = correct ? "#4ADE80" : qualifiedWrongSlot ? "#FCD34D" : t.textMuted;
+          const colorGreen  = mono ? "#16A34A" : "#4ADE80";
+          const colorYellow = mono ? "#B45309" : "#FCD34D";
+          const predColor = correct ? colorGreen : qualifiedWrongSlot ? colorYellow : t.textMuted;
 
           return (
             <div
@@ -175,8 +177,8 @@ function CompareCard({
                 >
                   {predRow.team}
                 </span>
-                {correct && <span className="text-[10px] flex-shrink-0" style={{ color: "#4ADE80" }}>✓</span>}
-                {qualifiedWrongSlot && <span className="text-[10px] flex-shrink-0" style={{ color: "#FCD34D" }}>~</span>}
+                {correct && <span className="text-[10px] flex-shrink-0" style={{ color: colorGreen }}>✓</span>}
+                {qualifiedWrongSlot && <span className="text-[10px] flex-shrink-0" style={{ color: colorYellow }}>~</span>}
               </div>
 
               {/* Actual position (team at same rank slot) */}
