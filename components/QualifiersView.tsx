@@ -213,12 +213,6 @@ export default function QualifiersView({ matches, scorePicks, actualScores, mono
       away: resolveTeam(m.away, tables, m.id, thirdMap, pickedGroups),
     })), [tables, thirdMap, pickedGroups]);
 
-  // Bracket propagated from actual scores (for "actual" view)
-  const bracketTeams = useMemo(
-    () => resolveBracketTeams(topR32Pairs, botR32Pairs, actualScores),
-    [topR32Pairs, botR32Pairs, actualScores]
-  );
-
   // Bracket propagated from user's score picks (for entire_tournament "predicted" view)
   const predictedBracketTeams = useMemo(
     () => resolveBracketTeams(topR32Pairs, botR32Pairs, scorePicks),
@@ -257,6 +251,24 @@ export default function QualifiersView({ matches, scorePicks, actualScores, mono
     }
     return map;
   }, [actualTables, actualThirdMap]);
+
+  // Actual R32 pairs — resolved from actual group tables (no pickedGroups gate)
+  const actualTopR32Pairs = useMemo(() =>
+    TOP_R32.map(m => ({
+      home: resolveTeam(m.home, actualTables, m.id, actualThirdMap),
+      away: resolveTeam(m.away, actualTables, m.id, actualThirdMap),
+    })), [actualTables, actualThirdMap]);
+  const actualBotR32Pairs = useMemo(() =>
+    BOTTOM_R32.map(m => ({
+      home: resolveTeam(m.home, actualTables, m.id, actualThirdMap),
+      away: resolveTeam(m.away, actualTables, m.id, actualThirdMap),
+    })), [actualTables, actualThirdMap]);
+
+  // Bracket propagated from actual R32 teams + actual KO scores
+  const bracketTeams = useMemo(
+    () => resolveBracketTeams(actualTopR32Pairs, actualBotR32Pairs, actualScores),
+    [actualTopR32Pairs, actualBotR32Pairs, actualScores]
+  );
 
   // Match lists for mobile picker — grouped as pairs that feed the same next-round slot
   type MobileMatch = { id: string; homeTeam: TeamRow | null; awayTeam: TeamRow | null; homeLabel: string; awayLabel: string; actualHomeTeam?: TeamRow | null; actualAwayTeam?: TeamRow | null };

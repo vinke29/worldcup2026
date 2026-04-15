@@ -8,6 +8,7 @@ import { saveBonusAnswer } from "@/app/actions/bonuses";
 import { BONUS_QUESTIONS, playerListForQuestion } from "@/lib/bonus-data";
 import {
   R32_LABELS, R16_IDS, QF_IDS, SF_IDS, THIRD_PLACE_ID, FINAL_ID,
+  resolveR32Pairs, resolveBracketTeams,
   type KnockoutMatchInfo,
 } from "@/lib/bracket";
 
@@ -178,6 +179,24 @@ export default function AdminClient({ matches, phases, initialScores, initialIll
   );
 
   const knockoutLabels: KnockoutMatchInfo[] = isGroupPhase ? [] : (KNOCKOUT_LABELS[activePhase] ?? []);
+
+  // Resolve actual bracket teams from current scores so admin sees real names
+  const koTeamNames = useMemo((): Record<string, { home: string | null; away: string | null }> => {
+    try {
+      const { top, bot } = resolveR32Pairs(matches, scores, false);
+      const b = resolveBracketTeams(top, bot, scores);
+      const map: Record<string, { home: string | null; away: string | null }> = {};
+      R16_IDS.slice(0, 4).forEach((id, i) => { map[id] = { home: b.r16Top[i]?.home?.team ?? null, away: b.r16Top[i]?.away?.team ?? null }; });
+      R16_IDS.slice(4).forEach((id, i) => { map[id] = { home: b.r16Bot[i]?.home?.team ?? null, away: b.r16Bot[i]?.away?.team ?? null }; });
+      QF_IDS.slice(0, 2).forEach((id, i) => { map[id] = { home: b.qfTop[i]?.home?.team ?? null, away: b.qfTop[i]?.away?.team ?? null }; });
+      QF_IDS.slice(2).forEach((id, i) => { map[id] = { home: b.qfBot[i]?.home?.team ?? null, away: b.qfBot[i]?.away?.team ?? null }; });
+      map[SF_IDS[0]]    = { home: b.sfTop.home?.team ?? null,      away: b.sfTop.away?.team ?? null };
+      map[SF_IDS[1]]    = { home: b.sfBot.home?.team ?? null,      away: b.sfBot.away?.team ?? null };
+      map[THIRD_PLACE_ID] = { home: b.thirdPlace.home?.team ?? null, away: b.thirdPlace.away?.team ?? null };
+      map[FINAL_ID]     = { home: b.final.home?.team ?? null,      away: b.final.away?.team ?? null };
+      return map;
+    } catch { return {}; }
+  }, [matches, scores]);
 
   function handlePhaseChange(phase: PhaseId) {
     setActivePhase(phase);
@@ -543,6 +562,8 @@ export default function AdminClient({ matches, phases, initialScores, initialIll
                   <KnockoutScoreRow
                     key={m.id}
                     info={m}
+                    homeTeamName={koTeamNames[m.id]?.home ?? null}
+                    awayTeamName={koTeamNames[m.id]?.away ?? null}
                     score={scores[m.id] ?? { home: 0, away: 0 }}
                     pensWinner={pensWinners[m.id] ?? null}
                     isSaved={!!saved[m.id]}
@@ -568,9 +589,11 @@ export default function AdminClient({ matches, phases, initialScores, initialIll
 
 // ── Knockout score row ────────────────────────────────────────────────────────
 function KnockoutScoreRow({
-  info, score, pensWinner, isSaved, onChangeHome, onChangeAway, onPensWinner, onSave,
+  info, homeTeamName, awayTeamName, score, pensWinner, isSaved, onChangeHome, onChangeAway, onPensWinner, onSave,
 }: {
   info: KnockoutMatchInfo;
+  homeTeamName?: string | null;
+  awayTeamName?: string | null;
   score: { home: number; away: number };
   pensWinner: "home" | "away" | null;
   isSaved: boolean;
@@ -580,6 +603,8 @@ function KnockoutScoreRow({
   onSave: () => void;
 }) {
   const tied = score.home === score.away;
+  const homeDisplay = homeTeamName ?? info.homeLabel;
+  const awayDisplay = awayTeamName ?? info.awayLabel;
 
   return (
     <div
@@ -588,17 +613,27 @@ function KnockoutScoreRow({
     >
       {/* Score row */}
       <div className="flex items-center gap-3 px-4 py-3">
-        <span className="flex-1 text-xs font-bold truncate text-right" style={{ color: T.textSec }}>
-          {info.homeLabel}
-        </span>
+        <div className="flex-1 text-right min-w-0">
+          <span className="text-xs font-bold truncate block" style={{ color: homeTeamName ? T.text : T.textSec }}>
+            {homeDisplay}
+          </span>
+          {homeTeamName && info.homeLabel && (
+            <span className="text-[10px] block truncate" style={{ color: T.textMuted }}>{info.homeLabel}</span>
+          )}
+        </div>
         <div className="flex items-center gap-1.5 flex-shrink-0">
           <ScoreInput value={score.home} onChange={onChangeHome} />
           <span className="text-xs font-black" style={{ color: T.textMuted }}>—</span>
           <ScoreInput value={score.away} onChange={onChangeAway} />
         </div>
-        <span className="flex-1 text-xs font-bold truncate" style={{ color: T.textSec }}>
-          {info.awayLabel}
-        </span>
+        <div className="flex-1 min-w-0">
+          <span className="text-xs font-bold truncate block" style={{ color: awayTeamName ? T.text : T.textSec }}>
+            {awayDisplay}
+          </span>
+          {awayTeamName && info.awayLabel && (
+            <span className="text-[10px] block truncate" style={{ color: T.textMuted }}>{info.awayLabel}</span>
+          )}
+        </div>
         <button
           onClick={onSave}
           disabled={isSaved}
@@ -625,7 +660,7 @@ function KnockoutScoreRow({
           </span>
           <div className="flex gap-2 flex-1">
             {(["home", "away"] as const).map(side => {
-              const label = side === "home" ? info.homeLabel : info.awayLabel;
+              const label = side === "home" ? homeDisplay : awayDisplay;
               const active = pensWinner === side;
               return (
                 <button
