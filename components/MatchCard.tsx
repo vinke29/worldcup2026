@@ -298,9 +298,35 @@ export default function MatchCard({
           </div>
           <div className="flex-shrink-0 px-2 pt-1">
             {isFinished ? (
-              <span className="text-2xl font-black tabular-nums" style={{ color: isMono ? "#1A1208" : "#F0EDE6" }}>
-                {match.homeScore}–{match.awayScore}
-              </span>
+              <div className="flex flex-col items-center gap-0.5">
+                {/* User's prediction — struck through if wrong */}
+                {scoreHome !== "" && scoreAway !== "" ? (
+                  <span
+                    className="text-lg font-black tabular-nums leading-none"
+                    style={{
+                      color: isCorrect
+                        ? "#4ADE80"
+                        : isMono ? "#A89E8E" : "#4A6B50",
+                      textDecoration: isWrong ? "line-through" : "none",
+                      textDecorationColor: "#F87171",
+                      textDecorationThickness: "2px",
+                      opacity: isWrong ? 0.5 : 1,
+                    }}
+                  >
+                    {scoreHome}–{scoreAway}
+                  </span>
+                ) : null}
+                {/* Actual score */}
+                <span
+                  className="font-black tabular-nums leading-none"
+                  style={{
+                    fontSize: scoreHome !== "" && scoreAway !== "" ? "14px" : "24px",
+                    color: isMono ? "#1A1208" : "#F0EDE6",
+                  }}
+                >
+                  {match.homeScore}–{match.awayScore}
+                </span>
+              </div>
             ) : (
               <span className="text-[10px] font-black tracking-widest" style={{ color: isMono ? "#C8C0B0" : "#2C4832" }}>VS</span>
             )}
@@ -315,10 +341,10 @@ export default function MatchCard({
       </div>
 
       {isFinished ? (
-        /* ── Post-game result banner ─────────────────────────────────────── */
+        /* ── Post-game result story ──────────────────────────────────────── */
         <div className="px-4 pb-4">
           <div
-            className="flex flex-col gap-1.5 px-4 py-3 rounded-2xl"
+            className="flex flex-col gap-2 px-4 py-3 rounded-2xl"
             style={{
               backgroundColor: isCorrect
                 ? isMono ? "rgba(26,18,8,0.05)" : "rgba(74,222,128,0.1)"
@@ -332,36 +358,65 @@ export default function MatchCard({
               }`,
             }}
           >
-            <span className="text-[9px] font-black uppercase tracking-widest" style={{ color: isMono ? "#A89E8E" : "#4A6B50" }}>
-              Final result
-            </span>
+            {/* Your pick line */}
+            <div className="flex flex-col gap-0.5">
+              <span className="text-[9px] font-black uppercase tracking-widest" style={{ color: isMono ? "#A89E8E" : "#4A6B50" }}>
+                Your pick
+              </span>
+              {selected ? (
+                <span className="text-xs font-bold" style={{ color: isMono ? "#6B5E4E" : "#C8D8CC" }}>
+                  {scoreHome !== "" && scoreAway !== ""
+                    ? `${selected === "home" ? match.homeTeam : selected === "away" ? match.awayTeam : "Draw"} to win ${scoreHome}–${scoreAway}`
+                    : selected === "draw"
+                    ? "Draw"
+                    : `${selected === "home" ? match.homeTeam : match.awayTeam} to win`}
+                </span>
+              ) : (
+                <span className="text-xs" style={{ color: isMono ? "#A89E8E" : "#4A6B50" }}>
+                  No prediction made
+                </span>
+              )}
+            </div>
 
+            {/* Divider */}
+            <div style={{ height: 1, backgroundColor: isMono ? "#E5E1D8" : "rgba(255,255,255,0.06)" }} />
+
+            {/* Actual result line */}
+            <div className="flex flex-col gap-0.5">
+              <span className="text-[9px] font-black uppercase tracking-widest" style={{ color: isMono ? "#A89E8E" : "#4A6B50" }}>
+                Result
+              </span>
+              <span className="text-xs font-bold" style={{ color: isMono ? "#1A1208" : "#F0EDE6" }}>
+                {actualOutcome === "draw"
+                  ? `Draw ${match.homeScore}–${match.awayScore}`
+                  : `${actualOutcome === "home" ? match.homeTeam : match.awayTeam} won ${match.homeScore}–${match.awayScore}`}
+              </span>
+            </div>
+
+            {/* Divider */}
+            <div style={{ height: 1, backgroundColor: isMono ? "#E5E1D8" : "rgba(255,255,255,0.06)" }} />
+
+            {/* Points verdict */}
             {selected ? (
               isCorrect ? (() => {
                 const isExact = scoreHome !== "" && scoreAway !== ""
                   && scoreHome === String(match.homeScore)
                   && scoreAway === String(match.awayScore);
+                const [outPts, exPts] = phasePoints(match.phase);
+                const pts = isExact ? exPts : outPts;
                 return (
                   <span className="text-sm font-black" style={{ color: "#4ADE80" }}>
-                    {(() => {
-                      const [outPts, exPts] = phasePoints(match.phase);
-                      return isExact
-                        ? `✓ Exact score · +${exPts} pts`
-                        : `✓ Correct result · +${outPts} pt${outPts === 1 ? "" : "s"}`;
-                    })()}
+                    {isExact ? `✓ Exact score! +${pts} pts` : `✓ Correct result · +${pts} pt${pts === 1 ? "" : "s"}`}
                   </span>
                 );
               })() : (
-                <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-                  <span className="text-sm font-black" style={{ color: "#F87171" }}>✗ Wrong pick</span>
-                  <span className="text-xs" style={{ color: isMono ? "#A89E8E" : "#7A9B84" }}>
-                    · {actualOutcome === "home" ? match.homeTeam : actualOutcome === "away" ? match.awayTeam : "Draw"} won
-                  </span>
-                </div>
+                <span className="text-sm font-black" style={{ color: "#F87171" }}>
+                  ✗ 0 pts
+                </span>
               )
             ) : (
-              <span className="text-sm" style={{ color: isMono ? "#A89E8E" : "#4A6B50" }}>
-                No pick · {actualOutcome === "home" ? match.homeTeam : actualOutcome === "away" ? match.awayTeam : "Draw"} won
+              <span className="text-sm font-bold" style={{ color: isMono ? "#A89E8E" : "#4A6B50" }}>
+                — 0 pts
               </span>
             )}
           </div>
