@@ -1137,18 +1137,25 @@ function MobileMatchCard({
               </span>
               {/* Case (b): right team, wrong slot — show who occupies this slot */}
               {wrongSlot && actualTeam && (
-                <span style={{ fontSize: 10, color: "#F59E0B", opacity: 0.8, display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                  → {actualTeam.team} in this slot
-                </span>
+                <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 2 }}>
+                  <FlagImage emoji={actualTeam.flag} size={12} team={actualTeam.team} />
+                  <span style={{ fontSize: 10, color: "#F59E0B", opacity: 0.8, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {actualTeam.team}
+                  </span>
+                </div>
               )}
-              {/* Case (c): eliminated — show who actually advanced */}
+              {/* Case (c): eliminated — show actual team that took this slot */}
               {eliminated && actualTeam && (
-                <span style={{ fontSize: 10, color: t.textSec, display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                  → {actualTeam.team} advanced
-                </span>
+                <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 2 }}>
+                  <FlagImage emoji={actualTeam.flag} size={12} team={actualTeam.team} />
+                  <span style={{ fontSize: 10, fontWeight: 600, color: t.textSec, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {actualTeam.team}
+                  </span>
+                </div>
               )}
             </div>
             {correct && <span style={{ fontSize: 12, color: "#4ADE80", flexShrink: 0 }}>✓</span>}
+            {correct && <span style={{ fontSize: 10, fontWeight: 800, color: "#4ADE80", flexShrink: 0 }}>+2</span>}
             {wrongSlot && <span style={{ fontSize: 10, fontWeight: 800, color: "#F59E0B", flexShrink: 0 }}>+2</span>}
             {showWinner && <span style={{ fontSize: 10, fontWeight: 800, color: t.accent, flexShrink: 0, letterSpacing: "0.05em" }}>{isFinal ? "🏆 Champion" : "advances →"}</span>}
             {correct && isFinal && <span style={{ fontSize: 10, fontWeight: 800, color: "#4ADE80", flexShrink: 0 }}>🏆 Champion</span>}
