@@ -5,7 +5,7 @@ import type { Match, LeagueMode } from "@/lib/mock-data";
 import { computeGroupTables, rankThirdPlaceTeams, type TeamRow } from "@/lib/group-standings";
 import {
   resolveBracketTeams, TOP_R32_IDS, BOT_R32_IDS, R16_IDS, QF_IDS, SF_IDS, THIRD_PLACE_ID, FINAL_ID,
-  KNOCKOUT_MATCH_META, TOP_R32_DEFS, BOT_R32_DEFS, THIRD_SLOT_ASSIGNMENTS, assignThirdPlaceGroups, resolveSlotTeam,
+  KNOCKOUT_MATCH_META, KNOCKOUT_MATCH_NUMBER, TOP_R32_DEFS, BOT_R32_DEFS, THIRD_SLOT_ASSIGNMENTS, assignThirdPlaceGroups, resolveSlotTeam,
   type BracketSlot, type R32MatchDef,
 } from "@/lib/bracket";
 import type { ScoreEntry } from "@/lib/bracket";
@@ -1133,6 +1133,12 @@ function MobileMatchCard({
           </span>
           <span style={{ fontSize: 11, color: t.border }}>·</span>
           <span style={{ fontSize: 10, color: t.textMuted, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{meta.venue}</span>
+          {KNOCKOUT_MATCH_NUMBER[id] && (
+            <>
+              <span style={{ fontSize: 10, color: t.border }}>·</span>
+              <span style={{ fontSize: 10, fontWeight: 700, color: t.textMuted, flexShrink: 0 }}>M{KNOCKOUT_MATCH_NUMBER[id]}</span>
+            </>
+          )}
           {interactive && (
             <span
               className="transition-all duration-300"
