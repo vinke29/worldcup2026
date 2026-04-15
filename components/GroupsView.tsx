@@ -142,6 +142,14 @@ function CompareCard({
           const correct = actualIdx === predIdx;
           const delta = actualIdx >= 0 ? predIdx - actualIdx : null; // positive = improved, negative = dropped
 
+          // Colour convention for predicted column:
+          //   green  = exact slot match
+          //   yellow = team advanced (top 2) but in wrong slot — still earns R32 pts
+          //   muted  = predicted to advance but didn't (or vice versa)
+          const qualifiedWrongSlot = predQualifies && actualQualifies && !correct;
+          const missedQualify = predQualifies && actualIdx >= 0 && !actualQualifies;
+          const predColor = correct ? "#4ADE80" : qualifiedWrongSlot ? "#FCD34D" : t.textMuted;
+
           return (
             <div
               key={predRow.team}
@@ -153,27 +161,22 @@ function CompareCard({
                 className="flex items-center gap-2 px-3 py-2.5"
                 style={{ backgroundColor: predQualifies ? t.qualify : "transparent" }}
               >
-                <span className="text-xs font-black w-4 text-center flex-shrink-0" style={{ color: predQualifies ? t.accent : t.textMuted }}>
+                <span className="text-xs font-black w-4 text-center flex-shrink-0" style={{ color: predColor }}>
                   {predIdx + 1}
                 </span>
                 <FlagImage emoji={predRow.flag} size={14} team={predRow.team} />
                 <span
                   className="text-xs font-semibold truncate flex-1"
                   style={{
-                    color: correct ? t.accent : t.textSec,
-                    textDecoration: !correct && actualIdx >= 0 ? "line-through" : "none",
-                    opacity: !correct && actualIdx >= 0 ? 0.6 : 1,
+                    color: predColor,
+                    textDecoration: missedQualify ? "line-through" : "none",
+                    opacity: missedQualify ? 0.55 : 1,
                   }}
                 >
                   {predRow.team}
                 </span>
-                {/* Delta arrow */}
-                {delta !== null && delta !== 0 && (
-                  <span className="text-[10px] flex-shrink-0" style={{ color: delta > 0 ? (mono ? "#1A1208" : "#4ADE80") : "#F87171" }}>
-                    {delta > 0 ? "↑" : "↓"}
-                  </span>
-                )}
-                {correct && <span className="text-[10px] flex-shrink-0" style={{ color: t.accent }}>✓</span>}
+                {correct && <span className="text-[10px] flex-shrink-0" style={{ color: "#4ADE80" }}>✓</span>}
+                {qualifiedWrongSlot && <span className="text-[10px] flex-shrink-0" style={{ color: "#FCD34D" }}>~</span>}
               </div>
 
               {/* Actual position (team at same rank slot) */}
