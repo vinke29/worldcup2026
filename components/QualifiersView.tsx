@@ -1138,8 +1138,9 @@ function MobileMatchCard({
               {/* Case (b): right team, wrong slot — show who occupies this slot */}
               {wrongSlot && actualTeam && (
                 <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 2 }}>
+                  <span style={{ fontSize: 8, fontWeight: 900, letterSpacing: "0.06em", color: t.textMuted, flexShrink: 0 }}>ACTUAL</span>
                   <FlagImage emoji={actualTeam.flag} size={12} team={actualTeam.team} />
-                  <span style={{ fontSize: 10, color: "#F59E0B", opacity: 0.8, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  <span style={{ fontSize: 10, color: t.textSec, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                     {actualTeam.team}
                   </span>
                 </div>
@@ -1147,8 +1148,9 @@ function MobileMatchCard({
               {/* Case (c): eliminated — show actual team that took this slot */}
               {eliminated && actualTeam && (
                 <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 2 }}>
+                  <span style={{ fontSize: 8, fontWeight: 900, letterSpacing: "0.06em", color: t.textMuted, flexShrink: 0 }}>ACTUAL</span>
                   <FlagImage emoji={actualTeam.flag} size={12} team={actualTeam.team} />
-                  <span style={{ fontSize: 10, fontWeight: 600, color: t.textSec, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  <span style={{ fontSize: 10, color: t.textSec, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                     {actualTeam.team}
                   </span>
                 </div>
