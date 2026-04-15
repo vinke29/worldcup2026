@@ -44,13 +44,13 @@ export const KNOCKOUT_MATCH_META: Record<string, KnockoutMatchMeta> = {
   "m86": { date: "Jul 3",  time: "18:00", venue: "Hard Rock Stadium · Miami" },
   "m87": { date: "Jul 3",  time: "21:30", venue: "Arrowhead Stadium · Kansas City" },
   "m88": { date: "Jul 3",  time: "14:00", venue: "AT&T Stadium · Arlington" },
-  // R16 — Jul 4–7
-  "r16-0": { date: "Jul 4",  time: "13:00", venue: "NRG Stadium · Houston" },
-  "r16-1": { date: "Jul 4",  time: "17:00", venue: "Lincoln Financial Field · Philadelphia" },
-  "r16-2": { date: "Jul 5",  time: "16:00", venue: "MetLife Stadium · East Rutherford" },
-  "r16-3": { date: "Jul 5",  time: "20:00", venue: "Estadio Azteca · Mexico City" },
-  "r16-4": { date: "Jul 6",  time: "15:00", venue: "AT&T Stadium · Arlington" },
-  "r16-5": { date: "Jul 6",  time: "20:00", venue: "Lumen Field · Seattle" },
+  // R16 — Jul 4–7 (slot order follows bracket pairing, not calendar order)
+  "r16-0": { date: "Jul 4",  time: "17:00", venue: "Lincoln Financial Field · Philadelphia" },
+  "r16-1": { date: "Jul 4",  time: "13:00", venue: "NRG Stadium · Houston" },
+  "r16-2": { date: "Jul 6",  time: "15:00", venue: "AT&T Stadium · Arlington" },
+  "r16-3": { date: "Jul 6",  time: "20:00", venue: "Lumen Field · Seattle" },
+  "r16-4": { date: "Jul 5",  time: "16:00", venue: "MetLife Stadium · East Rutherford" },
+  "r16-5": { date: "Jul 5",  time: "20:00", venue: "Estadio Azteca · Mexico City" },
   "r16-6": { date: "Jul 7",  time: "12:00", venue: "Mercedes-Benz Stadium · Atlanta" },
   "r16-7": { date: "Jul 7",  time: "16:00", venue: "BC Place · Vancouver" },
   // QF — Jul 9–11
@@ -74,8 +74,8 @@ export const KNOCKOUT_MATCH_NUMBER: Record<string, number> = {
   m79:79, m80:80, m81:81, m82:82, m83:83, m84:84,
   m85:85, m86:86, m87:87, m88:88,
   // R16 (89–96) — slot order follows bracket pairing (not calendar date order)
-  "r16-0":90, "r16-1":89, "r16-2":91, "r16-3":92,
-  "r16-4":93, "r16-5":94, "r16-6":95, "r16-7":96,
+  "r16-0":89, "r16-1":90, "r16-2":93, "r16-3":94,
+  "r16-4":91, "r16-5":92, "r16-6":95, "r16-7":96,
   // QF (97–100)
   "qf-0":97, "qf-1":98, "qf-2":99, "qf-3":100,
   // SF (101–102)
