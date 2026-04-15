@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WC2026 · Illustration Prompts · Bonus Questions</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #0B1E0D;
+    color: #F0EDE6;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    padding: 48px 24px;
+    line-height: 1.5;
+  }
+
+  header {
+    max-width: 900px;
+    margin: 0 auto 48px;
+    border-bottom: 1px solid #2C4832;
+    padding-bottom: 32px;
+  }
+
+  header h1 {
+    font-size: 32px;
+    font-weight: 900;
+    letter-spacing: -0.5px;
+    margin-bottom: 8px;
+  }
+  header h1 span { color: #D7FF5A; }
+
+  .subtitle { color: #7A9B84; font-size: 15px; margin-bottom: 24px; }
+
+  .style-guide {
+    background: #1A2E1F;
+    border: 1px solid #2C4832;
+    border-radius: 16px;
+    padding: 20px 24px;
+    font-size: 13px;
+    color: #B3C9B7;
+  }
+  .style-guide strong { color: #D7FF5A; display: block; margin-bottom: 8px; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; }
+  .style-guide p { margin-bottom: 4px; }
+
+  .difference-note {
+    max-width: 900px;
+    margin: 0 auto 32px;
+    background: #1A2E1F;
+    border: 1px solid #2C4832;
+    border-radius: 12px;
+    padding: 16px 20px;
+    font-size: 13px;
+    color: #7A9B84;
+  }
+  .difference-note strong { color: #D7FF5A; }
+
+  .file-convention {
+    max-width: 900px;
+    margin: 0 auto 32px;
+    background: #1A2E1F;
+    border: 1px solid #2C4832;
+    border-radius: 12px;
+    padding: 16px 20px;
+    font-size: 13px;
+    color: #7A9B84;
+  }
+  .file-convention code {
+    background: #0F2411;
+    color: #D7FF5A;
+    font-family: monospace;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 12px;
+  }
+
+  .bonus-card {
+    max-width: 900px;
+    margin: 0 auto 20px;
+    background: #1A2E1F;
+    border: 1px solid #2C4832;
+    border-radius: 16px;
+    overflow: hidden;
+  }
+
+  .bonus-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 20px;
+    border-bottom: 1px solid #1F3A24;
+  }
+
+  .bonus-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .bonus-icon { font-size: 22px; }
+  .bonus-name {
+    font-size: 18px;
+    font-weight: 900;
+    letter-spacing: -0.3px;
+  }
+  .bonus-desc {
+    font-size: 11px;
+    color: #4A6B50;
+    margin-top: 2px;
+  }
+  .bonus-filename {
+    font-family: monospace;
+    font-size: 11px;
+    color: #D7FF5A;
+    background: #0F2411;
+    padding: 2px 8px;
+    border-radius: 4px;
+    flex-shrink: 0;
+  }
+
+  .bonus-body { padding: 16px 20px; }
+
+  .prompt-label {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: #4A6B50;
+    margin-bottom: 8px;
+  }
+
+  .prompt-text {
+    font-size: 13.5px;
+    color: #B3C9B7;
+    line-height: 1.7;
+    background: #0F2411;
+    border: 1px solid #1F3A24;
+    border-radius: 10px;
+    padding: 14px 16px;
+    cursor: text;
+    white-space: pre-wrap;
+  }
+
+  .palette-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+    align-items: center;
+  }
+  .palette-label {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #4A6B50;
+    flex-shrink: 0;
+  }
+  .swatch {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 1px solid #2C4832;
+    flex-shrink: 0;
+  }
+  .swatch-name {
+    font-size: 11px;
+    color: #4A6B50;
+    font-family: monospace;
+  }
+
+  .copy-btn {
+    display: block;
+    margin-top: 10px;
+    background: transparent;
+    border: 1px solid #2C4832;
+    color: #7A9B84;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 6px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: inherit;
+  }
+  .copy-btn:hover { border-color: #D7FF5A; color: #D7FF5A; }
+  .copy-btn.copied { border-color: #4ADE80; color: #4ADE80; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>WC2026 · Illustration Prompts<br><span>Bonus Questions · 7 Awards</span></h1>
+  <p class="subtitle">7 bonus question cards · Same aesthetic as match illustrations · Single-subject compositions</p>
+  <div class="style-guide">
+    <strong>Consistent style — matches the game card illustrations exactly</strong>
+    <p>· Background: deep forest green (#0B1E0D) — matches the app background exactly</p>
+    <p>· Style: risograph / silk-screen print — flat spot colors, visible halftone grain, slight ink misregistration gives a handmade feel</p>
+    <p>· Colors: 2–3 spot colors max per illustration, chosen to match each award's mood and color symbolism</p>
+    <p>· Composition: single dominant subject, centered or slightly off-center, commanding the full frame — no match duality here</p>
+    <p>· Format: horizontal, 3:2 ratio — generate at exactly 1500×1000px</p>
+    <p>· Mood: bold, graphic, collector's-item energy — like a vintage poster for a specific award or moment</p>
+    <p>· No text, no numbers, no letters, no logos of real brands</p>
+    <p>· The subject should feel iconic and timeless — not tied to any specific player or team</p>
+  </div>
+</header>
+
+<div class="difference-note">
+  <strong>Key difference from match cards:</strong> Match cards have two animals facing off (one per team). Bonus cards have a <strong>single iconic subject</strong> filling the frame — a trophy, a creature, a dramatic moment. Think of them as award posters, not match posters. The subject should be immediately recognizable as representing the award even without text.
+</div>
+
+<div class="file-convention">
+  <strong>File naming:</strong> save as <code>bonus-{key}.png</code> and drop in <code>/public/</code><br>
+  Keys: <code>bonus-golden-ball.png</code> · <code>bonus-golden-boot.png</code> · <code>bonus-golden-glove.png</code> · <code>bonus-best-young-player.png</code> · <code>bonus-total-goals.png</code> · <code>bonus-worst-team.png</code> · <code>bonus-red-cards.png</code>
+</div>
+
+
+<!-- GOLDEN BALL -->
+<div class="bonus-card">
+  <div class="bonus-header">
+    <div class="bonus-title">
+      <span class="bonus-icon">⚽</span>
+      <div>
+        <div class="bonus-name">Golden Ball</div>
+        <div class="bonus-desc">Best player of the tournament</div>
+      </div>
+    </div>
+    <span class="bonus-filename">bonus-golden-ball.png</span>
+  </div>
+  <div class="bonus-body">
+    <div class="prompt-label">Illustration prompt — 1500×1000px</div>
+    <div class="prompt-text" id="p-golden-ball">Risograph screenprint illustration on deep forest green (#0B1E0D) background. The Golden Ball award. A single enormous soccer ball rendered as a radiant celestial orb — faceted panels glowing in molten gold and warm amber, with sharp rays of light bursting outward from it in all directions like a sun. The ball floats slightly above center frame, casting a long soft shadow below. Around it, faint laurel wreath elements frame the composition on either side, rendered as flat botanical silhouettes in deep olive. The overall impression is of a sacred, untouchable object — the most coveted thing in the sport. Flat spot colors: molten gold (#E8A020), warm amber (#C47010), deep olive green (#2A4A1A), cream highlights (#F5EDD0). Visible halftone grain throughout, slight ink misregistration on the gold layers. No text. No player figures. Horizontal 3:2 format, 1500×1000px. Bold, graphic, vintage award poster energy.</div>
+    <div class="palette-row">
+      <span class="palette-label">Palette</span>
+      <span class="swatch" style="background:#E8A020"></span><span class="swatch-name">#E8A020 gold</span>
+      <span class="swatch" style="background:#C47010"></span><span class="swatch-name">#C47010 amber</span>
+      <span class="swatch" style="background:#2A4A1A"></span><span class="swatch-name">#2A4A1A olive</span>
+      <span class="swatch" style="background:#F5EDD0"></span><span class="swatch-name">#F5EDD0 cream</span>
+    </div>
+    <button class="copy-btn" onclick="copyPrompt('p-golden-ball', this)">Copy prompt</button>
+  </div>
+</div>
+
+
+<!-- GOLDEN BOOT -->
+<div class="bonus-card">
+  <div class="bonus-header">
+    <div class="bonus-title">
+      <span class="bonus-icon">👟</span>
+      <div>
+        <div class="bonus-name">Golden Boot</div>
+        <div class="bonus-desc">Top scorer of the tournament</div>
+      </div>
+    </div>
+    <span class="bonus-filename">bonus-golden-boot.png</span>
+  </div>
+  <div class="bonus-body">
+    <div class="prompt-label">Illustration prompt — 1500×1000px</div>
+    <div class="prompt-text" id="p-golden-boot">Risograph screenprint illustration on deep forest green (#0B1E0D) background. The Golden Boot award. An enormous ornate soccer boot — cleat-side down, mid-strike — dominates the frame. The boot is rendered entirely in hammered gold, with fine engraved line detail on the leather panels. The moment of impact: the tip of the boot connects with a soccer ball that explodes into a starburst of golden sparks and geometric fragments radiating outward. Cleat studs leave scorched marks below. The composition has extreme upward energy — power channeled from earth through foot through ball. Rendered in flat spot colors: hammered gold (#D4940A), crimson red (#C0281A) for the spark accents, deep cream (#F0E8C8) for highlights. Visible halftone grain, slight ink misregistration on the gold. No text. No player body above the ankle. Horizontal 3:2 format, 1500×1000px.</div>
+    <div class="palette-row">
+      <span class="palette-label">Palette</span>
+      <span class="swatch" style="background:#D4940A"></span><span class="swatch-name">#D4940A gold</span>
+      <span class="swatch" style="background:#C0281A"></span><span class="swatch-name">#C0281A crimson</span>
+      <span class="swatch" style="background:#F0E8C8"></span><span class="swatch-name">#F0E8C8 cream</span>
+    </div>
+    <button class="copy-btn" onclick="copyPrompt('p-golden-boot', this)">Copy prompt</button>
+  </div>
+</div>
+
+
+<!-- GOLDEN GLOVE -->
+<div class="bonus-card">
+  <div class="bonus-header">
+    <div class="bonus-title">
+      <span class="bonus-icon">🧤</span>
+      <div>
+        <div class="bonus-name">Golden Glove</div>
+        <div class="bonus-desc">Best goalkeeper of the tournament</div>
+      </div>
+    </div>
+    <span class="bonus-filename">bonus-golden-glove.png</span>
+  </div>
+  <div class="bonus-body">
+    <div class="prompt-label">Illustration prompt — 1500×1000px</div>
+    <div class="prompt-text" id="p-golden-glove">Risograph screenprint illustration on deep forest green (#0B1E0D) background. The Golden Glove award. Two enormous goalkeeper gloves rise from the bottom of the frame, fingers spread wide and straining upward, catching a soccer ball that blazes in from the top-right corner like a comet — trailing a streak of electric blue-white light across the sky. The gloves are rendered in deep gold with visible stitch detail and grip patterns on the palms. The ball is captured mid-catch, fractionally before contact, surrounded by a halo of energy rings. The upper half of the frame is dark sky — the drama happens at the hands. Flat spot colors: deep gold (#C8900A), electric blue-white (#B8D8F0) for the ball trail, off-white (#F0ECE0) for the glove highlights, black (#080E09) for deep shadows. Visible halftone grain, slight ink misregistration. No text. No player body above the wrists. Horizontal 3:2 format, 1500×1000px.</div>
+    <div class="palette-row">
+      <span class="palette-label">Palette</span>
+      <span class="swatch" style="background:#C8900A"></span><span class="swatch-name">#C8900A gold</span>
+      <span class="swatch" style="background:#B8D8F0"></span><span class="swatch-name">#B8D8F0 electric blue</span>
+      <span class="swatch" style="background:#F0ECE0"></span><span class="swatch-name">#F0ECE0 off-white</span>
+    </div>
+    <button class="copy-btn" onclick="copyPrompt('p-golden-glove', this)">Copy prompt</button>
+  </div>
+</div>
+
+
+<!-- BEST YOUNG PLAYER -->
+<div class="bonus-card">
+  <div class="bonus-header">
+    <div class="bonus-title">
+      <span class="bonus-icon">🌟</span>
+      <div>
+        <div class="bonus-name">Best Young Player</div>
+        <div class="bonus-desc">Top performer born after Jan 1, 2003</div>
+      </div>
+    </div>
+    <span class="bonus-filename">bonus-best-young-player.png</span>
+  </div>
+  <div class="bonus-body">
+    <div class="prompt-label">Illustration prompt — 1500×1000px</div>
+    <div class="prompt-text" id="p-best-young-player">Risograph screenprint illustration on deep forest green (#0B1E0D) background. The Best Young Player award. A young phoenix in mid-transformation — still partly cocooned in ash and shadow at the bottom, but its upper body and wings exploding upward in an eruption of fire and radiant starbursts. The wings are fully spread and enormous, feathers transitioning from deep charcoal at the roots to blazing amber-gold at the tips. A single bright star burns at the apex of the composition, the focal point toward which the phoenix strains. The energy is entirely upward — rising, emerging, unstoppable. Around the lower frame, cracked earth and embers; above, open sky with scattered starburst shapes. Flat spot colors: blazing amber (#E88010), bright gold (#F0C030), charcoal (#1A1A14), warm cream (#F5EAD0) for feather highlights. Visible halftone grain, slight ink misregistration on the amber layers. No text. No human figures. Horizontal 3:2 format, 1500×1000px.</div>
+    <div class="palette-row">
+      <span class="palette-label">Palette</span>
+      <span class="swatch" style="background:#E88010"></span><span class="swatch-name">#E88010 amber</span>
+      <span class="swatch" style="background:#F0C030"></span><span class="swatch-name">#F0C030 bright gold</span>
+      <span class="swatch" style="background:#1A1A14"></span><span class="swatch-name">#1A1A14 charcoal</span>
+      <span class="swatch" style="background:#F5EAD0"></span><span class="swatch-name">#F5EAD0 cream</span>
+    </div>
+    <button class="copy-btn" onclick="copyPrompt('p-best-young-player', this)">Copy prompt</button>
+  </div>
+</div>
+
+
+<!-- TOTAL GOALS -->
+<div class="bonus-card">
+  <div class="bonus-header">
+    <div class="bonus-title">
+      <span class="bonus-icon">🎯</span>
+      <div>
+        <div class="bonus-name">Total Goals</div>
+        <div class="bonus-desc">Total goals scored across all 104 matches</div>
+      </div>
+    </div>
+    <span class="bonus-filename">bonus-total-goals.png</span>
+  </div>
+  <div class="bonus-body">
+    <div class="prompt-label">Illustration prompt — 1500×1000px</div>
+    <div class="prompt-text" id="p-total-goals">Risograph screenprint illustration on deep forest green (#0B1E0D) background. Total Goals. A large goal net fills most of the frame — viewed from just behind and slightly above the goal line, looking outward. Bursting through the net simultaneously are seven or eight soccer balls, each trailing a different arc of motion lines and fire streaks, coming from different angles as if scored in quick succession. The net bulges dramatically at multiple points, rippling with each impact. The balls are rendered in flat white and orange, the net in fine cream line-work, the fire trails in vivid orange and crimson. The composition is chaotic and joyful — pure abundance of goals, a festival of scoring. Flat spot colors: vivid orange (#E86010), crimson (#C02818), flat white (#F0EDE6), cream net lines (#C8C0A8). Visible halftone grain throughout, slight ink misregistration on the orange layers. No text. No player figures. Horizontal 3:2 format, 1500×1000px.</div>
+    <div class="palette-row">
+      <span class="palette-label">Palette</span>
+      <span class="swatch" style="background:#E86010"></span><span class="swatch-name">#E86010 vivid orange</span>
+      <span class="swatch" style="background:#C02818"></span><span class="swatch-name">#C02818 crimson</span>
+      <span class="swatch" style="background:#F0EDE6"></span><span class="swatch-name">#F0EDE6 white</span>
+      <span class="swatch" style="background:#C8C0A8"></span><span class="swatch-name">#C8C0A8 cream</span>
+    </div>
+    <button class="copy-btn" onclick="copyPrompt('p-total-goals', this)">Copy prompt</button>
+  </div>
+</div>
+
+
+<!-- WORST GROUP STAGE TEAM -->
+<div class="bonus-card">
+  <div class="bonus-header">
+    <div class="bonus-title">
+      <span class="bonus-icon">📉</span>
+      <div>
+        <div class="bonus-name">Worst Group Stage Team</div>
+        <div class="bonus-desc">Auto-calculated from your match picks</div>
+      </div>
+    </div>
+    <span class="bonus-filename">bonus-worst-team.png</span>
+  </div>
+  <div class="bonus-body">
+    <div class="prompt-label">Illustration prompt — 1500×1000px</div>
+    <div class="prompt-text" id="p-worst-team">Risograph screenprint illustration on deep forest green (#0B1E0D) background. The Worst Group Stage Team. A lone, exhausted tortoise — shell cracked and dusty — sits at the center of an empty stadium field. The tortoise looks directly at the viewer, expression stoic and unbothered. Around it, the ground is littered with fallen leaves and a single deflated soccer ball. In the far background, stadium seats are completely empty, rendered as tiny repeating geometric shapes fading into shadow. Overhead, a single spotlight beam falls directly on the tortoise, isolating it in the silence. The mood is wry and darkly comic — not cruel, but unmistakably last place. Flat spot colors: dusty ochre (#B89840) for the tortoise shell, muted sage (#4A6B50) for the field, cool grey (#8A9090) for the empty stands, warm cream (#E8E0C8) for the spotlight pool. Visible halftone grain, slight ink misregistration. No text. No human figures. Horizontal 3:2 format, 1500×1000px.</div>
+    <div class="palette-row">
+      <span class="palette-label">Palette</span>
+      <span class="swatch" style="background:#B89840"></span><span class="swatch-name">#B89840 dusty ochre</span>
+      <span class="swatch" style="background:#4A6B50"></span><span class="swatch-name">#4A6B50 sage</span>
+      <span class="swatch" style="background:#8A9090"></span><span class="swatch-name">#8A9090 grey</span>
+      <span class="swatch" style="background:#E8E0C8"></span><span class="swatch-name">#E8E0C8 cream</span>
+    </div>
+    <button class="copy-btn" onclick="copyPrompt('p-worst-team', this)">Copy prompt</button>
+  </div>
+</div>
+
+
+<!-- RED CARDS -->
+<div class="bonus-card">
+  <div class="bonus-header">
+    <div class="bonus-title">
+      <span class="bonus-icon">🟥</span>
+      <div>
+        <div class="bonus-name">Red Cards</div>
+        <div class="bonus-desc">Total red cards shown in the tournament</div>
+      </div>
+    </div>
+    <span class="bonus-filename">bonus-red-cards.png</span>
+  </div>
+  <div class="bonus-body">
+    <div class="prompt-label">Illustration prompt — 1500×1000px</div>
+    <div class="prompt-text" id="p-red-cards">Risograph screenprint illustration on deep forest green (#0B1E0D) background. Red Cards. A referee's arm and hand thrust upward from the lower center of the frame, holding a glowing red card directly at the viewer — extreme low-angle perspective, arm foreshortened, card filling the upper third of the composition. The card blazes with an inner crimson light, edges slightly feathered as if radiating heat. Around the arm, faint crowd silhouettes recede in all directions — tiny, gesturing figures suggesting the enormity of the moment. A thin halo of deep red light surrounds the card at the top. The sleeve is black with a fine white referee stripe at the cuff. Everything converges on that single red rectangle. Flat spot colors: blazing crimson (#D01818), deep red (#8A0A0A), flat black (#0A0A0A), white (#F0EDE6) for the sleeve stripe and crowd outlines. Visible halftone grain, slight ink misregistration on the red layers — the misregistration adds a heat-shimmer effect. No text. Horizontal 3:2 format, 1500×1000px. Dramatic, graphic, unforgettable.</div>
+    <div class="palette-row">
+      <span class="palette-label">Palette</span>
+      <span class="swatch" style="background:#D01818"></span><span class="swatch-name">#D01818 blazing crimson</span>
+      <span class="swatch" style="background:#8A0A0A"></span><span class="swatch-name">#8A0A0A deep red</span>
+      <span class="swatch" style="background:#0A0A0A"></span><span class="swatch-name">#0A0A0A black</span>
+      <span class="swatch" style="background:#F0EDE6"></span><span class="swatch-name">#F0EDE6 white</span>
+    </div>
+    <button class="copy-btn" onclick="copyPrompt('p-red-cards', this)">Copy prompt</button>
+  </div>
+</div>
+
+
+<script>
+function copyPrompt(id, btn) {
+  const text = document.getElementById(id).innerText;
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = "Copied!";
+    btn.classList.add("copied");
+    setTimeout(() => {
+      btn.textContent = "Copy prompt";
+      btn.classList.remove("copied");
+    }, 2000);
+  });
+}
+</script>
+</body>
+</html>
