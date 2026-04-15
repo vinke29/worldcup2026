@@ -65,7 +65,7 @@ export default function Leaderboard({ members, currentUserId, mono = false, vari
                 {member.avatar}
               </div>
 
-              {/* Name */}
+              {/* Name + mobile breakdown */}
               <div className="flex-1 min-w-0">
                 <span className="text-sm font-semibold truncate block" style={{ color: isYou ? t.accent : t.text }}>
                   {member.name}
@@ -73,6 +73,15 @@ export default function Leaderboard({ members, currentUserId, mono = false, vari
                     <span className="ml-1.5 text-[9px] font-black uppercase tracking-wider" style={{ color: mono ? t.textSec : t.accent }}>you</span>
                   )}
                 </span>
+                {(member.koPts > 0 || member.bonusPts > 0) && (
+                  <span className="text-[10px] sm:hidden" style={{ color: t.textMuted }}>
+                    {[
+                      member.groupPts > 0 && `Group ${member.groupPts}`,
+                      member.koPts > 0    && `KO ${member.koPts}`,
+                      member.bonusPts > 0 && `Bonus ${member.bonusPts}`,
+                    ].filter(Boolean).join(" · ")}
+                  </span>
+                )}
               </div>
 
               {/* Pts */}
