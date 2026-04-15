@@ -4,6 +4,8 @@ import { useState, useMemo, useTransition, useRef, useCallback } from "react";
 import type { Match, Phase, PhaseId } from "@/lib/mock-data";
 import { saveScore, saveAllScores, clearAllScores } from "@/app/actions/scores";
 import { saveIllustrationSetting, type IllustrationSetting } from "@/app/actions/illustrations";
+import { saveBonusAnswer } from "@/app/actions/bonuses";
+import { BONUS_QUESTIONS, playerListForQuestion } from "@/lib/bonus-data";
 import {
   R32_LABELS, R16_IDS, QF_IDS, SF_IDS, THIRD_PLACE_ID, FINAL_ID,
   type KnockoutMatchInfo,
@@ -14,6 +16,7 @@ interface AdminClientProps {
   phases: Phase[];
   initialScores: Record<string, { home: number; away: number; pens?: "home" | "away" }>;
   initialIllustrationSettings: Record<string, IllustrationSetting>;
+  initialBonusAnswers?: Record<string, string>;
 }
 
 // Knockout match definitions for admin display
@@ -73,9 +76,9 @@ function parseDateStr(date: string): Date {
   return new Date(2026, months[mon], Number(day));
 }
 
-type AdminView = "scores" | "illustrations";
+type AdminView = "scores" | "illustrations" | "bonuses";
 
-export default function AdminClient({ matches, phases, initialScores, initialIllustrationSettings }: AdminClientProps) {
+export default function AdminClient({ matches, phases, initialScores, initialIllustrationSettings, initialBonusAnswers = {} }: AdminClientProps) {
   const [adminView, setAdminView] = useState<AdminView>("scores");
   const [activePhase, setActivePhase] = useState<PhaseId>("group-md1");
   const [activeDay, setActiveDay] = useState<string>(() => {
@@ -123,6 +126,20 @@ export default function AdminClient({ matches, phases, initialScores, initialIll
     () => matches.filter(m => m.illustration),
     [matches]
   );
+
+  const [bonusAnswers, setBonusAnswers] = useState<Record<string, string>>(initialBonusAnswers);
+  const [bonusSaved, setBonusSaved] = useState<Record<string, boolean>>(() =>
+    Object.fromEntries(Object.keys(initialBonusAnswers).map(k => [k, true]))
+  );
+
+  function handleBonusAnswer(key: string, value: string) {
+    setBonusSaved(prev => ({ ...prev, [key]: false }));
+    setBonusAnswers(prev => ({ ...prev, [key]: value }));
+    startTransition(async () => {
+      await saveBonusAnswer(key, value);
+      setBonusSaved(prev => ({ ...prev, [key]: true }));
+    });
+  }
 
   function handleIllustrationChange(matchId: string, setting: IllustrationSetting) {
     setIllustrationSaved(prev => ({ ...prev, [matchId]: false }));
@@ -257,7 +274,7 @@ export default function AdminClient({ matches, phases, initialScores, initialIll
             Admin
           </span>
           <div className="flex rounded-lg overflow-hidden border" style={{ borderColor: T.border }}>
-            {(["scores", "illustrations"] as AdminView[]).map(v => (
+            {(["scores", "illustrations", "bonuses"] as AdminView[]).map(v => (
               <button
                 key={v}
                 onClick={() => setAdminView(v)}
@@ -294,6 +311,119 @@ export default function AdminClient({ matches, phases, initialScores, initialIll
           </div>
         )}
       </div>
+
+      {/* Bonuses view */}
+      {adminView === "bonuses" && (
+        <div className="max-w-2xl mx-auto px-4 py-6 space-y-4">
+          <p className="text-xs" style={{ color: T.textMuted }}>
+            Set the correct answer for each bonus question. Once saved, all users will see their score.
+          </p>
+          {BONUS_QUESTIONS.filter(q => q.type !== "auto").map(q => {
+            const players = playerListForQuestion(q.key);
+            return (
+              <div
+                key={q.key}
+                className="rounded-2xl p-4 space-y-3"
+                style={{ backgroundColor: T.card, border: `1px solid ${T.border}` }}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">{q.icon}</span>
+                    <div>
+                      <p className="text-sm font-black" style={{ color: T.text }}>{q.label}</p>
+                      <p className="text-[11px]" style={{ color: T.textMuted }}>{q.description}</p>
+                    </div>
+                  </div>
+                  {bonusSaved[q.key] && (
+                    <span className="text-[10px] font-bold" style={{ color: "#4ADE80" }}>✓ Saved</span>
+                  )}
+                </div>
+
+                {q.type === "player" ? (
+                  <div className="space-y-1">
+                    <select
+                      value={bonusAnswers[q.key] ?? ""}
+                      onChange={e => handleBonusAnswer(q.key, e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl text-sm font-bold outline-none cursor-pointer"
+                      style={{
+                        backgroundColor: T.inner,
+                        border: `1px solid ${T.border}`,
+                        color: bonusAnswers[q.key] ? T.text : T.textMuted,
+                      }}
+                    >
+                      <option value="">— Select winner —</option>
+                      {players.map(p => (
+                        <option key={p} value={p}>{p}</option>
+                      ))}
+                    </select>
+                    <div className="flex gap-2">
+                      <input
+                        placeholder="Or type custom name…"
+                        className="flex-1 px-3 py-2 rounded-xl text-sm outline-none"
+                        style={{ backgroundColor: T.inner, border: `1px solid ${T.border}`, color: T.text }}
+                        onBlur={e => { if (e.target.value.trim()) handleBonusAnswer(q.key, e.target.value.trim()); }}
+                        onKeyDown={e => {
+                          if (e.key === "Enter") {
+                            const v = (e.target as HTMLInputElement).value.trim();
+                            if (v) handleBonusAnswer(q.key, v);
+                          }
+                        }}
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => handleBonusAnswer(q.key, String(Math.max(0, (parseInt(bonusAnswers[q.key] ?? "0") || 0) - 1)))}
+                      className="w-9 h-9 rounded-lg flex items-center justify-center text-xl font-black cursor-pointer"
+                      style={{ backgroundColor: T.inner, border: `1px solid ${T.border}`, color: T.textSec }}
+                    >−</button>
+                    <span className="flex-1 text-center text-2xl font-black tabular-nums" style={{ color: T.text }}>
+                      {bonusAnswers[q.key] ?? "—"}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => handleBonusAnswer(q.key, String((parseInt(bonusAnswers[q.key] ?? "0") || 0) + 1))}
+                      className="w-9 h-9 rounded-lg flex items-center justify-center text-xl font-black cursor-pointer"
+                      style={{ backgroundColor: T.inner, border: `1px solid ${T.border}`, color: T.textSec }}
+                    >+</button>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+
+          {/* Worst Group Team — informational only, auto-calculated per user */}
+          <div
+            className="rounded-2xl p-4"
+            style={{ backgroundColor: T.card, border: `1px solid ${T.border}` }}
+          >
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-lg">📉</span>
+              <div>
+                <p className="text-sm font-black" style={{ color: T.text }}>Worst Group Stage Team</p>
+                <p className="text-[11px]" style={{ color: T.textMuted }}>Auto-calculated per user from their score picks. No input needed.</p>
+              </div>
+            </div>
+            <p className="text-xs px-3 py-2 rounded-xl" style={{ backgroundColor: T.inner, color: T.textSec }}>
+              Each user&apos;s predicted worst team is derived from their group stage score picks. When results are final, set the actual worst team below.
+            </p>
+            <div className="mt-3 flex gap-2">
+              <input
+                placeholder="Actual worst team (e.g. Qatar)…"
+                value={bonusAnswers["worst_group_team"] ?? ""}
+                onChange={e => handleBonusAnswer("worst_group_team", e.target.value)}
+                className="flex-1 px-3 py-2 rounded-xl text-sm outline-none"
+                style={{ backgroundColor: T.inner, border: `1px solid ${T.border}`, color: T.text }}
+              />
+              {bonusSaved["worst_group_team"] && (
+                <span className="self-center text-[10px] font-bold" style={{ color: "#4ADE80" }}>✓</span>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Illustrations view */}
       {adminView === "illustrations" && (

@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { MATCHES, PHASES } from "@/lib/mock-data";
 import { getActualScores } from "@/app/actions/scores";
 import { getIllustrationSettings } from "@/app/actions/illustrations";
+import { getBonusAnswers } from "@/app/actions/bonuses";
 import AdminClient from "./AdminClient";
 
 export default async function AdminPage() {
@@ -13,9 +14,10 @@ export default async function AdminPage() {
     redirect("/");
   }
 
-  const [initialScores, initialIllustrationSettings] = await Promise.all([
+  const [initialScores, initialIllustrationSettings, initialBonusAnswers] = await Promise.all([
     getActualScores(),
     getIllustrationSettings(),
+    getBonusAnswers(),
   ]);
 
   return (
@@ -24,6 +26,7 @@ export default async function AdminPage() {
       phases={PHASES}
       initialScores={initialScores}
       initialIllustrationSettings={initialIllustrationSettings}
+      initialBonusAnswers={initialBonusAnswers}
     />
   );
 }

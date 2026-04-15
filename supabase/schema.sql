@@ -132,8 +132,54 @@ create policy "match_scores: authenticated can write"
   using (auth.role() = 'authenticated')
   with check (auth.role() = 'authenticated');
 
+-- ── bonus_picks ──────────────────────────────────────────────────────────────
+-- User answers to bonus questions (one row per user/question).
+create table if not exists public.bonus_picks (
+  user_id      uuid references auth.users(id) on delete cascade,
+  question_key text not null,
+  answer       text not null,
+  updated_at   timestamptz default now(),
+  primary key (user_id, question_key)
+);
+
+alter table public.bonus_picks enable row level security;
+
+drop policy if exists "bonus_picks: anyone authenticated can read" on public.bonus_picks;
+drop policy if exists "bonus_picks: users manage their own"        on public.bonus_picks;
+
+create policy "bonus_picks: anyone authenticated can read"
+  on public.bonus_picks for select using (auth.role() = 'authenticated');
+
+create policy "bonus_picks: users manage their own"
+  on public.bonus_picks for all
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
+
+-- ── bonus_answers ─────────────────────────────────────────────────────────────
+-- Admin-set correct answers for each bonus question.
+create table if not exists public.bonus_answers (
+  question_key text primary key,
+  answer       text not null,
+  updated_at   timestamptz default now()
+);
+
+alter table public.bonus_answers enable row level security;
+
+drop policy if exists "bonus_answers: anyone authenticated can read"  on public.bonus_answers;
+drop policy if exists "bonus_answers: authenticated can write"        on public.bonus_answers;
+
+create policy "bonus_answers: anyone authenticated can read"
+  on public.bonus_answers for select using (auth.role() = 'authenticated');
+
+-- Write access is open to authenticated; the server action enforces admin-only.
+create policy "bonus_answers: authenticated can write"
+  on public.bonus_answers for all
+  using (auth.role() = 'authenticated')
+  with check (auth.role() = 'authenticated');
+
 -- ── Indexes ───────────────────────────────────────────────────────────────────
 create index if not exists predictions_user_id    on public.predictions(user_id);
 create index if not exists predictions_match_id   on public.predictions(match_id);
 create index if not exists score_picks_user_id    on public.score_picks(user_id);
 create index if not exists league_members_user_id on public.league_members(user_id);
+create index if not exists bonus_picks_user_id    on public.bonus_picks(user_id);

@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { MOCK_LEAGUE, type Outcome, type Member } from "@/lib/mock-data";
 import { getActualScores } from "@/app/actions/scores";
 import { getIllustrationSettings } from "@/app/actions/illustrations";
+import { getAllBonusPicks, getBonusAnswers } from "@/app/actions/bonuses";
 import LeagueClient from "./LeagueClient";
 import type { LeagueMode } from "@/lib/mock-data";
 
@@ -56,7 +57,7 @@ export default async function LeaguePage({
 
   if (!league) redirect("/auth/setup");
 
-  // Fetch league members, predictions, score picks, actual scores, illustration settings, and current user profile in parallel
+  // Fetch league members, predictions, score picks, actual scores, illustration settings, bonus data, and current user profile in parallel
   const [memberIdsResult, predictionsResult, scorePicksResult, actualScores, illustrationSettings, profileResult] = await Promise.all([
     supabase
       .from("league_members")
@@ -135,6 +136,12 @@ export default async function LeaguePage({
   const myMember = members.find((m) => m.id === user.id);
   const leagueMode = (league.mode ?? "phase_by_phase") as LeagueMode;
 
+  // Fetch bonus data for all members + correct answers
+  const [allBonusPicks, bonusAnswers] = await Promise.all([
+    getAllBonusPicks(memberIds),
+    getBonusAnswers(),
+  ]);
+
   return (
     <LeagueClient
       code={code}
@@ -146,6 +153,9 @@ export default async function LeaguePage({
       actualScores={actualScores}
       mode={leagueMode}
       illustrationSettings={illustrationSettings}
+      initialBonusPicks={allBonusPicks[user.id] ?? {}}
+      allMemberBonusPicks={allBonusPicks}
+      bonusAnswers={bonusAnswers}
     />
   );
 }

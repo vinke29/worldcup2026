@@ -13,6 +13,7 @@ import OnboardingModal from "@/components/OnboardingModal";
 import MemberPicksModal from "@/components/MemberPicksModal";
 import GroupsView from "@/components/GroupsView";
 import QualifiersView from "@/components/QualifiersView";
+import BonusTab from "@/components/BonusTab";
 import { MATCHES, PHASES, WHOLE_GROUP_PHASES, type Match, type Outcome, type PhaseId, type Member, type LeagueMode } from "@/lib/mock-data";
 import { computeStandings } from "@/lib/scoring";
 import { computePhaseStatuses } from "@/lib/bracket";
@@ -20,6 +21,7 @@ import type { ScoreEntry } from "@/lib/bracket";
 import { savePrediction, saveScorePick } from "@/app/actions/predictions";
 import { logout } from "@/app/actions/auth";
 import type { IllustrationSetting } from "@/app/actions/illustrations";
+import { computeWorstGroupTeam, computeBonusPoints } from "@/lib/bonus-scoring";
 
 interface LeagueClientProps {
   code: string;
@@ -32,6 +34,9 @@ interface LeagueClientProps {
   mode?: LeagueMode;
   isPreview?: boolean;
   illustrationSettings?: Record<string, IllustrationSetting>;
+  initialBonusPicks?: Record<string, string>;
+  allMemberBonusPicks?: Record<string, Record<string, string>>;
+  bonusAnswers?: Record<string, string>;
 }
 
 function kickoffUTC(date: string, time: string): Date {
@@ -74,6 +79,9 @@ export default function LeagueClient({
   mode = "phase_by_phase",
   isPreview = false,
   illustrationSettings = {},
+  initialBonusPicks = {},
+  allMemberBonusPicks = {},
+  bonusAnswers = {},
 }: LeagueClientProps) {
   const [, startTransition] = useTransition();
   const router = useRouter();
@@ -93,7 +101,8 @@ export default function LeagueClient({
   const [activeDay, setActiveDay] = useState<string>(defaultNav.day);
   const [predictions, setPredictions] = useState<Record<string, Outcome>>(initialPredictions);
   const [scorePredictions, setScorePredictions] = useState<Record<string, ScoreEntry>>(initialScorePicks);
-  const [mobileView, setMobileView] = useState<"matches" | "standings" | "groups" | "qualifiers">(() => {
+  const [bonusPicks, setBonusPicks] = useState<Record<string, string>>(initialBonusPicks);
+  const [mobileView, setMobileView] = useState<"matches" | "standings" | "groups" | "qualifiers" | "bonuses">(() => {
     if (mode !== "entire_tournament") return "matches";
     // If the tournament has started and the user has made picks, land on Standings
     const firstKickoff = Date.UTC(2026, 5, 11, 23, 0); // Jun 11 19:00 EDT = 23:00 UTC
@@ -134,6 +143,12 @@ export default function LeagueClient({
       return s != null ? { ...m, homeScore: s.home, awayScore: s.away } : m;
     }),
     [actualScores]
+  );
+
+  // Auto-calculate worst group team from user's score picks
+  const worstGroupTeam = useMemo(
+    () => computeWorstGroupTeam(MATCHES, scorePredictions),
+    [scorePredictions]
   );
 
   // Dynamically compute which phases are open/locked/completed based on actual scores
@@ -381,7 +396,7 @@ export default function LeagueClient({
           className="flex rounded-xl p-1 mb-5 border"
           style={{ backgroundColor: t.cardBg, borderColor: t.border }}
         >
-          {(["matches", "groups", "qualifiers", "standings"] as const).map((tab) => (
+          {(["matches", "groups", "qualifiers", "bonuses", "standings"] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => setMobileView(tab)}
@@ -600,7 +615,12 @@ export default function LeagueClient({
               onGoToMatches={() => setMobileView("matches")}
             />
             <Leaderboard
-              members={computeStandings(matches, members, currentUserId, predictions, scorePredictions, actualScores)}
+              members={computeStandings(matches, members, currentUserId, predictions, scorePredictions, actualScores).map(m => {
+                const memberBonusPicks = m.id === currentUserId ? bonusPicks : (allMemberBonusPicks[m.id] ?? {});
+                const memberWorstTeam = m.id === currentUserId ? worstGroupTeam : computeWorstGroupTeam(MATCHES, m.scorePicks ?? {});
+                const bonusPts = computeBonusPoints(memberBonusPicks, bonusAnswers, memberWorstTeam);
+                return { ...m, points: m.points + bonusPts };
+              })}
               currentUserId={currentUserId}
               mono={mono}
               variant="full"
@@ -709,6 +729,18 @@ export default function LeagueClient({
             dismissedRounds={dismissedDays}
             onDismissRound={(round) => setDismissedDays(prev => new Set([...prev, round]))}
             bannersReady={bannersHydrated}
+          />
+        )}
+
+        {/* Bonuses view */}
+        {mobileView === "bonuses" && (
+          <BonusTab
+            bonusPicks={bonusPicks}
+            bonusAnswers={bonusAnswers}
+            worstGroupTeam={worstGroupTeam}
+            isPreview={isPreview}
+            mono={mono}
+            onPickChange={(key, value) => setBonusPicks(prev => ({ ...prev, [key]: value }))}
           />
         )}
       </div>
