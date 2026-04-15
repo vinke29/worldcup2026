@@ -138,12 +138,18 @@ const ROUND_LABEL: Record<MobileRound, string> = {
 
 // ── Main component ────────────────────────────────────────────────────────────
 export default function QualifiersView({ matches, scorePicks, actualScores, mono, mode = "phase_by_phase", leagueCode, onScorePick, isLocked = false, dismissedRounds: dismissedRoundsProp, onDismissRound, bannersReady = true }: QualifiersViewProps) {
-  const hasActual = useMemo(() => matches.some(m => m.homeScore !== null), [matches]);
-  // R32 actual teams are only reliable once ALL group matches are finished
-  const groupStageComplete = useMemo(() =>
-    matches.filter(m => m.group?.startsWith("Group")).every(m => m.homeScore !== null && m.awayScore !== null),
-    [matches]
+  // Actual scores live in the actual_scores table (actualScores prop), not on match objects.
+  // Fall back to checking match objects for backwards compatibility.
+  const hasActual = useMemo(() =>
+    Object.keys(actualScores).length > 0 || matches.some(m => m.homeScore !== null),
+    [matches, actualScores]
   );
+  // R32 actual teams are only reliable once ALL group matches are scored
+  const groupStageComplete = useMemo(() => {
+    const groupMatches = matches.filter(m => m.group?.startsWith("Group"));
+    if (groupMatches.length === 0) return false;
+    return groupMatches.every(m => actualScores[m.id] !== undefined || m.homeScore !== null);
+  }, [matches, actualScores]);
   const defaultView = hasActual ? "compare" : "predicted";
   const [view, setView] = useState<"predicted" | "actual" | "compare">(defaultView);
   const [mobileRound, setMobileRound] = useState<MobileRound>("r32");
@@ -167,7 +173,9 @@ export default function QualifiersView({ matches, scorePicks, actualScores, mono
   const totalWidth = finalX + POD_W;
 
   const predictedTables = useMemo(() => computeGroupTables(matches, scorePicks, false), [matches, scorePicks]);
-  const actualTables    = useMemo(() => computeGroupTables(matches, scorePicks, true), [matches]);
+  // Use actualScores (from actual_scores table) for actual group standings.
+  // m.homeScore on match objects may be null even when admin has seeded scores.
+  const actualTables    = useMemo(() => computeGroupTables(matches, actualScores, false), [matches, actualScores]);
   const tables = view === "actual" ? actualTables : predictedTables;
 
   const thirdMap = useMemo(() => {
