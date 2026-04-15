@@ -722,12 +722,6 @@ export default function LeagueClient({
                     <span className="text-xs font-black whitespace-nowrap" style={{ color: t.accent }}>5 pts each</span>
                   </div>
 
-                  {/* Divider */}
-                  <div style={{ height: 1, backgroundColor: t.borderInner }} />
-
-                  <p className="text-[10px] leading-relaxed" style={{ color: t.textMuted }}>
-                    Points <span style={{ fontWeight: 700 }}>accumulate at every round</span> you predict correctly — you don&apos;t just get points at the end. Pick Brazil to go all the way: R32 <span style={{ color: t.accent, fontWeight: 800 }}>+2</span> · R16 <span style={{ color: t.accent, fontWeight: 800 }}>+3</span> · QF <span style={{ color: t.accent, fontWeight: 800 }}>+5</span> · SF <span style={{ color: t.accent, fontWeight: 800 }}>+7</span> · Final <span style={{ color: t.accent, fontWeight: 800 }}>+10</span> · Champion <span style={{ color: t.accent, fontWeight: 800 }}>+15</span> = <span style={{ color: t.accent, fontWeight: 800 }}>42 pts</span> total.
-                  </p>
                 </div>
               </div>
             </div>
