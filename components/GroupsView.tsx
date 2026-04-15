@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import type { Match, LeagueMode } from "@/lib/mock-data";
-import { computeGroupTables, countCorrectPositions, hasAnyActualResults, type TeamRow } from "@/lib/group-standings";
+import { computeGroupTables, rankThirdPlaceTeams, countCorrectPositions, hasAnyActualResults, type TeamRow } from "@/lib/group-standings";
 import FlagImage from "@/lib/flag-image";
 
 interface GroupsViewProps {
@@ -31,10 +31,14 @@ export default function GroupsView({ matches, scorePicks, mono, mode = "phase_by
   );
 
   const t = mono
-    ? { bg: "#F5F0E8", card: "#EDE8DE", border: "#DDD9D0", text: "#1A1208", textSec: "#6B5E4E", textMuted: "#A89E8E", accent: "#1A1208", accentText: "#F7F4EE", qualify: "rgba(26,18,8,0.08)", qualifyBorder: "#C8C0B0" }
-    : { bg: "#0B1E0D", card: "#1A2E1F", border: "#2C4832", text: "#F0EDE6", textSec: "#B3C9B7", textMuted: "#7A9B84", accent: "#D7FF5A", accentText: "#0B1E0D", qualify: "rgba(215,255,90,0.07)", qualifyBorder: "rgba(215,255,90,0.25)" };
+    ? { bg: "#F5F0E8", card: "#EDE8DE", border: "#DDD9D0", text: "#1A1208", textSec: "#6B5E4E", textMuted: "#A89E8E", accent: "#1A1208", accentText: "#F7F4EE", qualify: "rgba(26,18,8,0.08)", qualifyBorder: "#C8C0B0", qualify3rd: "rgba(26,18,8,0.04)", qualify3rdBorder: "#DDD9D0" }
+    : { bg: "#0B1E0D", card: "#1A2E1F", border: "#2C4832", text: "#F0EDE6", textSec: "#B3C9B7", textMuted: "#7A9B84", accent: "#D7FF5A", accentText: "#0B1E0D", qualify: "rgba(215,255,90,0.07)", qualifyBorder: "rgba(215,255,90,0.25)", qualify3rd: "rgba(215,255,90,0.03)", qualify3rdBorder: "rgba(215,255,90,0.12)" };
 
   const activeTables = view === "actual" ? actualTables : predictedTables;
+
+  // Top 8 third-place qualifiers for predicted and actual standings
+  const predictedQ3rds = useMemo(() => new Set(rankThirdPlaceTeams(predictedTables).slice(0, 8).map(e => e.row.team)), [predictedTables]);
+  const actualQ3rds    = useMemo(() => new Set(rankThirdPlaceTeams(actualTables).slice(0, 8).map(e => e.row.team)), [actualTables]);
 
   return (
     <div>
@@ -58,12 +62,15 @@ export default function GroupsView({ matches, scorePicks, mono, mode = "phase_by
                 predicted={predicted}
                 actual={actual}
                 correct={correct}
+                predictedQ3rds={predictedQ3rds}
+                actualQ3rds={actualQ3rds}
                 mono={mono}
                 t={t}
               />
             );
           }
 
+          const activeQ3rds = view === "actual" ? actualQ3rds : predictedQ3rds;
           return (
             <GroupCard
               key={groupKey}
@@ -72,6 +79,7 @@ export default function GroupsView({ matches, scorePicks, mono, mode = "phase_by
               correct={correct}
               hasActual={hasActual}
               view={view}
+              qualifiedQ3rds={activeQ3rds}
               mono={mono}
               t={t}
             />
@@ -85,12 +93,14 @@ export default function GroupsView({ matches, scorePicks, mono, mode = "phase_by
 // ── Compare card: predicted vs actual side by side ────────────────────────────
 
 function CompareCard({
-  letter, predicted, actual, correct, mono, t,
+  letter, predicted, actual, correct, predictedQ3rds, actualQ3rds, mono, t,
 }: {
   letter: string;
   predicted: TeamRow[];
   actual: TeamRow[];
   correct: number | null;
+  predictedQ3rds: Set<string>;
+  actualQ3rds: Set<string>;
   mono: boolean;
   t: Record<string, string>;
 }) {
@@ -137,10 +147,11 @@ function CompareCard({
         {predicted.map((predRow, predIdx) => {
           const actualIdx = actualRankByTeam[predRow.team] != null ? actualRankByTeam[predRow.team] - 1 : -1;
           const actualRow = actual[predIdx]; // team in actual at same rank position
-          const predQualifies  = predIdx < 2;
-          const actualQualifies = actualIdx >= 0 && actualIdx < 2;
+          const predIs3rdQ  = predIdx === 2 && predictedQ3rds.has(predRow.team);
+          const actualIs3rdQ = actual[predIdx] && predIdx === 2 && actualQ3rds.has(actual[predIdx].team);
+          const predQualifies  = predIdx < 2 || predIs3rdQ;
+          const actualQualifies = (actualIdx >= 0 && actualIdx < 2) || (actualIdx === 2 && actualQ3rds.has(predRow.team));
           const correct = actualIdx === predIdx;
-          const delta = actualIdx >= 0 ? predIdx - actualIdx : null; // positive = improved, negative = dropped
 
           // Colour convention for predicted column:
           //   green  = exact slot match
@@ -161,7 +172,7 @@ function CompareCard({
               {/* Predicted position */}
               <div
                 className="flex items-center gap-2 px-3 py-2.5"
-                style={{ backgroundColor: predQualifies ? t.qualify : "transparent" }}
+                style={{ backgroundColor: predIs3rdQ ? t.qualify3rd : predQualifies ? t.qualify : "transparent" }}
               >
                 <span className="text-xs font-black w-4 text-center flex-shrink-0" style={{ color: predColor }}>
                   {predIdx + 1}
@@ -184,9 +195,12 @@ function CompareCard({
               {/* Actual position (team at same rank slot) */}
               <div
                 className="flex items-center gap-2 px-3 py-2.5 border-l"
-                style={{ backgroundColor: actualQualifies && actualRow?.team === predRow.team ? t.qualify : "transparent", borderColor: t.border }}
+                style={{
+                  backgroundColor: actualRow && actualIs3rdQ ? t.qualify3rd : actualRow && actualQualifies && actualRow.team === predRow.team ? t.qualify : "transparent",
+                  borderColor: t.border,
+                }}
               >
-                <span className="text-xs font-black w-4 text-center flex-shrink-0" style={{ color: actualRow && predIdx < 2 ? t.accent : t.textMuted }}>
+                <span className="text-xs font-black w-4 text-center flex-shrink-0" style={{ color: actualRow && (predIdx < 2 || actualIs3rdQ) ? t.accent : t.textMuted }}>
                   {predIdx + 1}
                 </span>
                 {actualRow ? (
@@ -198,6 +212,9 @@ function CompareCard({
                     >
                       {actualRow.team}
                     </span>
+                    {actualIs3rdQ && (
+                      <span className="text-[9px] font-black flex-shrink-0 px-1 py-0.5 rounded" style={{ color: t.textMuted, border: `1px solid ${t.qualify3rdBorder}` }}>3Q</span>
+                    )}
                     <span className="text-xs font-black tabular-nums flex-shrink-0" style={{ color: t.textMuted }}>
                       {actualRow.pts}p
                     </span>
@@ -217,13 +234,14 @@ function CompareCard({
 // ── Standard group card ───────────────────────────────────────────────────────
 
 function GroupCard({
-  letter, rows, correct, hasActual, view, mono, t,
+  letter, rows, correct, hasActual, view, qualifiedQ3rds, mono, t,
 }: {
   letter: string;
   rows: TeamRow[];
   correct: number | null;
   hasActual: boolean;
   view: "predicted" | "actual" | "compare";
+  qualifiedQ3rds: Set<string>;
   mono: boolean;
   t: Record<string, string>;
 }) {
@@ -268,20 +286,21 @@ function GroupCard({
         </div>
 
         {rows.map((row, i) => {
-          const qualifies = i < 2;
+          const qualifies   = i < 2;
+          const is3rdQ      = i === 2 && qualifiedQ3rds.has(row.team);
           return (
             <div
               key={row.team}
               className="flex items-center gap-2 rounded-xl px-2 py-2"
               style={{
-                backgroundColor: qualifies ? t.qualify : "transparent",
-                border: qualifies ? `1px solid ${t.qualifyBorder}` : "1px solid transparent",
+                backgroundColor: qualifies ? t.qualify : is3rdQ ? t.qualify3rd : "transparent",
+                border: qualifies ? `1px solid ${t.qualifyBorder}` : is3rdQ ? `1px solid ${t.qualify3rdBorder}` : "1px solid transparent",
               }}
             >
               {/* Position */}
               <span
                 className="w-4 text-center text-xs font-black"
-                style={{ color: qualifies ? t.accent : t.textMuted }}
+                style={{ color: qualifies ? t.accent : is3rdQ ? t.textSec : t.textMuted }}
               >
                 {i + 1}
               </span>
@@ -292,6 +311,7 @@ function GroupCard({
                 <span className="text-xs font-semibold truncate" style={{ color: t.text }}>
                   {row.team}
                 </span>
+                {is3rdQ && <span className="text-[9px] font-black px-1 py-0.5 rounded flex-shrink-0" style={{ color: t.textMuted, border: `1px solid ${t.qualify3rdBorder}` }}>3Q</span>}
               </div>
 
               <span className="w-5 text-center text-xs tabular-nums" style={{ color: t.textSec }}>{row.w}</span>
