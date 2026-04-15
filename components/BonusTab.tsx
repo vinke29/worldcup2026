@@ -5,6 +5,16 @@ import { BONUS_QUESTIONS, playerListForQuestion } from "@/lib/bonus-data";
 import { scoreBonusQuestion } from "@/lib/bonus-scoring";
 import { saveBonusPick } from "@/app/actions/bonuses";
 
+const BONUS_ILLUSTRATIONS: Record<string, string> = {
+  golden_ball:       "/bonuses/golden-ball.png",
+  golden_boot:       "/bonuses/golden-boot.png",
+  golden_glove:      "/bonuses/golden-glove.png",
+  best_young_player: "/bonuses/best-young-player.png",
+  total_goals:       "/bonuses/total-goals.png",
+  worst_group_team:  "/bonuses/worst-group-team.png",
+  red_cards:         "/bonuses/red-cards.png",
+};
+
 interface BonusTabProps {
   bonusPicks: Record<string, string>;          // current user's picks
   bonusAnswers: Record<string, string>;         // admin-set actual answers (empty if not revealed)
@@ -111,6 +121,8 @@ export default function BonusTab({
         const isCorrect = pts !== null && pts > 0;
         const isWrong = pts !== null && pts === 0 && isAnswered;
 
+        const illustration = BONUS_ILLUSTRATIONS[q.key];
+
         return (
           <div
             key={q.key}
@@ -122,8 +134,46 @@ export default function BonusTab({
                 : isWrong  ? (mono ? "#DDD9D0" : "rgba(248,113,113,0.2)")
                 : t.border
               }`,
+              boxShadow: isCorrect
+                ? mono ? "0 4px 24px rgba(74,222,128,0.15)" : "0 0 0 1px rgba(74,222,128,0.15), 0 8px 32px rgba(74,222,128,0.12)"
+                : isWrong
+                ? mono ? "none" : "0 2px 12px rgba(0,0,0,0.3)"
+                : "none",
             }}
           >
+            {/* Illustration */}
+            {illustration && (
+              <div className="relative w-full overflow-hidden" style={{ aspectRatio: "3/2", maxHeight: "180px" }}>
+                <img
+                  src={illustration}
+                  alt={q.label}
+                  className="w-full h-full object-cover"
+                  style={{ filter: mono ? "grayscale(1) contrast(1.2) brightness(1.05)" : "none" }}
+                />
+                {/* Bottom gradient fade into card bg */}
+                <div
+                  className="absolute inset-x-0 bottom-0"
+                  style={{ height: "70px", background: `linear-gradient(to bottom, transparent, ${mono ? "#FFFFFF" : "#1A2E1F"})` }}
+                />
+                {/* Correct/wrong verdict badge — shown after admin reveals */}
+                {isRevealed && (
+                  <div
+                    className="absolute top-3 right-3 px-3 py-1.5 rounded-xl flex items-center gap-1.5"
+                    style={{
+                      backgroundColor: isCorrect
+                        ? mono ? "rgba(22,163,74,0.9)" : "rgba(74,222,128,0.9)"
+                        : mono ? "rgba(220,38,38,0.85)" : "rgba(248,113,113,0.85)",
+                      backdropFilter: "blur(4px)",
+                    }}
+                  >
+                    <span className="text-xs font-black" style={{ color: isCorrect ? (mono ? "#fff" : "#0B1E0D") : "#fff" }}>
+                      {isCorrect ? `✓ +${pts} pts` : "✗ 0 pts"}
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Question header */}
             <div
               className="flex items-center justify-between px-4 py-3"
