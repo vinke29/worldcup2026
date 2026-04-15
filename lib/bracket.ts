@@ -73,9 +73,9 @@ export const KNOCKOUT_MATCH_NUMBER: Record<string, number> = {
   m73:73, m74:74, m75:75, m76:76, m77:77, m78:78,
   m79:79, m80:80, m81:81, m82:82, m83:83, m84:84,
   m85:85, m86:86, m87:87, m88:88,
-  // R16 (89–96) — order follows bracket pairing
-  "r16-0":89, "r16-1":90, "r16-4":91, "r16-5":92,
-  "r16-2":93, "r16-3":94, "r16-6":95, "r16-7":96,
+  // R16 (89–96) — slot order follows bracket pairing (not calendar date order)
+  "r16-0":90, "r16-1":89, "r16-2":91, "r16-3":92,
+  "r16-4":93, "r16-5":94, "r16-6":95, "r16-7":96,
   // QF (97–100)
   "qf-0":97, "qf-1":98, "qf-2":99, "qf-3":100,
   // SF (101–102)

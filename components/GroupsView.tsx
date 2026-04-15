@@ -120,7 +120,6 @@ function ThirdPlaceTable({
   if (actualRanked.length === 0) return null;
 
   const colorGreen  = mono ? "#16A34A" : "#4ADE80";
-  const colorYellow = mono ? "#B45309" : "#FCD34D";
 
   function GdCell({ gd }: { gd: number }) {
     return (
@@ -178,16 +177,8 @@ function ThirdPlaceTable({
 
         const predQualifies   = i < 8;
         const actualQualifies = i < 8;
-
-        // Colour for predicted row
-        const predInActualTop8  = pred   && actualQ3rds.has(pred.row.team);
-        const actualInPredTop8  = actual && predictedQ3rds.has(actual.row.team);
-        const predExact         = pred && actual && pred.row.team === actual.row.team;
-        const predColor = !pred ? t.textMuted
-          : predExact        ? colorGreen
-          : predInActualTop8 ? colorYellow
-          : predQualifies    ? "#F87171"   // predicted to qualify, didn't
-          : t.textMuted;
+        // Did my predicted team at this rank actually end up in the top 8?
+        const predTeamQualified = pred ? actualQ3rds.has(pred.row.team) : false;
 
         return (
           <div key={i}>
@@ -212,9 +203,13 @@ function ThirdPlaceTable({
                   <>
                     <span className="text-[10px] font-black w-4 text-center flex-shrink-0" style={{ color: t.textMuted }}>{pred.group}</span>
                     <FlagImage emoji={pred.row.flag} size={14} team={pred.row.team} />
-                    <span className="text-xs font-semibold truncate flex-1" style={{ color: predColor, textDecoration: predQualifies && !predInActualTop8 && !predExact ? "line-through" : "none", opacity: predQualifies && !predInActualTop8 && !predExact ? 0.55 : 1 }}>
+                    <span className="text-xs font-semibold truncate flex-1" style={{ color: predTeamQualified ? t.text : t.textMuted, opacity: predTeamQualified ? 1 : 0.5 }}>
                       {pred.row.team}
                     </span>
+                    {predTeamQualified
+                      ? <span className="text-[10px] flex-shrink-0" style={{ color: t.textSec }}>✓</span>
+                      : <span className="text-[10px] flex-shrink-0" style={{ color: t.textMuted }}>✗</span>
+                    }
                     <GdCell gd={pred.row.gd} />
                     <PtsCell pts={pred.row.pts} />
                   </>
@@ -231,10 +226,9 @@ function ThirdPlaceTable({
                   <>
                     <span className="text-[10px] font-black w-4 text-center flex-shrink-0" style={{ color: t.textMuted }}>{actual.group}</span>
                     <FlagImage emoji={actual.row.flag} size={14} team={actual.row.team} />
-                    <span className="text-xs font-semibold truncate flex-1" style={{ color: actualInPredTop8 ? colorGreen : t.text }}>
+                    <span className="text-xs font-semibold truncate flex-1" style={{ color: t.text }}>
                       {actual.row.team}
                     </span>
-                    {actualInPredTop8 && actualQualifies && <span className="text-[10px] flex-shrink-0" style={{ color: colorGreen }}>✓</span>}
                     <GdCell gd={actual.row.gd} />
                     <PtsCell pts={actual.row.pts} />
                   </>
@@ -262,10 +256,6 @@ function CompareCard({
   mono: boolean;
   t: Record<string, string>;
 }) {
-  // Build a lookup: team → actual rank
-  const actualRankByTeam: Record<string, number> = {};
-  actual.forEach((row, i) => { actualRankByTeam[row.team] = i + 1; });
-
   return (
     <div
       className="rounded-2xl overflow-hidden border"
@@ -305,23 +295,14 @@ function CompareCard({
       {/* Rows — predicted on left, actual on right */}
       <div>
         {predicted.map((predRow, predIdx) => {
-          const actualIdx = actualRankByTeam[predRow.team] != null ? actualRankByTeam[predRow.team] - 1 : -1;
-          const actualRow = actual[predIdx]; // team in actual at same rank position
+          const actualRow   = actual[predIdx];
           const predIs3rdQ  = predIdx === 2 && predictedQ3rds.has(predRow.team);
-          const actualIs3rdQ = actual[predIdx] && predIdx === 2 && actualQ3rds.has(actual[predIdx].team);
-          const predQualifies  = predIdx < 2 || predIs3rdQ;
-          const actualQualifies = (actualIdx >= 0 && actualIdx < 2) || (actualIdx === 2 && actualQ3rds.has(predRow.team));
-          const correct = actualIdx === predIdx;
-
-          // Colour convention for predicted column:
-          //   green  = exact slot match
-          //   yellow = team advanced (top 2) but in wrong slot — still earns R32 pts
-          //   muted  = predicted to advance but didn't (or vice versa)
-          const qualifiedWrongSlot = predQualifies && actualQualifies && !correct;
-          const missedQualify = predQualifies && actualIdx >= 0 && !actualQualifies;
-          const colorGreen  = mono ? "#16A34A" : "#4ADE80";
-          const colorYellow = mono ? "#B45309" : "#FCD34D";
-          const predColor = correct ? colorGreen : qualifiedWrongSlot ? colorYellow : t.textMuted;
+          const actualIs3rdQ = actualRow && predIdx === 2 && actualQ3rds.has(actualRow.team);
+          // Did my predicted team actually qualify? (top 2 or 3rd-place qualifier)
+          const predTeamQualified = actual.findIndex(r => r.team === predRow.team) < 2
+            || actualQ3rds.has(predRow.team);
+          const predQualifies = predIdx < 2 || predIs3rdQ;
+          const actualQualifies = predIdx < 2 || !!actualIs3rdQ;
 
           return (
             <div
@@ -332,44 +313,39 @@ function CompareCard({
               {/* Predicted position */}
               <div
                 className="flex items-center gap-2 px-3 py-2.5"
-                style={{ backgroundColor: predIs3rdQ ? t.qualify3rd : predQualifies ? t.qualify : "transparent" }}
+                style={{ backgroundColor: predQualifies ? t.qualify : "transparent" }}
               >
-                <span className="text-xs font-black w-4 text-center flex-shrink-0" style={{ color: predColor }}>
+                <span className="text-xs font-black w-4 text-center flex-shrink-0" style={{ color: predQualifies ? t.accent : t.textMuted }}>
                   {predIdx + 1}
                 </span>
                 <FlagImage emoji={predRow.flag} size={14} team={predRow.team} />
                 <span
                   className="text-xs font-semibold truncate flex-1"
                   style={{
-                    color: predColor,
-                    textDecoration: missedQualify ? "line-through" : "none",
-                    opacity: missedQualify ? 0.55 : 1,
+                    color: predTeamQualified ? t.text : t.textMuted,
+                    opacity: predTeamQualified ? 1 : 0.5,
                   }}
                 >
                   {predRow.team}
                 </span>
-                {correct && <span className="text-[10px] flex-shrink-0" style={{ color: colorGreen }}>✓</span>}
-                {qualifiedWrongSlot && <span className="text-[10px] flex-shrink-0" style={{ color: colorYellow }}>~</span>}
+                {predTeamQualified
+                  ? <span className="text-[10px] flex-shrink-0" style={{ color: t.textSec }}>✓</span>
+                  : <span className="text-[10px] flex-shrink-0" style={{ color: t.textMuted }}>✗</span>
+                }
               </div>
 
               {/* Actual position (team at same rank slot) */}
               <div
                 className="flex items-center gap-2 px-3 py-2.5 border-l"
-                style={{
-                  backgroundColor: actualRow && actualIs3rdQ ? t.qualify3rd : actualRow && actualQualifies && actualRow.team === predRow.team ? t.qualify : "transparent",
-                  borderColor: t.border,
-                }}
+                style={{ backgroundColor: actualQualifies ? t.qualify : "transparent", borderColor: t.border }}
               >
-                <span className="text-xs font-black w-4 text-center flex-shrink-0" style={{ color: actualRow && (predIdx < 2 || actualIs3rdQ) ? t.accent : t.textMuted }}>
+                <span className="text-xs font-black w-4 text-center flex-shrink-0" style={{ color: actualQualifies ? t.accent : t.textMuted }}>
                   {predIdx + 1}
                 </span>
                 {actualRow ? (
                   <>
                     <FlagImage emoji={actualRow.flag} size={14} team={actualRow.team} />
-                    <span
-                      className="text-xs font-semibold truncate flex-1"
-                      style={{ color: actualRow.team === predRow.team ? t.accent : t.text }}
-                    >
+                    <span className="text-xs font-semibold truncate flex-1" style={{ color: t.text }}>
                       {actualRow.team}
                     </span>
                     {actualIs3rdQ && (
