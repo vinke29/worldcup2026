@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 
 interface HeaderProps {
   leagueName?: string;
@@ -14,6 +14,8 @@ interface HeaderProps {
 
 export default function Header({ leagueName, leagueCode, mono = false, onToggleMono, onLogout, showLeagueSwitcher = false }: HeaderProps) {
   const [copied, setCopied] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   function copyCode() {
     if (!leagueCode) return;
@@ -24,9 +26,19 @@ export default function Header({ leagueName, leagueCode, mono = false, onToggleM
     });
   }
 
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false);
+      }
+    }
+    if (menuOpen) document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [menuOpen]);
+
   return (
     <header
-      className="sticky top-0 z-50 border-b overflow-hidden"
+      className="sticky top-0 z-50 border-b overflow-visible"
       style={{
         backgroundColor: mono ? "rgba(245,240,232,0.95)" : "rgba(11,30,13,0.92)",
         borderColor: mono ? "#DDD9D0" : "#2C4832",
@@ -56,16 +68,6 @@ export default function Header({ leagueName, leagueCode, mono = false, onToggleM
         )}
 
         <div className="flex items-center gap-2 flex-shrink-0">
-          {/* League switcher */}
-          {showLeagueSwitcher && (
-            <Link
-              href="/"
-              className="text-[10px] font-bold uppercase tracking-widest transition-opacity hover:opacity-60"
-              style={{ color: mono ? "#A09080" : "#4A6B50" }}
-            >
-              ← My Leagues
-            </Link>
-          )}
           {/* Invite code */}
           {leagueCode && (
             <button
@@ -100,7 +102,6 @@ export default function Header({ leagueName, leagueCode, mono = false, onToggleM
               }}
             >
               {mono ? (
-                /* Sun — click to go back to dark/green */
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: "#1A1208" }}>
                   <circle cx="12" cy="12" r="5" />
                   <line x1="12" y1="1" x2="12" y2="3" />
@@ -113,7 +114,6 @@ export default function Header({ leagueName, leagueCode, mono = false, onToggleM
                   <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
                 </svg>
               ) : (
-                /* Moon — click to go to light/mono */
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: "#7A9B84" }}>
                   <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
                 </svg>
@@ -121,26 +121,70 @@ export default function Header({ leagueName, leagueCode, mono = false, onToggleM
             </button>
           )}
 
-          {/* New / join league */}
+          {/* ··· menu */}
           {onLogout && (
-            <Link
-              href="/auth/setup"
-              className="text-[10px] font-bold uppercase tracking-widest transition-opacity hover:opacity-60"
-              style={{ color: mono ? "#A09080" : "#4A6B50" }}
-            >
-              + League
-            </Link>
-          )}
+            <div className="relative" ref={menuRef}>
+              <button
+                onClick={() => setMenuOpen(v => !v)}
+                className="flex items-center justify-center rounded-lg w-8 h-8 border cursor-pointer transition-all duration-200"
+                style={{
+                  borderColor: menuOpen
+                    ? mono ? "#1A1208" : "#D7FF5A"
+                    : mono ? "#C8C0B0" : "#2C4832",
+                  backgroundColor: menuOpen
+                    ? mono ? "rgba(26,18,8,0.08)" : "rgba(215,255,90,0.06)"
+                    : "transparent",
+                }}
+              >
+                <span className="font-bold text-sm leading-none" style={{ color: mono ? "#1A1208" : "#7A9B84", letterSpacing: "0.05em" }}>···</span>
+              </button>
 
-          {/* Logout */}
-          {onLogout && (
-            <button
-              onClick={onLogout}
-              className="text-[10px] font-bold uppercase tracking-widest transition-opacity hover:opacity-60 cursor-pointer"
-              style={{ color: mono ? "#A09080" : "#4A6B50" }}
-            >
-              Sign out
-            </button>
+              {menuOpen && (
+                <div
+                  className="absolute right-0 top-10 w-44 rounded-xl border py-1 z-50"
+                  style={{
+                    backgroundColor: mono ? "#F5F0E8" : "#1A2E1F",
+                    borderColor: mono ? "#DDD9D0" : "#2C4832",
+                    boxShadow: "0 8px 24px rgba(0,0,0,0.3)",
+                  }}
+                >
+                  {showLeagueSwitcher && (
+                    <Link
+                      href="/"
+                      onClick={() => setMenuOpen(false)}
+                      className="flex items-center gap-2 px-4 py-2.5 text-xs font-semibold transition-opacity hover:opacity-60"
+                      style={{ color: mono ? "#1A1208" : "#F0EDE6" }}
+                    >
+                      ← My Leagues
+                    </Link>
+                  )}
+                  <Link
+                    href="/auth/setup"
+                    onClick={() => setMenuOpen(false)}
+                    className="flex items-center gap-2 px-4 py-2.5 text-xs font-semibold transition-opacity hover:opacity-60"
+                    style={{ color: mono ? "#1A1208" : "#F0EDE6" }}
+                  >
+                    + New league
+                  </Link>
+                  <Link
+                    href="/auth/setup?intent=join"
+                    onClick={() => setMenuOpen(false)}
+                    className="flex items-center gap-2 px-4 py-2.5 text-xs font-semibold transition-opacity hover:opacity-60"
+                    style={{ color: mono ? "#1A1208" : "#F0EDE6" }}
+                  >
+                    + Join league
+                  </Link>
+                  <div className="my-1 border-t" style={{ borderColor: mono ? "#DDD9D0" : "#2C4832" }} />
+                  <button
+                    onClick={() => { setMenuOpen(false); onLogout(); }}
+                    className="w-full flex items-center gap-2 px-4 py-2.5 text-xs font-semibold transition-opacity hover:opacity-60 cursor-pointer text-left"
+                    style={{ color: mono ? "#A09080" : "#7A9B84", backgroundColor: "transparent", border: "none", fontFamily: "inherit" }}
+                  >
+                    Sign out
+                  </button>
+                </div>
+              )}
+            </div>
           )}
         </div>
       </div>
