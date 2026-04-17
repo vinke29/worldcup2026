@@ -37,7 +37,7 @@ interface LeagueClientProps {
   initialBonusPicks?: Record<string, string>;
   allMemberBonusPicks?: Record<string, Record<string, string>>;
   bonusAnswers?: Record<string, string>;
-  leagueCount?: number;
+  userLeagues?: { id: string; name: string; code: string }[];
 }
 
 function kickoffUTC(date: string, time: string): Date {
@@ -83,7 +83,7 @@ export default function LeagueClient({
   initialBonusPicks = {},
   allMemberBonusPicks = {},
   bonusAnswers = {},
-  leagueCount = 1,
+  userLeagues = [],
 }: LeagueClientProps) {
   const [, startTransition] = useTransition();
   const router = useRouter();
@@ -392,7 +392,7 @@ export default function LeagueClient({
         mono={mono}
         onToggleMono={() => setMono(v => !v)}
         onLogout={isPreview ? undefined : () => startTransition(() => { logout(); })}
-        showLeagueSwitcher={!isPreview && leagueCount > 1}
+        userLeagues={isPreview ? [] : userLeagues}
       />
       <PhaseNav phases={phases} activePhase={activePhase} onSelect={handlePhaseChange} mono={mono} todayPhases={mode === "entire_tournament" ? todayPhases : undefined} />
       {isGroupPhase && days.length > 0 && mode !== "entire_tournament" && (

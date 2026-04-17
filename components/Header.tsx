@@ -3,18 +3,26 @@
 import Link from "next/link";
 import { useState, useRef, useEffect } from "react";
 
+interface League {
+  id: string;
+  name: string;
+  code: string;
+}
+
 interface HeaderProps {
   leagueName?: string;
   leagueCode?: string;
   mono?: boolean;
   onToggleMono?: () => void;
   onLogout?: () => void;
-  showLeagueSwitcher?: boolean;
+  userLeagues?: League[];
 }
 
-export default function Header({ leagueName, leagueCode, mono = false, onToggleMono, onLogout, showLeagueSwitcher = false }: HeaderProps) {
+export default function Header({ leagueName, leagueCode, mono = false, onToggleMono, onLogout, userLeagues = [] }: HeaderProps) {
   const [copied, setCopied] = useState(false);
+  const [leagueMenuOpen, setLeagueMenuOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const leagueMenuRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
   function copyCode() {
@@ -28,13 +36,20 @@ export default function Header({ leagueName, leagueCode, mono = false, onToggleM
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
+      if (leagueMenuRef.current && !leagueMenuRef.current.contains(e.target as Node)) {
+        setLeagueMenuOpen(false);
+      }
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
         setMenuOpen(false);
       }
     }
-    if (menuOpen) document.addEventListener("mousedown", handleClickOutside);
+    if (leagueMenuOpen || menuOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [menuOpen]);
+  }, [leagueMenuOpen, menuOpen]);
+
+  const multiLeague = userLeagues.length > 1;
 
   return (
     <header
@@ -60,15 +75,58 @@ export default function Header({ leagueName, leagueCode, mono = false, onToggleM
           </span>
         </Link>
 
-        {/* League name */}
+        {/* League name — plain or dropdown */}
         {leagueName && (
-          showLeagueSwitcher ? (
-            <Link href="/" className="hidden sm:flex items-center gap-1 text-sm font-medium truncate hover:opacity-70 transition-opacity" style={{ color: mono ? "#6B5E4E" : "#7A9B84" }}>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-              {leagueName}
-            </Link>
+          multiLeague ? (
+            <div className="relative flex-1 flex justify-center" ref={leagueMenuRef}>
+              <button
+                onClick={() => setLeagueMenuOpen(v => !v)}
+                className="flex items-center gap-1.5 text-sm font-medium transition-opacity hover:opacity-70 cursor-pointer max-w-[200px] truncate"
+                style={{ color: mono ? "#6B5E4E" : "#7A9B84", background: "none", border: "none", fontFamily: "inherit" }}
+              >
+                <span className="truncate">{leagueName}</span>
+                <svg
+                  width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                  strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+                  style={{ flexShrink: 0, transform: leagueMenuOpen ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.15s" }}
+                >
+                  <polyline points="6 9 12 15 18 9" />
+                </svg>
+              </button>
+
+              {leagueMenuOpen && (
+                <div
+                  className="absolute top-8 left-1/2 -translate-x-1/2 w-52 rounded-xl border py-1 z-50"
+                  style={{
+                    backgroundColor: mono ? "#F5F0E8" : "#1A2E1F",
+                    borderColor: mono ? "#DDD9D0" : "#2C4832",
+                    boxShadow: "0 8px 24px rgba(0,0,0,0.3)",
+                  }}
+                >
+                  <p className="px-4 pt-2 pb-1 text-[10px] font-bold uppercase tracking-widest" style={{ color: mono ? "#A09080" : "#4A6B50" }}>
+                    My Leagues
+                  </p>
+                  {userLeagues.map((lg) => (
+                    <Link
+                      key={lg.id}
+                      href={`/league/${lg.code}`}
+                      onClick={() => setLeagueMenuOpen(false)}
+                      className="flex items-center justify-between px-4 py-2.5 transition-opacity hover:opacity-70"
+                      style={{ color: lg.code === leagueCode ? (mono ? "#1A1208" : "#D7FF5A") : (mono ? "#1A1208" : "#F0EDE6") }}
+                    >
+                      <span className="text-xs font-semibold truncate">{lg.name}</span>
+                      {lg.code === leagueCode && (
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                      )}
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
           ) : (
-            <span className="hidden sm:block text-sm font-medium truncate" style={{ color: mono ? "#6B5E4E" : "#7A9B84" }}>
+            <span className="flex-1 text-center text-sm font-medium truncate" style={{ color: mono ? "#6B5E4E" : "#7A9B84" }}>
               {leagueName}
             </span>
           )
@@ -92,7 +150,7 @@ export default function Header({ leagueName, leagueCode, mono = false, onToggleM
               <span className="font-mono text-xs font-bold tracking-widest" style={{ color: mono ? "#1A1208" : "#D7FF5A" }}>
                 {leagueCode}
               </span>
-              <span className="text-[10px] font-semibold" style={{ color: mono ? "#6B5E4E" : (copied ? "#D7FF5A" : "#7A9B84") }}>
+              <span className="hidden sm:inline text-[10px] font-semibold" style={{ color: mono ? "#6B5E4E" : (copied ? "#D7FF5A" : "#7A9B84") }}>
                 {copied ? "Copied!" : "Copy"}
               </span>
             </button>
@@ -155,16 +213,6 @@ export default function Header({ leagueName, leagueCode, mono = false, onToggleM
                     boxShadow: "0 8px 24px rgba(0,0,0,0.3)",
                   }}
                 >
-                  {showLeagueSwitcher && (
-                    <Link
-                      href="/"
-                      onClick={() => setMenuOpen(false)}
-                      className="flex items-center gap-2 px-4 py-2.5 text-xs font-semibold transition-opacity hover:opacity-60"
-                      style={{ color: mono ? "#1A1208" : "#F0EDE6" }}
-                    >
-                      ← My Leagues
-                    </Link>
-                  )}
                   <Link
                     href="/auth/setup"
                     onClick={() => setMenuOpen(false)}

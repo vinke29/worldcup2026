@@ -57,8 +57,8 @@ export default async function LeaguePage({
 
   if (!league) redirect("/auth/setup");
 
-  // Fetch league members, predictions, score picks, actual scores, illustration settings, bonus data, current user profile, and league count in parallel
-  const [memberIdsResult, predictionsResult, scorePicksResult, actualScores, illustrationSettings, profileResult, leagueCountResult] = await Promise.all([
+  // Fetch league members, predictions, score picks, actual scores, illustration settings, bonus data, current user profile, and user's leagues in parallel
+  const [memberIdsResult, predictionsResult, scorePicksResult, actualScores, illustrationSettings, profileResult, userLeaguesResult] = await Promise.all([
     supabase
       .from("league_members")
       .select("user_id")
@@ -78,7 +78,7 @@ export default async function LeaguePage({
       .maybeSingle(),
     supabase
       .from("league_members")
-      .select("league_id")
+      .select("leagues(id, name, code)")
       .eq("user_id", user.id),
   ]);
 
@@ -163,7 +163,7 @@ export default async function LeaguePage({
       initialBonusPicks={allBonusPicks[user.id] ?? {}}
       allMemberBonusPicks={allBonusPicks}
       bonusAnswers={bonusAnswers}
-      leagueCount={leagueCountResult.data?.length ?? 1}
+      userLeagues={(userLeaguesResult.data ?? []).flatMap((m) => Array.isArray(m.leagues) ? m.leagues : m.leagues ? [m.leagues] : []).filter((l): l is { id: string; name: string; code: string } => Boolean(l?.id))}
     />
   );
 }
