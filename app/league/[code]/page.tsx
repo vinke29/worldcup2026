@@ -78,7 +78,7 @@ export default async function LeaguePage({
       .maybeSingle(),
     supabase
       .from("league_members")
-      .select("league_id", { count: "exact", head: true })
+      .select("league_id")
       .eq("user_id", user.id),
   ]);
 
@@ -163,7 +163,7 @@ export default async function LeaguePage({
       initialBonusPicks={allBonusPicks[user.id] ?? {}}
       allMemberBonusPicks={allBonusPicks}
       bonusAnswers={bonusAnswers}
-      leagueCount={leagueCountResult.count ?? 1}
+      leagueCount={leagueCountResult.data?.length ?? 1}
     />
   );
 }
