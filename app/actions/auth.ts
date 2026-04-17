@@ -29,6 +29,12 @@ export async function login(
     .limit(1)
     .maybeSingle();
 
+  // If they came via an invite link, send them to join it first
+  const setupQuery = (formData.get("setupQuery") as string | null) ?? "";
+  if (setupQuery && new URLSearchParams(setupQuery).get("intent") === "join") {
+    redirect(`/auth/setup?${setupQuery}`);
+  }
+
   if (membership?.league_id) {
     const { data: league } = await supabase
       .from("leagues")
@@ -39,7 +45,6 @@ export async function login(
   }
 
   // No league yet — forward any invite params so they can join
-  const setupQuery = (formData.get("setupQuery") as string | null) ?? "";
   redirect(setupQuery ? `/auth/setup?${setupQuery}` : "/auth/setup");
 }
 

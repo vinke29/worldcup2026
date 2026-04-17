@@ -62,9 +62,15 @@ export default function Header({ leagueName, leagueCode, mono = false, onToggleM
 
         {/* League name */}
         {leagueName && (
-          <span className="hidden sm:block text-sm font-medium truncate" style={{ color: mono ? "#6B5E4E" : "#7A9B84" }}>
-            {leagueName}
-          </span>
+          showLeagueSwitcher ? (
+            <Link href="/" className="hidden sm:block text-sm font-medium truncate hover:opacity-70 transition-opacity" style={{ color: mono ? "#6B5E4E" : "#7A9B84" }}>
+              {leagueName}
+            </Link>
+          ) : (
+            <span className="hidden sm:block text-sm font-medium truncate" style={{ color: mono ? "#6B5E4E" : "#7A9B84" }}>
+              {leagueName}
+            </span>
+          )
         )}
 
         <div className="flex items-center gap-2 flex-shrink-0">
