@@ -121,6 +121,17 @@ export default function Header({ leagueName, leagueCode, mono = false, onToggleM
             </button>
           )}
 
+          {/* New / join league */}
+          {onLogout && (
+            <Link
+              href="/auth/setup"
+              className="text-[10px] font-bold uppercase tracking-widest transition-opacity hover:opacity-60"
+              style={{ color: mono ? "#A09080" : "#4A6B50" }}
+            >
+              + League
+            </Link>
+          )}
+
           {/* Logout */}
           {onLogout && (
             <button
