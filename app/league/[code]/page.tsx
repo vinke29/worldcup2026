@@ -57,8 +57,8 @@ export default async function LeaguePage({
 
   if (!league) redirect("/auth/setup");
 
-  // Fetch league members, predictions, score picks, actual scores, illustration settings, bonus data, and current user profile in parallel
-  const [memberIdsResult, predictionsResult, scorePicksResult, actualScores, illustrationSettings, profileResult] = await Promise.all([
+  // Fetch league members, predictions, score picks, actual scores, illustration settings, bonus data, current user profile, and league count in parallel
+  const [memberIdsResult, predictionsResult, scorePicksResult, actualScores, illustrationSettings, profileResult, leagueCountResult] = await Promise.all([
     supabase
       .from("league_members")
       .select("user_id")
@@ -76,6 +76,10 @@ export default async function LeaguePage({
       .select("id, name, avatar")
       .eq("id", user.id)
       .maybeSingle(),
+    supabase
+      .from("league_members")
+      .select("league_id", { count: "exact", head: true })
+      .eq("user_id", user.id),
   ]);
 
   // Ensure current user is always in the member list (safety fallback if join/insert lagged)
@@ -159,6 +163,7 @@ export default async function LeaguePage({
       initialBonusPicks={allBonusPicks[user.id] ?? {}}
       allMemberBonusPicks={allBonusPicks}
       bonusAnswers={bonusAnswers}
+      leagueCount={leagueCountResult.count ?? 1}
     />
   );
 }

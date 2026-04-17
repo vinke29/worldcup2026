@@ -9,9 +9,10 @@ interface HeaderProps {
   mono?: boolean;
   onToggleMono?: () => void;
   onLogout?: () => void;
+  showLeagueSwitcher?: boolean;
 }
 
-export default function Header({ leagueName, leagueCode, mono = false, onToggleMono, onLogout }: HeaderProps) {
+export default function Header({ leagueName, leagueCode, mono = false, onToggleMono, onLogout, showLeagueSwitcher = false }: HeaderProps) {
   const [copied, setCopied] = useState(false);
 
   function copyCode() {
@@ -55,6 +56,16 @@ export default function Header({ leagueName, leagueCode, mono = false, onToggleM
         )}
 
         <div className="flex items-center gap-2 flex-shrink-0">
+          {/* League switcher */}
+          {showLeagueSwitcher && (
+            <Link
+              href="/"
+              className="text-[10px] font-bold uppercase tracking-widest transition-opacity hover:opacity-60"
+              style={{ color: mono ? "#A09080" : "#4A6B50" }}
+            >
+              ← My Leagues
+            </Link>
+          )}
           {/* Invite code */}
           {leagueCode && (
             <button
