@@ -25,28 +25,7 @@ export async function GET(request: NextRequest) {
     after(() => sendWelcomeEmail(user.email!, name).catch(() => {}));
   }
 
-  // Already in a league (e.g. re-confirming email) — go straight there.
-  const { data: membership } = await supabase
-    .from("league_members")
-    .select("league_id")
-    .eq("user_id", user.id)
-    .limit(1)
-    .maybeSingle();
-
-  if (membership?.league_id) {
-    const { data: league } = await supabase
-      .from("leagues")
-      .select("code")
-      .eq("id", membership.league_id)
-      .single();
-    if (league?.code) {
-      return NextResponse.redirect(new URL(`/league/${league.code}`, origin));
-    }
-  }
-
-  // Read the intent stored in metadata at signup time.
-  // For Google OAuth, metadata won't have these — fall back to query params
-  // (persisted via localStorage → callback page).
+  // Read intent stored in metadata (email signup) or query params (Google OAuth via cookie).
   const meta = user.user_metadata ?? {};
   const incomingParams = new URL(request.url).searchParams;
   const intent = (meta.pending_intent as string) ?? incomingParams.get("intent") ?? "create";
@@ -54,7 +33,7 @@ export async function GET(request: NextRequest) {
   const leagueName = ((meta.pending_league_name as string) ?? incomingParams.get("leagueName") ?? "").trim();
   const mode = (meta.pending_league_mode as string) ?? incomingParams.get("mode") ?? "entire_tournament";
 
-  // ── Join flow ──────────────────────────────────────────────────────────────
+  // ── Join flow (checked before membership redirect so invite links work for existing users) ──
   if (intent === "join" && joinCode) {
     const { data: league } = await supabase
       .from("leagues")
@@ -72,6 +51,25 @@ export async function GET(request: NextRequest) {
     // Code not found — send to setup with join tab open and code pre-filled.
     const params = new URLSearchParams({ intent: "join", code: joinCode });
     return NextResponse.redirect(new URL(`/auth/setup?${params}`, origin));
+  }
+
+  // Already in a league with no invite intent (e.g. re-logging in) — go straight there.
+  const { data: membership } = await supabase
+    .from("league_members")
+    .select("league_id")
+    .eq("user_id", user.id)
+    .limit(1)
+    .maybeSingle();
+
+  if (membership?.league_id) {
+    const { data: league } = await supabase
+      .from("leagues")
+      .select("code")
+      .eq("id", membership.league_id)
+      .single();
+    if (league?.code) {
+      return NextResponse.redirect(new URL(`/league/${league.code}`, origin));
+    }
   }
 
   // ── Create flow ────────────────────────────────────────────────────────────
