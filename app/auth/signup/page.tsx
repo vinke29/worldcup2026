@@ -116,7 +116,7 @@ function SignupForm() {
         <p className="text-center text-sm mt-6" style={{ color: "#4A6B50" }}>
           Already have an account?{" "}
           <Link
-            href="/auth/login"
+            href={setupQuery ? `/auth/login?${setupQuery}` : "/auth/login"}
             className="font-semibold"
             style={{ color: "#D7FF5A" }}
           >
