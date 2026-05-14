@@ -16,12 +16,19 @@ import QualifiersView from "@/components/QualifiersView";
 import BonusTab from "@/components/BonusTab";
 import { MATCHES, PHASES, WHOLE_GROUP_PHASES, type Match, type Outcome, type PhaseId, type Member, type LeagueMode } from "@/lib/mock-data";
 import { computeStandings } from "@/lib/scoring";
-import { computePhaseStatuses } from "@/lib/bracket";
+import { computePhaseStatuses, R32_IDS, R16_IDS, QF_IDS, SF_IDS, FINAL_ID } from "@/lib/bracket";
 import type { ScoreEntry } from "@/lib/bracket";
 import { savePrediction, saveScorePick } from "@/app/actions/predictions";
 import { logout } from "@/app/actions/auth";
 import type { IllustrationSetting } from "@/app/actions/illustrations";
 import { computeWorstGroupTeam, computeBonusPoints } from "@/lib/bonus-scoring";
+import { BONUS_QUESTIONS } from "@/lib/bonus-data";
+
+const GROUP_MATCH_IDS = new Set(MATCHES.filter(m => m.phase.startsWith("group-")).map(m => m.id));
+const KO_PICK_IDS = new Set<string>([...R32_IDS, ...R16_IDS, ...QF_IDS, ...SF_IDS, FINAL_ID]);
+const TOTAL_GROUP = GROUP_MATCH_IDS.size;
+const TOTAL_KO = KO_PICK_IDS.size;
+const TOTAL_BONUS = BONUS_QUESTIONS.length;
 
 interface LeagueClientProps {
   code: string;
@@ -628,14 +635,23 @@ export default function LeagueClient({
             />
             <Leaderboard
               members={computeStandings(matches, members, currentUserId, predictions, scorePredictions, actualScores).map(m => {
-                const memberBonusPicks = m.id === currentUserId ? bonusPicks : (allMemberBonusPicks[m.id] ?? {});
-                const memberWorstTeam = m.id === currentUserId ? worstGroupTeam : computeWorstGroupTeam(MATCHES, m.scorePicks ?? {});
+                const isMe = m.id === currentUserId;
+                const memberPredictions = isMe ? predictions : m.predictions;
+                const memberScorePicks  = isMe ? scorePredictions : (m.scorePicks ?? {});
+                const memberBonusPicks  = isMe ? bonusPicks : (allMemberBonusPicks[m.id] ?? {});
+                const memberWorstTeam   = isMe ? worstGroupTeam : computeWorstGroupTeam(MATCHES, m.scorePicks ?? {});
                 const bonusPts = computeBonusPoints(memberBonusPicks, bonusAnswers, memberWorstTeam);
-                return { ...m, points: m.points + bonusPts, bonusPts };
+                const groupPicked = Object.keys(memberPredictions).filter(id => GROUP_MATCH_IDS.has(id)).length;
+                const koPicked = Object.keys(memberScorePicks).filter(id => KO_PICK_IDS.has(id)).length;
+                const bonusPicked = Object.values(memberBonusPicks).filter(v => !!v).length;
+                return { ...m, points: m.points + bonusPts, bonusPts, groupPicked, koPicked, bonusPicked };
               })}
               currentUserId={currentUserId}
               mono={mono}
               variant="full"
+              groupTotal={TOTAL_GROUP}
+              koTotal={TOTAL_KO}
+              bonusTotal={TOTAL_BONUS}
               onSelectMember={
                 // In full-bracket mode, hide other players' picks until the tournament starts
                 mode === "entire_tournament" && Date.now() < Date.UTC(2026, 5, 11, 23, 0)

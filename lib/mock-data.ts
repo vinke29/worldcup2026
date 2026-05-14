@@ -42,6 +42,7 @@ export interface Member {
   id: string; name: string; avatar: string;
   points: number; correct: number; exact: number; total: number; picked: number;
   groupPts: number; koPts: number; bonusPts: number;
+  groupPicked?: number; koPicked?: number; bonusPicked?: number;
   predictions: Record<string, Outcome>;
   scorePicks?: Record<string, import("./bracket").ScoreEntry>;
 }

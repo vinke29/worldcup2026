@@ -24,7 +24,6 @@ export default function HomeClient() {
   const [name, setName] = useState("");
   const [leagueName, setLeagueName] = useState("");
   const [joinCode, setJoinCode] = useState("");
-  const [leagueMode, setLeagueMode] = useState<"phase_by_phase" | "entire_tournament">("entire_tournament");
   const formRef = useRef<HTMLDivElement>(null);
 
   function handleCreate(e: React.FormEvent) {
@@ -32,7 +31,7 @@ export default function HomeClient() {
     const params = new URLSearchParams();
     if (name.trim()) params.set("name", name.trim());
     if (leagueName.trim()) params.set("leagueName", leagueName.trim());
-    params.set("mode", leagueMode);
+    params.set("mode", "entire_tournament");
     router.push(`/auth/signup?${params}`);
   }
 
@@ -272,32 +271,6 @@ export default function HomeClient() {
                   <Field label="League name" inputBg={t.inputBg} border={t.border} textPrimary={t.textPrimary} textMuted={t.textMuted}>
                     <input type="text" value={leagueName} onChange={(e) => setLeagueName(e.target.value)} placeholder="La Banda del Martes" required />
                   </Field>
-                  <div className="space-y-1.5">
-                    <label className="block text-[10px] font-bold uppercase tracking-widest" style={{ color: t.textMuted }}>Format</label>
-                    <div className="grid grid-cols-2 gap-2">
-                      {([
-                        { value: "phase_by_phase", label: "Phase by phase", sub: "Unlock each round after the last ends" },
-                        { value: "entire_tournament", label: "Full bracket", sub: "Pick every round before it starts" },
-                      ] as const).map(({ value, label, sub }) => {
-                        const active = leagueMode === value;
-                        return (
-                          <button
-                            key={value}
-                            type="button"
-                            onClick={() => setLeagueMode(value)}
-                            className="text-left px-3 py-3 rounded-xl border transition-all cursor-pointer"
-                            style={{
-                              backgroundColor: active ? "rgba(215,255,90,0.06)" : t.inputBg,
-                              borderColor: active ? t.accent : t.border,
-                            }}
-                          >
-                            <p className="text-xs font-black mb-0.5" style={{ color: active ? t.accent : t.textPrimary }}>{label}</p>
-                            <p className="text-[10px] leading-snug" style={{ color: t.textMuted }}>{sub}</p>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
                   <Btn>Create league →</Btn>
                 </form>
               ) : (

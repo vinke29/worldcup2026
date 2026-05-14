@@ -141,7 +141,7 @@ export default async function LeaguePage({
   });
 
   const myMember = members.find((m) => m.id === user.id);
-  const leagueMode = (league.mode ?? "phase_by_phase") as LeagueMode;
+  const leagueMode = (league.mode ?? "entire_tournament") as LeagueMode;
 
   // Fetch bonus data for all members + correct answers
   const [allBonusPicks, bonusAnswers] = await Promise.all([

@@ -23,9 +23,9 @@ export async function createLeague(
   const name = (formData.get("leagueName") as string).trim();
   if (!name) return "League name is required.";
 
-  const mode = (formData.get("mode") as string | null) ?? "phase_by_phase";
+  const mode = (formData.get("mode") as string | null) ?? "entire_tournament";
   const validModes = ["phase_by_phase", "entire_tournament"];
-  const safeMode = validModes.includes(mode) ? mode : "phase_by_phase";
+  const safeMode = validModes.includes(mode) ? mode : "entire_tournament";
 
   // Ensure the generated code is unique
   let code = generateCode();

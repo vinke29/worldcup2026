@@ -6,9 +6,12 @@ interface LeaderboardProps {
   mono?: boolean;
   variant?: "compact" | "full";
   onSelectMember?: (member: Member) => void;
+  groupTotal?: number;
+  koTotal?: number;
+  bonusTotal?: number;
 }
 
-export default function Leaderboard({ members, currentUserId, mono = false, variant = "compact", onSelectMember }: LeaderboardProps) {
+export default function Leaderboard({ members, currentUserId, mono = false, variant = "compact", onSelectMember, groupTotal, koTotal, bonusTotal }: LeaderboardProps) {
   const sorted = [...members].sort((a, b) => b.points - a.points);
 
   const t = mono
@@ -80,6 +83,13 @@ export default function Leaderboard({ members, currentUserId, mono = false, vari
                       member.koPts > 0    && `KO ${member.koPts}`,
                       member.bonusPts > 0 && `Bonus ${member.bonusPts}`,
                     ].filter(Boolean).join(" · ")}
+                  </span>
+                )}
+                {groupTotal !== undefined && koTotal !== undefined && bonusTotal !== undefined && (
+                  <span className="hidden sm:block text-[10px] tabular-nums mt-0.5" style={{ color: t.textMuted }}>
+                    R1 <span style={{ color: (member.groupPicked ?? 0) === groupTotal ? (mono ? t.text : t.accent) : t.textSec }}>{member.groupPicked ?? 0}/{groupTotal}</span>
+                    {" · "}KO <span style={{ color: (member.koPicked ?? 0) === koTotal ? (mono ? t.text : t.accent) : t.textSec }}>{member.koPicked ?? 0}/{koTotal}</span>
+                    {" · "}Bonus <span style={{ color: (member.bonusPicked ?? 0) === bonusTotal ? (mono ? t.text : t.accent) : t.textSec }}>{member.bonusPicked ?? 0}/{bonusTotal}</span>
                   </span>
                 )}
               </div>
