@@ -132,6 +132,30 @@ create policy "match_scores: authenticated can write"
   using (auth.role() = 'authenticated')
   with check (auth.role() = 'authenticated');
 
+-- ── illustration_settings ────────────────────────────────────────────────────
+-- Per-match illustration position/scale set by admin; read by all authenticated.
+create table if not exists public.illustration_settings (
+  match_id   text primary key,
+  x_pct      numeric not null,
+  y_pct      numeric not null,
+  scale      numeric not null,
+  updated_at timestamptz default now()
+);
+
+alter table public.illustration_settings enable row level security;
+
+drop policy if exists "illustration_settings: authenticated can read"  on public.illustration_settings;
+drop policy if exists "illustration_settings: authenticated can write" on public.illustration_settings;
+
+create policy "illustration_settings: authenticated can read"
+  on public.illustration_settings for select using (auth.role() = 'authenticated');
+
+-- Write access is open to authenticated; the server action enforces admin-only.
+create policy "illustration_settings: authenticated can write"
+  on public.illustration_settings for all
+  using (auth.role() = 'authenticated')
+  with check (auth.role() = 'authenticated');
+
 -- ── bonus_picks ──────────────────────────────────────────────────────────────
 -- User answers to bonus questions (one row per user/question).
 create table if not exists public.bonus_picks (
