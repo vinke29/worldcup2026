@@ -4,7 +4,7 @@ import { useState, useMemo, useTransition, useRef, useCallback } from "react";
 import type { Match, Phase, PhaseId } from "@/lib/mock-data";
 import { saveScore, saveAllScores, clearAllScores } from "@/app/actions/scores";
 import { saveIllustrationSetting, type IllustrationSetting } from "@/app/actions/illustrations";
-import { saveBonusAnswer } from "@/app/actions/bonuses";
+import { saveBonusAnswer, clearBonusAnswer } from "@/app/actions/bonuses";
 import { BONUS_QUESTIONS, playerListForQuestion } from "@/lib/bonus-data";
 import {
   R32_LABELS, R16_IDS, QF_IDS, SF_IDS, THIRD_PLACE_ID, FINAL_ID,
@@ -141,6 +141,20 @@ export default function AdminClient({ matches, phases, initialScores, initialIll
       await saveBonusAnswer(key, value);
       setBonusSaved(prev => ({ ...prev, [key]: true }));
     });
+  }
+
+  function handleClearBonusAnswer(key: string) {
+    setBonusAnswers(prev => {
+      const next = { ...prev };
+      delete next[key];
+      return next;
+    });
+    setBonusSaved(prev => {
+      const next = { ...prev };
+      delete next[key];
+      return next;
+    });
+    startTransition(async () => { await clearBonusAnswer(key); });
   }
 
   function handleIllustrationChange(matchId: string, setting: IllustrationSetting) {
@@ -354,7 +368,7 @@ export default function AdminClient({ matches, phases, initialScores, initialIll
           <p className="text-xs" style={{ color: T.textMuted }}>
             Set the correct answer for each bonus question. Once saved, all users will see their score.
           </p>
-          {BONUS_QUESTIONS.filter(q => q.type !== "auto").map(q => {
+          {BONUS_QUESTIONS.filter(q => q.type !== "auto" && q.key !== "total_goals").map(q => {
             const players = playerListForQuestion(q.key);
             return (
               <div
@@ -370,9 +384,21 @@ export default function AdminClient({ matches, phases, initialScores, initialIll
                       <p className="text-[11px]" style={{ color: T.textMuted }}>{q.description}</p>
                     </div>
                   </div>
-                  {bonusSaved[q.key] && (
-                    <span className="text-[10px] font-bold" style={{ color: "#4ADE80" }}>✓ Saved</span>
-                  )}
+                  <div className="flex items-center gap-2">
+                    {bonusAnswers[q.key] !== undefined && (
+                      <button
+                        type="button"
+                        onClick={() => handleClearBonusAnswer(q.key)}
+                        className="text-[10px] font-bold uppercase tracking-wider cursor-pointer"
+                        style={{ color: T.textSec, backgroundColor: "transparent", border: "none", padding: 0 }}
+                      >
+                        Clear
+                      </button>
+                    )}
+                    {bonusSaved[q.key] && (
+                      <span className="text-[10px] font-bold" style={{ color: "#4ADE80" }}>✓ Saved</span>
+                    )}
+                  </div>
                 </div>
 
                 {q.type === "player" ? (
@@ -408,12 +434,18 @@ export default function AdminClient({ matches, phases, initialScores, initialIll
                     </div>
                   </div>
                 ) : (
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleBonusAnswer(q.key, String(Math.max(0, (parseInt(bonusAnswers[q.key] ?? "0") || 0) - 10)))}
+                      className="h-11 px-3 rounded-lg text-sm font-black cursor-pointer tabular-nums"
+                      style={{ backgroundColor: T.inner, border: `1px solid ${T.border}`, color: T.text }}
+                    >−10</button>
                     <button
                       type="button"
                       onClick={() => handleBonusAnswer(q.key, String(Math.max(0, (parseInt(bonusAnswers[q.key] ?? "0") || 0) - 1)))}
-                      className="w-9 h-9 rounded-lg flex items-center justify-center text-xl font-black cursor-pointer"
-                      style={{ backgroundColor: T.inner, border: `1px solid ${T.border}`, color: T.textSec }}
+                      className="w-11 h-11 rounded-lg flex items-center justify-center text-xl font-black cursor-pointer"
+                      style={{ backgroundColor: T.inner, border: `1px solid ${T.border}`, color: T.text }}
                     >−</button>
                     <span className="flex-1 text-center text-2xl font-black tabular-nums" style={{ color: T.text }}>
                       {bonusAnswers[q.key] ?? "—"}
@@ -421,14 +453,58 @@ export default function AdminClient({ matches, phases, initialScores, initialIll
                     <button
                       type="button"
                       onClick={() => handleBonusAnswer(q.key, String((parseInt(bonusAnswers[q.key] ?? "0") || 0) + 1))}
-                      className="w-9 h-9 rounded-lg flex items-center justify-center text-xl font-black cursor-pointer"
-                      style={{ backgroundColor: T.inner, border: `1px solid ${T.border}`, color: T.textSec }}
+                      className="w-11 h-11 rounded-lg flex items-center justify-center text-xl font-black cursor-pointer"
+                      style={{ backgroundColor: T.inner, border: `1px solid ${T.border}`, color: T.text }}
                     >+</button>
+                    <button
+                      type="button"
+                      onClick={() => handleBonusAnswer(q.key, String((parseInt(bonusAnswers[q.key] ?? "0") || 0) + 10))}
+                      className="h-11 px-3 rounded-lg text-sm font-black cursor-pointer tabular-nums"
+                      style={{ backgroundColor: T.inner, border: `1px solid ${T.border}`, color: T.text }}
+                    >+10</button>
                   </div>
                 )}
               </div>
             );
           })}
+
+          {/* Total Goals — auto-calculated from saved match scores */}
+          {(() => {
+            const totalGoals = Object.values(scores).reduce((sum, s) => sum + (s.home || 0) + (s.away || 0), 0);
+            return (
+              <div
+                className="rounded-2xl p-4"
+                style={{ backgroundColor: T.card, border: `1px solid ${T.border}` }}
+              >
+                <div className="flex items-center justify-between gap-2 mb-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">🎯</span>
+                    <div>
+                      <p className="text-sm font-black" style={{ color: T.text }}>Total Goals</p>
+                      <p className="text-[11px]" style={{ color: T.textMuted }}>Auto-calculated from saved match scores. No input needed.</p>
+                    </div>
+                  </div>
+                  {bonusAnswers["total_goals"] !== undefined && (
+                    <button
+                      type="button"
+                      onClick={() => handleClearBonusAnswer("total_goals")}
+                      className="text-[10px] font-bold uppercase tracking-wider cursor-pointer"
+                      style={{ color: T.textSec, backgroundColor: "transparent", border: "none", padding: 0 }}
+                    >
+                      Clear stored ({bonusAnswers["total_goals"]})
+                    </button>
+                  )}
+                </div>
+                <div
+                  className="flex items-center justify-between px-3 py-3 rounded-xl"
+                  style={{ backgroundColor: T.inner, border: `1px solid ${T.border}` }}
+                >
+                  <span className="text-xs" style={{ color: T.textSec }}>Running total</span>
+                  <span className="text-2xl font-black tabular-nums" style={{ color: T.accent }}>{totalGoals}</span>
+                </div>
+              </div>
+            );
+          })()}
 
           {/* Worst Group Team — informational only, auto-calculated per user */}
           <div

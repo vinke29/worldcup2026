@@ -79,7 +79,7 @@ export default function BonusTab({
 
   const totalEarned = BONUS_QUESTIONS.reduce((acc, q) => {
     const actual = bonusAnswers[q.key];
-    if (!actual) return acc;
+    if (!actual || !tournamentStarted) return acc;
     const userAnswer = q.type === "auto" ? (worstGroupTeam ?? "") : (picks[q.key] ?? "");
     return acc + scoreBonusQuestion(q.key, userAnswer, actual);
   }, 0);
@@ -88,7 +88,7 @@ export default function BonusTab({
     q.type === "auto" ? !!worstGroupTeam : !!picks[q.key]
   ).length;
 
-  const hasAnyAnswers = Object.keys(bonusAnswers).length > 0;
+  const hasAnyAnswers = tournamentStarted && Object.keys(bonusAnswers).length > 0;
 
   return (
     <div className="flex flex-col gap-4">
@@ -137,7 +137,7 @@ export default function BonusTab({
         const userAnswer = q.type === "auto" ? (worstGroupTeam ?? "") : (picks[q.key] ?? "");
         const actual = bonusAnswers[q.key];
         const isAnswered = !!userAnswer;
-        const isRevealed = !!actual;
+        const isRevealed = !!actual && tournamentStarted;
         const pts = isRevealed ? scoreBonusQuestion(q.key, userAnswer, actual) : null;
         const isCorrect = pts !== null && pts > 0;
         const isWrong = pts !== null && pts === 0 && isAnswered;

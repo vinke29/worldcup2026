@@ -103,6 +103,16 @@ export default function LeagueClient({
     return () => clearInterval(id);
   }, [router]);
 
+  const actualTotalGoals = useMemo(
+    () => Object.values(actualScores).reduce((sum, s) => sum + (s.home || 0) + (s.away || 0), 0),
+    [actualScores],
+  );
+  const tournamentStarted = Object.keys(actualScores).length > 0 || Date.now() >= Date.UTC(2026, 5, 11, 20, 0);
+  const effectiveBonusAnswers = useMemo(() => {
+    if (!tournamentStarted) return {} as Record<string, string>;
+    return actualTotalGoals > 0 ? { ...bonusAnswers, total_goals: String(actualTotalGoals) } : bonusAnswers;
+  }, [bonusAnswers, actualTotalGoals, tournamentStarted]);
+
   const defaultNav = getDefaultNav();
   const [activePhase, setActivePhase] = useState<PhaseId>(
     mode === "entire_tournament" ? "group-a" : defaultNav.phase
@@ -640,7 +650,7 @@ export default function LeagueClient({
                 const memberScorePicks  = isMe ? scorePredictions : (m.scorePicks ?? {});
                 const memberBonusPicks  = isMe ? bonusPicks : (allMemberBonusPicks[m.id] ?? {});
                 const memberWorstTeam   = isMe ? worstGroupTeam : computeWorstGroupTeam(MATCHES, m.scorePicks ?? {});
-                const bonusPts = computeBonusPoints(memberBonusPicks, bonusAnswers, memberWorstTeam);
+                const bonusPts = computeBonusPoints(memberBonusPicks, effectiveBonusAnswers, memberWorstTeam);
                 const groupPicked = Object.keys(memberPredictions).filter(id => GROUP_MATCH_IDS.has(id)).length;
                 const koPicked = Object.keys(memberScorePicks).filter(id => KO_PICK_IDS.has(id)).length;
                 const bonusPicked = Object.values(memberBonusPicks).filter(v => !!v).length;
@@ -769,10 +779,10 @@ export default function LeagueClient({
         {mobileView === "bonuses" && (
           <BonusTab
             bonusPicks={bonusPicks}
-            bonusAnswers={bonusAnswers}
+            bonusAnswers={effectiveBonusAnswers}
             worstGroupTeam={worstGroupTeam}
             isPreview={isPreview}
-            tournamentStarted={Object.keys(actualScores).length > 0 || Date.now() >= Date.UTC(2026, 5, 11, 20, 0)}
+            tournamentStarted={tournamentStarted}
             mono={mono}
             onPickChange={(key, value) => setBonusPicks(prev => ({ ...prev, [key]: value }))}
           />

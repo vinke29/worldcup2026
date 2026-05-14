@@ -66,3 +66,9 @@ export async function saveBonusAnswer(questionKey: string, answer: string): Prom
     { onConflict: "question_key" },
   );
 }
+
+/** Admin: remove the stored answer for a bonus question. */
+export async function clearBonusAnswer(questionKey: string): Promise<void> {
+  const supabase = await createClient();
+  await supabase.from("bonus_answers").delete().eq("question_key", questionKey);
+}
