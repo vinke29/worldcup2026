@@ -21,7 +21,7 @@ import type { ScoreEntry } from "@/lib/bracket";
 import { savePrediction, saveScorePick } from "@/app/actions/predictions";
 import { logout } from "@/app/actions/auth";
 import type { IllustrationSetting } from "@/app/actions/illustrations";
-import { computeWorstGroupTeam, computeBonusPoints } from "@/lib/bonus-scoring";
+import { computeWorstGroupTeam, computeBonusPoints, computePredictedTotalGoals } from "@/lib/bonus-scoring";
 import { BONUS_QUESTIONS } from "@/lib/bonus-data";
 
 const GROUP_MATCH_IDS = new Set(MATCHES.filter(m => m.phase.startsWith("group-")).map(m => m.id));
@@ -167,6 +167,12 @@ export default function LeagueClient({
   // Auto-calculate worst group team from user's score picks
   const worstGroupTeam = useMemo(
     () => computeWorstGroupTeam(MATCHES, scorePredictions),
+    [scorePredictions]
+  );
+
+  // Auto-calculate predicted total goals from user's score picks
+  const predictedTotalGoals = useMemo(
+    () => computePredictedTotalGoals(scorePredictions),
     [scorePredictions]
   );
 
@@ -650,7 +656,8 @@ export default function LeagueClient({
                 const memberScorePicks  = isMe ? scorePredictions : (m.scorePicks ?? {});
                 const memberBonusPicks  = isMe ? bonusPicks : (allMemberBonusPicks[m.id] ?? {});
                 const memberWorstTeam   = isMe ? worstGroupTeam : computeWorstGroupTeam(MATCHES, m.scorePicks ?? {});
-                const bonusPts = computeBonusPoints(memberBonusPicks, effectiveBonusAnswers, memberWorstTeam);
+                const memberPredictedGoals = isMe ? predictedTotalGoals : computePredictedTotalGoals(m.scorePicks ?? {});
+                const bonusPts = computeBonusPoints(memberBonusPicks, effectiveBonusAnswers, memberWorstTeam, memberPredictedGoals);
                 const groupPicked = Object.keys(memberPredictions).filter(id => GROUP_MATCH_IDS.has(id)).length;
                 const koPicked = Object.keys(memberScorePicks).filter(id => KO_PICK_IDS.has(id)).length;
                 const bonusPicked = Object.values(memberBonusPicks).filter(v => !!v).length;
@@ -781,6 +788,7 @@ export default function LeagueClient({
             bonusPicks={bonusPicks}
             bonusAnswers={effectiveBonusAnswers}
             worstGroupTeam={worstGroupTeam}
+            predictedTotalGoals={predictedTotalGoals}
             isPreview={isPreview}
             tournamentStarted={tournamentStarted}
             mono={mono}

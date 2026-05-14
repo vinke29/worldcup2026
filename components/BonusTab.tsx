@@ -19,6 +19,7 @@ interface BonusTabProps {
   bonusPicks: Record<string, string>;          // current user's picks
   bonusAnswers: Record<string, string>;         // admin-set actual answers (empty if not revealed)
   worstGroupTeam: string | null;               // auto-calculated from user's score picks
+  predictedTotalGoals: number | null;          // auto-calculated sum of user's score picks
   isPreview?: boolean;
   tournamentStarted?: boolean;                  // true once any match score is set or past Jun 11
   mono?: boolean;
@@ -57,6 +58,7 @@ export default function BonusTab({
   bonusPicks: initialPicks,
   bonusAnswers,
   worstGroupTeam,
+  predictedTotalGoals,
   isPreview = false,
   tournamentStarted = false,
   mono = false,
@@ -77,15 +79,21 @@ export default function BonusTab({
     });
   }
 
+  const autoAnswer = (key: string): string => {
+    if (key === "worst_group_team") return worstGroupTeam ?? "";
+    if (key === "total_goals") return predictedTotalGoals != null ? String(predictedTotalGoals) : "";
+    return "";
+  };
+
   const totalEarned = BONUS_QUESTIONS.reduce((acc, q) => {
     const actual = bonusAnswers[q.key];
     if (!actual || !tournamentStarted) return acc;
-    const userAnswer = q.type === "auto" ? (worstGroupTeam ?? "") : (picks[q.key] ?? "");
+    const userAnswer = q.type === "auto" ? autoAnswer(q.key) : (picks[q.key] ?? "");
     return acc + scoreBonusQuestion(q.key, userAnswer, actual);
   }, 0);
 
   const answeredCount = BONUS_QUESTIONS.filter((q) =>
-    q.type === "auto" ? !!worstGroupTeam : !!picks[q.key]
+    q.type === "auto" ? !!autoAnswer(q.key) : !!picks[q.key]
   ).length;
 
   const hasAnyAnswers = tournamentStarted && Object.keys(bonusAnswers).length > 0;
@@ -134,7 +142,7 @@ export default function BonusTab({
 
       {/* Question cards */}
       {BONUS_QUESTIONS.map((q) => {
-        const userAnswer = q.type === "auto" ? (worstGroupTeam ?? "") : (picks[q.key] ?? "");
+        const userAnswer = q.type === "auto" ? autoAnswer(q.key) : (picks[q.key] ?? "");
         const actual = bonusAnswers[q.key];
         const isAnswered = !!userAnswer;
         const isRevealed = !!actual && tournamentStarted;
@@ -224,7 +232,13 @@ export default function BonusTab({
               {/* Hide picker once answer is revealed — result row below replaces it */}
               {!isRevealed && (
                 q.type === "auto" ? (
-                  <AutoAnswer team={worstGroupTeam} t={t} />
+                  <AutoAnswer
+                    value={autoAnswer(q.key)}
+                    emptyHint={q.key === "total_goals"
+                      ? "Make score predictions to auto-calculate your total goals"
+                      : "Make score predictions to auto-calculate your worst group team"}
+                    t={t}
+                  />
                 ) : q.type === "player" ? (
                   <PlayerPicker
                     questionKey={q.key}
@@ -285,25 +299,23 @@ export default function BonusTab({
   );
 }
 
-// ── Auto answer (Worst Group Team) ────────────────────────────────────────────
-function AutoAnswer({ team, t }: { team: string | null; t: typeof T_DARK }) {
+// ── Auto answer (derived from user's picks) ───────────────────────────────────
+function AutoAnswer({ value, emptyHint, t }: { value: string; emptyHint: string; t: typeof T_DARK }) {
   return (
     <div
       className="flex items-center gap-3 px-3 py-2.5 rounded-xl"
       style={{ backgroundColor: t.inner, border: `1px solid ${t.border}` }}
     >
       <div className="flex-1">
-        {team ? (
+        {value ? (
           <>
             <p className="text-[10px] font-black uppercase tracking-widest mb-0.5" style={{ color: t.textMuted }}>
               Auto-calculated from your picks
             </p>
-            <p className="text-sm font-black" style={{ color: t.textPrimary }}>{team}</p>
+            <p className="text-sm font-black" style={{ color: t.textPrimary }}>{value}</p>
           </>
         ) : (
-          <p className="text-xs" style={{ color: t.textMuted }}>
-            Make score predictions to auto-calculate your worst group team
-          </p>
+          <p className="text-xs" style={{ color: t.textMuted }}>{emptyHint}</p>
         )}
       </div>
       <span className="text-xs px-2 py-1 rounded-lg font-bold" style={{ backgroundColor: t.border, color: t.textSec }}>

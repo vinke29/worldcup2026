@@ -2,6 +2,15 @@ import type { Match } from "./mock-data";
 import type { ScoreEntry } from "./bracket";
 import { BONUS_QUESTIONS } from "./bonus-data";
 
+/** Sum of all home + away goals across a user's score picks. Returns null if no picks. */
+export function computePredictedTotalGoals(
+  scorePicks: Record<string, ScoreEntry>,
+): number | null {
+  const entries = Object.values(scorePicks);
+  if (entries.length === 0) return null;
+  return entries.reduce((sum, p) => sum + (p.home || 0) + (p.away || 0), 0);
+}
+
 /** Simulate group standings from a user's score picks and return the worst team name. */
 export function computeWorstGroupTeam(
   matches: Match[],
@@ -58,12 +67,11 @@ export function scoreBonusQuestion(
   const q = BONUS_QUESTIONS.find((q) => q.key === key);
   if (!q || !userAnswer || !actualAnswer) return 0;
 
-  if (q.type === "number") {
+  if (q.numberScoring) {
     const userNum = parseInt(userAnswer);
     const actualNum = parseInt(actualAnswer);
     if (isNaN(userNum) || isNaN(actualNum)) return 0;
     const diff = Math.abs(userNum - actualNum);
-    if (!q.numberScoring) return diff === 0 ? 5 : 0;
     // numberScoring: [exactPts, [withinN, pts], ...]
     if (diff === 0) return q.numberScoring[0];
     for (const [withinN, pts] of q.numberScoring.slice(1) as Array<[number, number]>) {
@@ -72,7 +80,7 @@ export function scoreBonusQuestion(
     return 0;
   }
 
-  // player or auto: exact string match (case-insensitive trim)
+  // player or auto (non-numeric): exact string match (case-insensitive trim)
   return userAnswer.trim().toLowerCase() === actualAnswer.trim().toLowerCase() ? 5 : 0;
 }
 
@@ -81,12 +89,17 @@ export function computeBonusPoints(
   bonusPicks: Record<string, string>,
   bonusAnswers: Record<string, string>,
   worstGroupTeam: string | null,
+  predictedTotalGoals: number | null = null,
 ): number {
+  const autoByKey: Record<string, string> = {
+    worst_group_team: worstGroupTeam ?? "",
+    total_goals: predictedTotalGoals != null ? String(predictedTotalGoals) : "",
+  };
   let pts = 0;
   for (const q of BONUS_QUESTIONS) {
     const actual = bonusAnswers[q.key];
     if (!actual) continue;
-    const userAnswer = q.type === "auto" ? (worstGroupTeam ?? "") : (bonusPicks[q.key] ?? "");
+    const userAnswer = q.type === "auto" ? (autoByKey[q.key] ?? "") : (bonusPicks[q.key] ?? "");
     pts += scoreBonusQuestion(q.key, userAnswer, actual);
   }
   return pts;

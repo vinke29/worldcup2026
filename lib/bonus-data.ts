@@ -45,9 +45,9 @@ export const BONUS_QUESTIONS: BonusQuestion[] = [
   {
     key: "total_goals",
     label: "Total Goals",
-    description: "Total goals scored in the tournament (104 matches)",
+    description: "Auto-calculated from your match score picks — your predicted total goals across the tournament",
     icon: "🎯",
-    type: "number",
+    type: "auto",
     numberScoring: [5, [3, 3], [7, 1]],
     lockDate: "Jun 11",
   },
