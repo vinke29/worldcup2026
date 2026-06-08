@@ -660,7 +660,11 @@ export default function LeagueClient({
                 const bonusPts = computeBonusPoints(memberBonusPicks, effectiveBonusAnswers, memberWorstTeam, memberPredictedGoals);
                 const groupPicked = Object.keys(memberPredictions).filter(id => GROUP_MATCH_IDS.has(id)).length;
                 const koPicked = Object.keys(memberScorePicks).filter(id => KO_PICK_IDS.has(id)).length;
-                const bonusPicked = Object.values(memberBonusPicks).filter(v => !!v).length;
+                const bonusPicked = BONUS_QUESTIONS.filter(q =>
+                  q.type === "auto"
+                    ? (q.key === "worst_group_team" ? !!memberWorstTeam : memberPredictedGoals != null)
+                    : !!memberBonusPicks[q.key]
+                ).length;
                 return { ...m, points: m.points + bonusPts, bonusPts, groupPicked, koPicked, bonusPicked };
               })}
               currentUserId={currentUserId}

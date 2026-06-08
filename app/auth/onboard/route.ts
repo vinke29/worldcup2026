@@ -44,7 +44,10 @@ export async function GET(request: NextRequest) {
     if (league) {
       await supabase
         .from("league_members")
-        .upsert({ league_id: league.id, user_id: user.id });
+        .upsert(
+          { league_id: league.id, user_id: user.id },
+          { ignoreDuplicates: true }
+        );
       return NextResponse.redirect(new URL(`/league/${league.code}`, origin));
     }
 

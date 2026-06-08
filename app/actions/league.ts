@@ -78,10 +78,13 @@ export async function joinLeague(
   if (error) return error.message;
   if (!league) return "League not found. Check the invite code and try again.";
 
-  // Upsert in case they're already a member
+  // Insert membership; ignore if they're already a member (no UPDATE RLS policy)
   const { error: memberError } = await supabase
     .from("league_members")
-    .upsert({ league_id: league.id, user_id: user.id });
+    .upsert(
+      { league_id: league.id, user_id: user.id },
+      { ignoreDuplicates: true }
+    );
 
   if (memberError) return memberError.message;
 
