@@ -700,13 +700,14 @@ export default function LeagueClient({
               koTotal={TOTAL_KO}
               bonusTotal={TOTAL_BONUS}
               onSelectMember={
-                // In full-bracket mode, hide other players' picks until the tournament starts
-                mode === "entire_tournament" && Date.now() < Date.UTC(2026, 5, 11, 23, 0)
+                // In full-bracket mode, hide other players' picks until picks freeze
+                // (tournament kickoff or any score entered) so they can't be copied.
+                mode === "entire_tournament" && !isTournamentLocked
                   ? undefined
                   : setSelectedMember
               }
             />
-            {mode === "entire_tournament" && Date.now() < Date.UTC(2026, 5, 11, 23, 0) && (
+            {mode === "entire_tournament" && !isTournamentLocked && (
               <p className="text-center text-xs" style={{ color: t.textMuted }}>
                 🔒 Friend picks visible once the tournament kicks off · Jun 11
               </p>
