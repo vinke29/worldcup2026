@@ -9,6 +9,22 @@ import type { LeagueMode } from "@/lib/mock-data";
 
 const PREVIEW_CODE = "BANDA26";
 
+// PostgREST caps responses at 1000 rows. Page through results so large leagues
+// don't silently lose picks (this caused KO picks to vanish from standings).
+async function fetchAllRows<T>(
+  runPage: (from: number, to: number) => PromiseLike<{ data: T[] | null }>,
+): Promise<T[]> {
+  const pageSize = 1000;
+  const all: T[] = [];
+  for (let from = 0; ; from += pageSize) {
+    const { data } = await runPage(from, from + pageSize - 1);
+    if (!data?.length) break;
+    all.push(...data);
+    if (data.length < pageSize) break;
+  }
+  return all;
+}
+
 export default async function LeaguePage({
   params,
 }: {
@@ -57,18 +73,13 @@ export default async function LeaguePage({
 
   if (!league) redirect("/auth/setup");
 
-  // Fetch league members, predictions, score picks, actual scores, illustration settings, bonus data, current user profile, and user's leagues in parallel
-  const [memberIdsResult, predictionsResult, scorePicksResult, actualScores, illustrationSettings, profileResult, userLeaguesResult] = await Promise.all([
+  // Fetch league members, actual scores, illustration settings, current user profile, and user's leagues in parallel.
+  // Predictions/score picks are fetched afterward, scoped to this league's members (see below).
+  const [memberIdsResult, actualScores, illustrationSettings, profileResult, userLeaguesResult] = await Promise.all([
     supabase
       .from("league_members")
       .select("user_id")
       .eq("league_id", league.id),
-    supabase
-      .from("predictions")
-      .select("user_id, match_id, outcome"),
-    supabase
-      .from("score_picks")
-      .select("user_id, match_id, home_score, away_score, pens_winner"),
     getActualScores(),
     getIllustrationSettings(),
     supabase
@@ -100,9 +111,26 @@ export default async function LeaguePage({
     profileMap.set(user.id, profileResult.data);
   }
 
-  // Filter predictions/picks to league members
-  const allPredictions = (predictionsResult.data ?? []).filter(p => memberIds.includes(p.user_id));
-  const allScorePicks  = (scorePicksResult.data  ?? []).filter(p => memberIds.includes(p.user_id));
+  // Fetch predictions/picks scoped to this league's members, paginated past the
+  // 1000-row PostgREST cap (predictions are per-user, shared across leagues).
+  type PredRow = { user_id: string; match_id: string; outcome: string };
+  type ScoreRow = { user_id: string; match_id: string; home_score: number; away_score: number; pens_winner: string | null };
+  const [allPredictions, allScorePicks] = await Promise.all([
+    fetchAllRows<PredRow>((from, to) =>
+      supabase.from("predictions")
+        .select("user_id, match_id, outcome")
+        .in("user_id", memberIds)
+        .order("user_id").order("match_id")
+        .range(from, to)
+    ),
+    fetchAllRows<ScoreRow>((from, to) =>
+      supabase.from("score_picks")
+        .select("user_id, match_id, home_score, away_score, pens_winner")
+        .in("user_id", memberIds)
+        .order("user_id").order("match_id")
+        .range(from, to)
+    ),
+  ]);
 
   // Build Member[] objects for the leaderboard
   const members: Member[] = memberIds.map((userId) => {
