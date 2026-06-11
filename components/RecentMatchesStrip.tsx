@@ -317,10 +317,10 @@ function MatchRow({
         </div>
 
         {/* Pick badge + expand chevron */}
-        <div className="w-14 sm:w-16 flex-shrink-0 flex items-center justify-end gap-1">
+        <div className="w-[68px] sm:w-16 flex-shrink-0 flex items-center justify-end gap-1">
           {scorePick !== undefined ? (
             <span
-              className="text-[10px] font-black px-2 py-0.5 rounded-full tabular-nums"
+              className="text-[10px] font-black px-2 py-0.5 rounded-full tabular-nums whitespace-nowrap"
               style={{
                 backgroundColor: isCorrect
                   ? (mono ? "rgba(22,163,74,0.1)" : "rgba(74,222,128,0.12)")
@@ -335,7 +335,7 @@ function MatchRow({
             </span>
           ) : prediction ? (
             <span
-              className="text-[10px] font-bold px-2 py-0.5 rounded-full uppercase"
+              className="text-[10px] font-bold px-2 py-0.5 rounded-full uppercase whitespace-nowrap"
               style={{
                 backgroundColor: isCorrect
                   ? (mono ? "rgba(22,163,74,0.1)" : "rgba(74,222,128,0.12)")
