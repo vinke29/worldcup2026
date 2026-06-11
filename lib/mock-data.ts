@@ -43,6 +43,7 @@ export interface Member {
   points: number; correct: number; exact: number; total: number; picked: number;
   groupPts: number; koPts: number; bonusPts: number;
   groupPicked?: number; koPicked?: number; bonusPicked?: number;
+  championFlag?: string | null; championTeam?: string | null;
   predictions: Record<string, Outcome>;
   scorePicks?: Record<string, import("./bracket").ScoreEntry>;
 }

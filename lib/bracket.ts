@@ -297,6 +297,21 @@ export function resolveBracketTeams(
   };
 }
 
+/**
+ * The team a member predicts to win the tournament: the winner of their
+ * predicted final, derived purely from their own group + knockout score picks
+ * (useActual=false). Returns null until they've picked a final result.
+ */
+export function predictedChampion(
+  matches: Match[],
+  scorePicks: Record<string, ScoreEntry>,
+): TeamRow | null {
+  if (!scorePicks[FINAL_ID]) return null;
+  const { top, bot } = resolveR32Pairs(matches, scorePicks, false);
+  const bracket = resolveBracketTeams(top, bot, scorePicks);
+  return matchWinner(bracket.final, scorePicks[FINAL_ID]);
+}
+
 // ── Phase status computation ──────────────────────────────────────────────────
 
 import type { PhaseId } from "./mock-data";

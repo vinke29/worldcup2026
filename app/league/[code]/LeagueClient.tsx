@@ -16,7 +16,7 @@ import QualifiersView from "@/components/QualifiersView";
 import BonusTab from "@/components/BonusTab";
 import { MATCHES, PHASES, WHOLE_GROUP_PHASES, type Match, type Outcome, type PhaseId, type Member, type LeagueMode } from "@/lib/mock-data";
 import { computeStandings } from "@/lib/scoring";
-import { computePhaseStatuses, R32_IDS, R16_IDS, QF_IDS, SF_IDS, FINAL_ID } from "@/lib/bracket";
+import { computePhaseStatuses, predictedChampion, R32_IDS, R16_IDS, QF_IDS, SF_IDS, FINAL_ID } from "@/lib/bracket";
 import type { ScoreEntry } from "@/lib/bracket";
 import { savePrediction, saveScorePick } from "@/app/actions/predictions";
 import { logout } from "@/app/actions/auth";
@@ -694,7 +694,11 @@ export default function LeagueClient({
                     ? (q.key === "worst_group_team" ? !!memberWorstTeam : memberPredictedGoals != null)
                     : !!memberBonusPicks[q.key]
                 ).length;
-                return { ...m, points: m.points + bonusPts, bonusPts, groupPicked, koPicked, bonusPicked };
+                // Predicted champion flag — your own always shows; others only once picks freeze
+                const showChamp = isMe || mode !== "entire_tournament" || isTournamentLocked;
+                const champ = showChamp ? predictedChampion(matches, memberScorePicks) : null;
+                return { ...m, points: m.points + bonusPts, bonusPts, groupPicked, koPicked, bonusPicked,
+                  championFlag: champ?.flag ?? null, championTeam: champ?.team ?? null };
               })}
               currentUserId={currentUserId}
               mono={mono}

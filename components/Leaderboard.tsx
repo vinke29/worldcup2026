@@ -1,4 +1,5 @@
 import type { Member } from "@/lib/mock-data";
+import FlagImage from "@/lib/flag-image";
 
 interface LeaderboardProps {
   members: Member[];
@@ -70,10 +71,19 @@ export default function Leaderboard({ members, currentUserId, mono = false, vari
 
               {/* Name + mobile breakdown */}
               <div className="flex-1 min-w-0">
-                <span className="text-sm font-semibold truncate block" style={{ color: isYou ? t.accent : t.text }}>
-                  {member.name}
+                <span className="text-sm font-semibold truncate flex items-center gap-1.5" style={{ color: isYou ? t.accent : t.text }}>
+                  <span className="truncate">{member.name}</span>
                   {isYou && (
-                    <span className="ml-1.5 text-[9px] font-black uppercase tracking-wider" style={{ color: mono ? t.textSec : t.accent }}>you</span>
+                    <span className="text-[9px] font-black uppercase tracking-wider flex-shrink-0" style={{ color: mono ? t.textSec : t.accent }}>you</span>
+                  )}
+                  {member.championFlag && (
+                    <span
+                      className="flex items-center gap-0.5 flex-shrink-0"
+                      title={member.championTeam ? `Champion pick: ${member.championTeam}` : "Champion pick"}
+                    >
+                      <span className="text-[9px]" style={{ color: t.textMuted }}>🏆</span>
+                      <FlagImage emoji={member.championFlag} size={13} team={member.championTeam ?? ""} />
+                    </span>
                   )}
                 </span>
                 {(member.koPts > 0 || member.bonusPts > 0) && (
