@@ -123,9 +123,10 @@ export default function LeagueClient({
   const [bonusPicks, setBonusPicks] = useState<Record<string, string>>(initialBonusPicks);
   const [mobileView, setMobileView] = useState<"matches" | "standings" | "groups" | "qualifiers" | "bonuses">(() => {
     if (mode !== "entire_tournament") return "matches";
-    // Once the tournament has started and the user has made picks, land on Standings
+    // Everyone has finished their picks — land anyone with picks on Standings.
+    // Users without picks still land on Matches to fill them out.
     const hasPicks = Object.keys(initialScorePicks).length > 0 || Object.keys(initialPredictions).length > 0;
-    if (tournamentStarted && hasPicks) return "standings";
+    if (hasPicks) return "standings";
     return "matches";
   });
   const [mono, setMono] = useState(false);
