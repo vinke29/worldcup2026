@@ -341,21 +341,47 @@ export default function LeagueClient({
   }, [visibleMatches]);
 
   function handlePredict(matchId: string, outcome: Outcome) {
-    setPredictions((prev) => ({ ...prev, [matchId]: outcome }));
+    const prev = predictions[matchId];
+    setPredictions((p) => ({ ...p, [matchId]: outcome }));
     if (!isPreview) {
-      startTransition(() => { savePrediction(matchId, outcome); });
+      startTransition(() => {
+        savePrediction(matchId, outcome, code).then((res) => {
+          if (!res.ok) {
+            // Server rejected (e.g. locked) — roll the optimistic pick back.
+            setPredictions((p) => {
+              const next = { ...p };
+              if (prev === undefined) delete next[matchId];
+              else next[matchId] = prev;
+              return next;
+            });
+          }
+        });
+      });
     }
   }
 
   function handleScorePick(matchId: string, home: number, away: number, pens?: "home" | "away") {
-    setScorePredictions((prev) => {
-      const prev_ = prev[matchId];
+    const prev = scorePredictions[matchId];
+    setScorePredictions((p) => {
+      const prev_ = p[matchId];
       const next = { home, away, ...(pens ? { pens } : prev_?.pens ? { pens: prev_.pens } : {}) };
-      return { ...prev, [matchId]: next };
+      return { ...p, [matchId]: next };
     });
     if (!isPreview) {
       const currentPens = pens ?? scorePredictions[matchId]?.pens;
-      startTransition(() => { saveScorePick(matchId, home, away, currentPens); });
+      startTransition(() => {
+        saveScorePick(matchId, home, away, code, currentPens).then((res) => {
+          if (!res.ok) {
+            // Server rejected (e.g. locked) — roll the optimistic pick back.
+            setScorePredictions((p) => {
+              const next = { ...p };
+              if (prev === undefined) delete next[matchId];
+              else next[matchId] = prev;
+              return next;
+            });
+          }
+        });
+      });
     }
   }
 
