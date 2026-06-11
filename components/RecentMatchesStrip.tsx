@@ -259,7 +259,7 @@ function MatchRow({
   return (
     <div>
       <div
-        className="flex items-center gap-3 px-4 py-3 transition-colors"
+        className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-3 transition-colors"
         onClick={canExpand ? onToggle : undefined}
         style={{
           cursor: canExpand ? "pointer" : "default",
@@ -268,7 +268,7 @@ function MatchRow({
       >
 
         {/* Status / time */}
-        <div className="w-14 flex-shrink-0">
+        <div className="w-11 sm:w-14 flex-shrink-0">
           {isLive ? (
             <span className="flex items-center gap-1 text-[10px] font-bold" style={{ color: t.live }}>
               <span className="w-1.5 h-1.5 rounded-full animate-pulse inline-block" style={{ backgroundColor: t.live }} />
@@ -293,7 +293,7 @@ function MatchRow({
         </div>
 
         {/* Score or VS */}
-        <div className="flex-shrink-0 w-16 text-center">
+        <div className="flex-shrink-0 w-12 sm:w-16 text-center">
           {isFinished ? (
             <span className="text-sm font-black tabular-nums" style={{ color: t.textPrimary }}>
               {match.homeScore} – {match.awayScore}
@@ -317,7 +317,7 @@ function MatchRow({
         </div>
 
         {/* Pick badge + expand chevron */}
-        <div className="w-16 flex-shrink-0 flex items-center justify-end gap-1">
+        <div className="w-14 sm:w-16 flex-shrink-0 flex items-center justify-end gap-1">
           {scorePick !== undefined ? (
             <span
               className="text-[10px] font-black px-2 py-0.5 rounded-full tabular-nums"
@@ -367,7 +367,7 @@ function MatchRow({
 
       {/* Expanded: everyone's pick for this match */}
       {expanded && (
-        <div className="px-4 pb-3 pt-1 space-y-1.5" style={{ backgroundColor: t.rowHover }}>
+        <div className="px-3 sm:px-4 pb-3 pt-1 space-y-1.5" style={{ backgroundColor: t.rowHover }}>
           {memberPicks.map((mp) => {
             const mOutcome: Outcome | undefined = mp.mScore
               ? outcomeOf(mp.mScore.home, mp.mScore.away)
