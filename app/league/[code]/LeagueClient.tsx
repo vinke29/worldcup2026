@@ -674,6 +674,9 @@ export default function LeagueClient({
               scorePredictions={scorePredictions}
               mono={mono}
               onGoToMatches={() => setMobileView("matches")}
+              members={members}
+              currentUserId={currentUserId}
+              canSeePicks={mode !== "entire_tournament" || isTournamentLocked}
             />
             <Leaderboard
               members={computeStandings(matches, members, currentUserId, predictions, scorePredictions, actualScores).map(m => {

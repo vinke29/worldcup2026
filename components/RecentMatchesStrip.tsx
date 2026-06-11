@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo } from "react";
-import type { Match, Outcome } from "@/lib/mock-data";
+import { useMemo, useState } from "react";
+import type { Match, Outcome, Member } from "@/lib/mock-data";
 import FlagImage from "@/lib/flag-image";
 
 interface RecentMatchesStripProps {
@@ -10,6 +10,9 @@ interface RecentMatchesStripProps {
   scorePredictions: Record<string, { home: number; away: number }>;
   mono: boolean;
   onGoToMatches: () => void;
+  members?: Member[];                                         // all league members (for the per-match breakdown)
+  currentUserId?: string;
+  canSeePicks?: boolean;                                      // reveal everyone's picks (picks frozen)
 }
 
 function kickoffMs(date: string, time: string): number {
@@ -71,8 +74,12 @@ export default function RecentMatchesStrip({
   scorePredictions,
   mono,
   onGoToMatches,
+  members = [],
+  currentUserId,
+  canSeePicks = false,
 }: RecentMatchesStripProps) {
   const now = Date.now();
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const { window: relevant, label } = useMemo(
     () => relevantMatches(matches, now),
@@ -95,6 +102,9 @@ export default function RecentMatchesStrip({
         correct: "#16A34A",
         wrong: "#DC2626",
         live: "#16A34A",
+        avatar: "#E0DAD0",
+        avatarText: "#6B5E4E",
+        rowHover: "rgba(26,18,8,0.03)",
       }
     : {
         cardBg: "#1A2E1F",
@@ -108,6 +118,9 @@ export default function RecentMatchesStrip({
         correct: "#4ADE80",
         wrong: "#F87171",
         live: "#4ADE80",
+        avatar: "#1F3A24",
+        avatarText: "#7A9B84",
+        rowHover: "rgba(255,255,255,0.02)",
       };
 
   // Group by date for section headers
@@ -165,12 +178,23 @@ export default function RecentMatchesStrip({
               now={now}
               t={t}
               mono={mono}
+              members={members}
+              currentUserId={currentUserId}
+              currentUserPredictions={predictions}
+              currentUserScorePicks={scorePredictions}
+              canSeePicks={canSeePicks}
+              expanded={expandedId === match.id}
+              onToggle={() => setExpandedId((prev) => (prev === match.id ? null : match.id))}
             />
           ))
         )}
       </div>
     </div>
   );
+}
+
+function outcomeOf(home: number, away: number): Outcome {
+  return home > away ? "home" : away > home ? "away" : "draw";
 }
 
 function MatchRow({
@@ -180,6 +204,13 @@ function MatchRow({
   now,
   t,
   mono,
+  members,
+  currentUserId,
+  currentUserPredictions,
+  currentUserScorePicks,
+  canSeePicks,
+  expanded,
+  onToggle,
 }: {
   match: Match;
   prediction: Outcome | undefined;
@@ -187,6 +218,13 @@ function MatchRow({
   now: number;
   t: Record<string, string>;
   mono: boolean;
+  members: Member[];
+  currentUserId?: string;
+  currentUserPredictions: Record<string, Outcome>;
+  currentUserScorePicks: Record<string, { home: number; away: number }>;
+  canSeePicks: boolean;
+  expanded: boolean;
+  onToggle: () => void;
 }) {
   const ko = kickoffMs(match.date, match.time);
   const isLive = now >= ko && now < ko + 105 * 60 * 1000;
@@ -194,9 +232,7 @@ function MatchRow({
   const isUpcoming = now < ko;
 
   const actualOutcome: Outcome | null = isFinished
-    ? match.homeScore! > match.awayScore! ? "home"
-    : match.awayScore! > match.homeScore! ? "away"
-    : "draw"
+    ? outcomeOf(match.homeScore!, match.awayScore!)
     : null;
 
   const isCorrect = isFinished && prediction !== null && prediction === actualOutcome;
@@ -206,95 +242,176 @@ function MatchRow({
     hour: "numeric", minute: "2-digit", hour12: true,
   });
 
+  const canExpand = canSeePicks && members.length > 0;
+
+  // Build the per-member pick rows for this match (current user first, then by name)
+  const memberPicks = expanded
+    ? members
+        .map((m) => {
+          const isMe = m.id === currentUserId;
+          const mScore = isMe ? currentUserScorePicks[match.id] : m.scorePicks?.[match.id];
+          const mOutcome = isMe ? currentUserPredictions[match.id] : m.predictions?.[match.id];
+          return { id: m.id, name: m.name, avatar: m.avatar, isMe, mScore, mOutcome };
+        })
+        .sort((a, b) => (a.isMe === b.isMe ? a.name.localeCompare(b.name) : a.isMe ? -1 : 1))
+    : [];
+
   return (
-    <div className="flex items-center gap-3 px-4 py-3">
+    <div>
+      <div
+        className="flex items-center gap-3 px-4 py-3 transition-colors"
+        onClick={canExpand ? onToggle : undefined}
+        style={{
+          cursor: canExpand ? "pointer" : "default",
+          backgroundColor: expanded ? t.rowHover : "transparent",
+        }}
+      >
 
-      {/* Status / time */}
-      <div className="w-14 flex-shrink-0">
-        {isLive ? (
-          <span className="flex items-center gap-1 text-[10px] font-bold" style={{ color: t.live }}>
-            <span className="w-1.5 h-1.5 rounded-full animate-pulse inline-block" style={{ backgroundColor: t.live }} />
-            Live
-          </span>
-        ) : isFinished ? (
-          <span className="text-[10px] font-bold" style={{ color: t.textMuted }}>FT</span>
-        ) : (
-          <span className="text-[10px] font-bold" style={{ color: t.textMuted }}>{localTime}</span>
-        )}
-      </div>
+        {/* Status / time */}
+        <div className="w-14 flex-shrink-0">
+          {isLive ? (
+            <span className="flex items-center gap-1 text-[10px] font-bold" style={{ color: t.live }}>
+              <span className="w-1.5 h-1.5 rounded-full animate-pulse inline-block" style={{ backgroundColor: t.live }} />
+              Live
+            </span>
+          ) : isFinished ? (
+            <span className="text-[10px] font-bold" style={{ color: t.textMuted }}>FT</span>
+          ) : (
+            <span className="text-[10px] font-bold" style={{ color: t.textMuted }}>{localTime}</span>
+          )}
+        </div>
 
-      {/* Home team */}
-      <div className="flex items-center gap-1.5 flex-1 min-w-0 justify-end">
-        <span
-          className="text-xs font-black uppercase tracking-tight truncate text-right"
-          style={{ color: t.textPrimary }}
-        >
-          {match.homeTeam}
-        </span>
-        <FlagImage emoji={match.homeFlag} size={16} team={match.homeTeam} />
-      </div>
-
-      {/* Score or VS */}
-      <div className="flex-shrink-0 w-16 text-center">
-        {isFinished ? (
-          <span className="text-sm font-black tabular-nums" style={{ color: t.textPrimary }}>
-            {match.homeScore} – {match.awayScore}
-          </span>
-        ) : isLive ? (
-          <span className="text-sm font-black" style={{ color: t.live }}>vs</span>
-        ) : (
-          <span className="text-[10px] font-black tracking-widest" style={{ color: t.textMuted }}>vs</span>
-        )}
-      </div>
-
-      {/* Away team */}
-      <div className="flex items-center gap-1.5 flex-1 min-w-0">
-        <FlagImage emoji={match.awayFlag} size={16} team={match.awayTeam} />
-        <span
-          className="text-xs font-black uppercase tracking-tight truncate"
-          style={{ color: t.textPrimary }}
-        >
-          {match.awayTeam}
-        </span>
-      </div>
-
-      {/* Pick badge */}
-      <div className="w-16 flex-shrink-0 flex justify-end">
-        {scorePick !== undefined ? (
+        {/* Home team */}
+        <div className="flex items-center gap-1.5 flex-1 min-w-0 justify-end">
           <span
-            className="text-[10px] font-black px-2 py-0.5 rounded-full tabular-nums"
-            style={{
-              backgroundColor: isCorrect
-                ? (mono ? "rgba(22,163,74,0.1)" : "rgba(74,222,128,0.12)")
-                : isWrong
-                ? (mono ? "rgba(220,38,38,0.08)" : "rgba(248,113,113,0.1)")
-                : (mono ? "rgba(26,18,8,0.06)" : "rgba(255,255,255,0.06)"),
-              color: isCorrect ? t.correct : isWrong ? t.wrong : t.textSec,
-              border: `1px solid ${isCorrect ? (mono ? "rgba(22,163,74,0.2)" : "rgba(74,222,128,0.25)") : isWrong ? (mono ? "rgba(220,38,38,0.15)" : "rgba(248,113,113,0.2)") : t.borderInner}`,
-            }}
+            className="text-xs font-black uppercase tracking-tight truncate text-right"
+            style={{ color: t.textPrimary }}
           >
-            {isCorrect ? "✓ " : isWrong ? "✗ " : ""}{scorePick.home}–{scorePick.away}
+            {match.homeTeam}
           </span>
-        ) : prediction ? (
+          <FlagImage emoji={match.homeFlag} size={16} team={match.homeTeam} />
+        </div>
+
+        {/* Score or VS */}
+        <div className="flex-shrink-0 w-16 text-center">
+          {isFinished ? (
+            <span className="text-sm font-black tabular-nums" style={{ color: t.textPrimary }}>
+              {match.homeScore} – {match.awayScore}
+            </span>
+          ) : isLive ? (
+            <span className="text-sm font-black" style={{ color: t.live }}>vs</span>
+          ) : (
+            <span className="text-[10px] font-black tracking-widest" style={{ color: t.textMuted }}>vs</span>
+          )}
+        </div>
+
+        {/* Away team */}
+        <div className="flex items-center gap-1.5 flex-1 min-w-0">
+          <FlagImage emoji={match.awayFlag} size={16} team={match.awayTeam} />
           <span
-            className="text-[10px] font-bold px-2 py-0.5 rounded-full uppercase"
-            style={{
-              backgroundColor: isCorrect
-                ? (mono ? "rgba(22,163,74,0.1)" : "rgba(74,222,128,0.12)")
-                : isWrong
-                ? (mono ? "rgba(220,38,38,0.08)" : "rgba(248,113,113,0.1)")
-                : (mono ? "rgba(26,18,8,0.06)" : "rgba(255,255,255,0.06)"),
-              color: isCorrect ? t.correct : isWrong ? t.wrong : t.textSec,
-              border: `1px solid ${isCorrect ? (mono ? "rgba(22,163,74,0.2)" : "rgba(74,222,128,0.25)") : isWrong ? (mono ? "rgba(220,38,38,0.15)" : "rgba(248,113,113,0.2)") : t.borderInner}`,
-            }}
+            className="text-xs font-black uppercase tracking-tight truncate"
+            style={{ color: t.textPrimary }}
           >
-            {isCorrect ? "✓ " : isWrong ? "✗ " : ""}
-            {prediction === "home" ? match.homeTeam.split(" ")[0] : prediction === "away" ? match.awayTeam.split(" ")[0] : "Draw"}
+            {match.awayTeam}
           </span>
-        ) : isUpcoming ? (
-          <span className="text-[10px]" style={{ color: t.textMuted }}>—</span>
-        ) : null}
+        </div>
+
+        {/* Pick badge + expand chevron */}
+        <div className="w-16 flex-shrink-0 flex items-center justify-end gap-1">
+          {scorePick !== undefined ? (
+            <span
+              className="text-[10px] font-black px-2 py-0.5 rounded-full tabular-nums"
+              style={{
+                backgroundColor: isCorrect
+                  ? (mono ? "rgba(22,163,74,0.1)" : "rgba(74,222,128,0.12)")
+                  : isWrong
+                  ? (mono ? "rgba(220,38,38,0.08)" : "rgba(248,113,113,0.1)")
+                  : (mono ? "rgba(26,18,8,0.06)" : "rgba(255,255,255,0.06)"),
+                color: isCorrect ? t.correct : isWrong ? t.wrong : t.textSec,
+                border: `1px solid ${isCorrect ? (mono ? "rgba(22,163,74,0.2)" : "rgba(74,222,128,0.25)") : isWrong ? (mono ? "rgba(220,38,38,0.15)" : "rgba(248,113,113,0.2)") : t.borderInner}`,
+              }}
+            >
+              {isCorrect ? "✓ " : isWrong ? "✗ " : ""}{scorePick.home}–{scorePick.away}
+            </span>
+          ) : prediction ? (
+            <span
+              className="text-[10px] font-bold px-2 py-0.5 rounded-full uppercase"
+              style={{
+                backgroundColor: isCorrect
+                  ? (mono ? "rgba(22,163,74,0.1)" : "rgba(74,222,128,0.12)")
+                  : isWrong
+                  ? (mono ? "rgba(220,38,38,0.08)" : "rgba(248,113,113,0.1)")
+                  : (mono ? "rgba(26,18,8,0.06)" : "rgba(255,255,255,0.06)"),
+                color: isCorrect ? t.correct : isWrong ? t.wrong : t.textSec,
+                border: `1px solid ${isCorrect ? (mono ? "rgba(22,163,74,0.2)" : "rgba(74,222,128,0.25)") : isWrong ? (mono ? "rgba(220,38,38,0.15)" : "rgba(248,113,113,0.2)") : t.borderInner}`,
+              }}
+            >
+              {isCorrect ? "✓ " : isWrong ? "✗ " : ""}
+              {prediction === "home" ? match.homeTeam.split(" ")[0] : prediction === "away" ? match.awayTeam.split(" ")[0] : "Draw"}
+            </span>
+          ) : isUpcoming ? (
+            <span className="text-[10px]" style={{ color: t.textMuted }}>—</span>
+          ) : null}
+
+          {canExpand && (
+            <svg
+              width="10" height="10" viewBox="0 0 12 12" fill="none"
+              className="transition-transform flex-shrink-0"
+              style={{ transform: expanded ? "rotate(180deg)" : "none", color: t.textMuted }}
+            >
+              <path d="M2.5 4.5L6 8l3.5-3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          )}
+        </div>
       </div>
+
+      {/* Expanded: everyone's pick for this match */}
+      {expanded && (
+        <div className="px-4 pb-3 pt-1 space-y-1.5" style={{ backgroundColor: t.rowHover }}>
+          {memberPicks.map((mp) => {
+            const mOutcome: Outcome | undefined = mp.mScore
+              ? outcomeOf(mp.mScore.home, mp.mScore.away)
+              : mp.mOutcome;
+            const mCorrect = isFinished && mOutcome != null && mOutcome === actualOutcome;
+            const mWrong = isFinished && mOutcome != null && mOutcome !== actualOutcome;
+            const exact = isFinished && mp.mScore != null &&
+              mp.mScore.home === match.homeScore && mp.mScore.away === match.awayScore;
+            const pickLabel = mp.mScore
+              ? `${mp.mScore.home}–${mp.mScore.away}`
+              : mp.mOutcome
+              ? (mp.mOutcome === "home" ? match.homeTeam.split(" ")[0]
+                : mp.mOutcome === "away" ? match.awayTeam.split(" ")[0]
+                : "Draw")
+              : "—";
+            const pickColor = mp.mScore == null && mp.mOutcome == null
+              ? t.textMuted
+              : mCorrect ? t.correct : mWrong ? t.wrong : t.textPrimary;
+            return (
+              <div key={mp.id} className="flex items-center gap-2">
+                <span
+                  className="w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-black flex-shrink-0"
+                  style={{
+                    backgroundColor: mp.isMe ? t.accent : t.avatar,
+                    color: mp.isMe ? (mono ? "#F7F4EE" : "#0B1E0D") : t.avatarText,
+                  }}
+                >
+                  {mp.avatar}
+                </span>
+                <span className="text-xs font-medium truncate flex-1 min-w-0" style={{ color: t.textBody ?? t.textPrimary }}>
+                  {mp.name}{mp.isMe ? " (you)" : ""}
+                </span>
+                <span
+                  className="text-[11px] font-black tabular-nums flex items-center gap-1"
+                  style={{ color: pickColor }}
+                >
+                  {exact && <span title="Exact score">🎯</span>}
+                  {mCorrect ? "✓ " : mWrong ? "✗ " : ""}{pickLabel}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
