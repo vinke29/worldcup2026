@@ -123,10 +123,9 @@ export default function LeagueClient({
   const [bonusPicks, setBonusPicks] = useState<Record<string, string>>(initialBonusPicks);
   const [mobileView, setMobileView] = useState<"matches" | "standings" | "groups" | "qualifiers" | "bonuses">(() => {
     if (mode !== "entire_tournament") return "matches";
-    // If the tournament has started and the user has made picks, land on Standings
-    const firstKickoff = Date.UTC(2026, 5, 11, 23, 0); // Jun 11 19:00 EDT = 23:00 UTC
+    // Once the tournament has started and the user has made picks, land on Standings
     const hasPicks = Object.keys(initialScorePicks).length > 0 || Object.keys(initialPredictions).length > 0;
-    if (Date.now() > firstKickoff && hasPicks) return "standings";
+    if (tournamentStarted && hasPicks) return "standings";
     return "matches";
   });
   const [mono, setMono] = useState(false);
