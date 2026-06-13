@@ -6,9 +6,11 @@ import { buildMatchIndex, mapFixture } from "./map-fixtures";
 export interface SyncResult {
   provider: string;
   fetched: number;   // fixtures returned by the provider (live + finished)
-  written: number;   // rows upserted into match_scores
+  written: number;   // rows upserted into match_scores (0 on a dry run)
   unmatched: string[]; // provider pairings we couldn't map (alias gaps)
   includeLive: boolean;
+  dryRun: boolean;
+  preview: Array<{ matchId: string; home: number; away: number; status: string }>;
 }
 
 /**
@@ -16,15 +18,16 @@ export interface SyncResult {
  * match_scores. Idempotent: safe to run on any cadence. With the mock provider
  * (no API key) it's a no-op that reports zeroes.
  */
-export async function syncScores(opts?: { includeLive?: boolean }): Promise<SyncResult> {
+export async function syncScores(opts?: { includeLive?: boolean; dryRun?: boolean }): Promise<SyncResult> {
   const includeLive = opts?.includeLive ?? true;
+  const dryRun = opts?.dryRun ?? false;
   const provider = getProvider();
   const fixtures = await provider.fetchFixtures();
 
   // No data (e.g. mock provider before an API key is set) → nothing to do, and
   // we avoid requiring the service-role key just to no-op.
   if (fixtures.length === 0) {
-    return { provider: provider.name, fetched: 0, written: 0, unmatched: [], includeLive };
+    return { provider: provider.name, fetched: 0, written: 0, unmatched: [], includeLive, dryRun, preview: [] };
   }
 
   const supabase = createAdminClient();
@@ -71,7 +74,7 @@ export async function syncScores(opts?: { includeLive?: boolean }): Promise<Sync
     });
   }
 
-  if (rows.length > 0) {
+  if (rows.length > 0 && !dryRun) {
     const { error } = await supabase
       .from("match_scores")
       .upsert(rows, { onConflict: "match_id" });
@@ -82,5 +85,18 @@ export async function syncScores(opts?: { includeLive?: boolean }): Promise<Sync
     console.warn(`[sync-scores] ${unmatched.length} unmatched fixtures (add aliases):`, unmatched);
   }
 
-  return { provider: provider.name, fetched: fixtures.length, written: rows.length, unmatched, includeLive };
+  const preview = rows.map((r) => {
+    const fx = fixtures.find((f) => mapFixture(f, index)?.matchId === r.match_id);
+    return { matchId: r.match_id, home: r.home_score, away: r.away_score, status: fx?.status ?? "?" };
+  });
+
+  return {
+    provider: provider.name,
+    fetched: fixtures.length,
+    written: dryRun ? 0 : rows.length,
+    unmatched,
+    includeLive,
+    dryRun,
+    preview,
+  };
 }

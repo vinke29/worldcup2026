@@ -78,8 +78,84 @@ export function apiFootballProvider(apiKey: string): ScoresProvider {
   };
 }
 
-/** Pick the live provider if a key is configured, otherwise the safe no-op. */
+// ── TheSportsDB ─────────────────────────────────────────────────────────────
+// Free tier covers FIFA World Cup 2026 (league 4429) incl. live scores. The
+// public test key "3" works without signup; a personal key (Patreon) is more
+// reliable. Set THESPORTSDB_KEY to override.
+// Docs: https://www.thesportsdb.com/free_sports_api
+
+const WORLD_CUP_LEAGUE = 4429;
+
+interface SportsDbEvent {
+  strHomeTeam: string | null;
+  strAwayTeam: string | null;
+  intHomeScore: string | null;
+  intAwayScore: string | null;
+  strStatus: string | null;
+  strTimestamp: string | null;
+  dateEvent: string | null;
+}
+
+const SDB_FINISHED = new Set(["FT", "AET", "PEN", "Match Finished", "FT_PEN"]);
+const SDB_LIVE = new Set(["1H", "2H", "HT", "ET", "BT", "P", "LIVE", "Live"]);
+
+function sdbStatus(s: string | null): FixtureStatus {
+  if (!s || s === "NS" || s === "Not Started") return "scheduled";
+  if (SDB_FINISHED.has(s)) return "finished";
+  if (SDB_LIVE.has(s)) return "live";
+  return "scheduled";
+}
+
+function parseSdbEvent(e: SportsDbEvent): ProviderFixture | null {
+  if (!e.strHomeTeam || !e.strAwayTeam) return null;
+  const status = sdbStatus(e.strStatus);
+  if (status === "scheduled") return null;
+
+  const home = e.intHomeScore == null ? 0 : parseInt(e.intHomeScore, 10);
+  const away = e.intAwayScore == null ? 0 : parseInt(e.intAwayScore, 10);
+  if (Number.isNaN(home) || Number.isNaN(away)) return null;
+
+  const koMs = e.strTimestamp
+    ? Date.parse(e.strTimestamp)
+    : e.dateEvent
+    ? Date.parse(`${e.dateEvent}T00:00:00Z`)
+    : 0;
+
+  return {
+    homeTeam: e.strHomeTeam,
+    awayTeam: e.strAwayTeam,
+    homeScore: home,
+    awayScore: away,
+    pensWinner: null, // not exposed by this endpoint; enter KO shootouts manually
+    status,
+    kickoffMs: Number.isNaN(koMs) ? 0 : koMs,
+  };
+}
+
+export function theSportsDbProvider(apiKey: string): ScoresProvider {
+  return {
+    name: "thesportsdb",
+    async fetchFixtures() {
+      const res = await fetch(
+        `https://www.thesportsdb.com/api/v1/json/${apiKey}/eventsseason.php?id=${WORLD_CUP_LEAGUE}&s=2026`,
+        { cache: "no-store" },
+      );
+      if (!res.ok) {
+        throw new Error(`thesportsdb fetch failed: ${res.status} ${res.statusText}`);
+      }
+      const json = (await res.json()) as { events?: SportsDbEvent[] };
+      return (json.events ?? [])
+        .map(parseSdbEvent)
+        .filter((f): f is ProviderFixture => f !== null);
+    },
+  };
+}
+
+/**
+ * Active provider. TheSportsDB by default (free, covers WC 2026). To use
+ * API-Football instead (paid plan needed for 2026), set FOOTBALL_API_KEY and
+ * switch the return below.
+ */
 export function getProvider(): ScoresProvider {
-  const key = process.env.FOOTBALL_API_KEY;
-  return key ? apiFootballProvider(key) : mockProvider;
+  return theSportsDbProvider(process.env.THESPORTSDB_KEY ?? "3");
 }

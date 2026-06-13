@@ -30,6 +30,7 @@ const ALIAS: Record<string, string> = {
   iranislamicrepublic: "iran",
   irar: "iran",
   bosniaandherzegovina: "bosniaherz",
+  bosniaherzegovina: "bosniaherz",
   bosnaihercegovina: "bosniaherz",
   ivorycoast: "cotedivoire",
   capeverde: "caboverde",
