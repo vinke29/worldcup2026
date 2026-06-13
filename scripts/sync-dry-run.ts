@@ -14,8 +14,9 @@ for (const line of readFileSync(resolve(".env.local"), "utf8").split("\n")) {
 }
 
 async function main() {
+  const write = process.argv.includes("--write");
   const { syncScores } = await import("@/lib/scores-sync/sync");
-  const result = await syncScores({ dryRun: true, includeLive: true });
+  const result = await syncScores({ dryRun: !write, includeLive: true });
   console.log(JSON.stringify(result, null, 2));
 }
 
