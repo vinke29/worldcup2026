@@ -85,33 +85,96 @@ export function buildMatchIndex(actualScores: ActualScores): IndexEntry[] {
   return entries;
 }
 
+// ── Fuzzy fallback ───────────────────────────────────────────────────────────
+// Used only when an exact name match fails, so spelling variants the alias map
+// doesn't cover ("Bosnia-Herzegovina", "Korea Republic", "Côte d'Ivoire", …)
+// still resolve on their own. Safe because we score against real fixture
+// pairings and require BOTH teams to be close — a fuzzy guess can't land a score
+// on a pairing that was never scheduled.
+
+function levenshtein(a: string, b: string): number {
+  const m = a.length, n = b.length;
+  if (m === 0) return n;
+  if (n === 0) return m;
+  const dp = Array.from({ length: n + 1 }, (_, j) => j);
+  for (let i = 1; i <= m; i++) {
+    let prev = dp[0];
+    dp[0] = i;
+    for (let j = 1; j <= n; j++) {
+      const tmp = dp[j];
+      dp[j] = Math.min(dp[j] + 1, dp[j - 1] + 1, prev + (a[i - 1] === b[j - 1] ? 0 : 1));
+      prev = tmp;
+    }
+  }
+  return dp[n];
+}
+
+function similarity(a: string, b: string): number {
+  if (a === b) return 1;
+  // One name being contained in the other (e.g. "bosniaherz" ⊂
+  // "bosniaherzegovina") is a strong signal for these short country keys.
+  if (a.length >= 4 && b.length >= 4 && (a.startsWith(b) || b.startsWith(a) || a.includes(b) || b.includes(a))) {
+    return 0.92;
+  }
+  return 1 - levenshtein(a, b) / Math.max(a.length, b.length);
+}
+
+const FUZZY_PER_TEAM = 0.62; // each team must be at least this close
+const FUZZY_PAIR_MIN = 0.78; // and the pair average at least this
+
+interface Match_ { entry: IndexEntry; sameOrientation: boolean; matchedBy: "exact" | "fuzzy"; }
+
+function findEntry(fxHome: string, fxAway: string, fx: ProviderFixture, index: IndexEntry[]): Match_ | null {
+  // 1) Exact (after alias normalisation). Nearest kickoff wins on a recurring pair.
+  const exact = index.filter(
+    (e) => (e.home === fxHome && e.away === fxAway) || (e.home === fxAway && e.away === fxHome),
+  );
+  if (exact.length > 0) {
+    const best = exact.reduce((a, b) =>
+      Math.abs(b.kickoffMs - fx.kickoffMs) < Math.abs(a.kickoffMs - fx.kickoffMs) ? b : a,
+    );
+    return { entry: best, sameOrientation: best.home === fxHome, matchedBy: "exact" };
+  }
+
+  // 2) Fuzzy fallback against real fixtures, both orientations.
+  let best: { entry: IndexEntry; score: number; sameOrientation: boolean } | null = null;
+  for (const e of index) {
+    const directH = similarity(fxHome, e.home);
+    const directA = similarity(fxAway, e.away);
+    const swapH = similarity(fxHome, e.away);
+    const swapA = similarity(fxAway, e.home);
+    const direct = (directH + directA) / 2;
+    const swap = (swapH + swapA) / 2;
+    const sameOrientation = direct >= swap;
+    const score = sameOrientation ? direct : swap;
+    const minTeam = sameOrientation ? Math.min(directH, directA) : Math.min(swapH, swapA);
+    if (minTeam < FUZZY_PER_TEAM) continue;
+    if (!best || score > best.score) best = { entry: e, score, sameOrientation };
+  }
+  if (best && best.score >= FUZZY_PAIR_MIN) {
+    return { entry: best.entry, sameOrientation: best.sameOrientation, matchedBy: "fuzzy" };
+  }
+  return null;
+}
+
 /**
  * Resolve one provider fixture to our match_id, putting the score into OUR
  * home/away orientation (the provider may list the teams the other way round).
- * Returns null if the team pair isn't in the index (logged as unmatched).
+ * Returns null only if neither exact nor fuzzy matching finds a real fixture.
  */
 export function mapFixture(fx: ProviderFixture, index: IndexEntry[]): MappedScore | null {
   const fxHome = canonTeam(fx.homeTeam);
   const fxAway = canonTeam(fx.awayTeam);
 
-  const candidates = index.filter(
-    (e) =>
-      (e.home === fxHome && e.away === fxAway) ||
-      (e.home === fxAway && e.away === fxHome),
-  );
-  if (candidates.length === 0) return null;
+  const m = findEntry(fxHome, fxAway, fx, index);
+  if (!m) return null;
 
-  // A pair can recur (group game + a later KO rematch); pick the nearest kickoff.
-  const best = candidates.reduce((a, b) =>
-    Math.abs(b.kickoffMs - fx.kickoffMs) < Math.abs(a.kickoffMs - fx.kickoffMs) ? b : a,
-  );
-
-  const sameOrientation = best.home === fxHome;
+  const { entry, sameOrientation, matchedBy } = m;
   const home = sameOrientation ? fx.homeScore : fx.awayScore;
   const away = sameOrientation ? fx.awayScore : fx.homeScore;
 
   let pens = fx.pensWinner ?? null;
   if (pens && !sameOrientation) pens = pens === "home" ? "away" : "home";
 
-  return { matchId: best.matchId, home, away, pens, status: fx.status };
+  return { matchId: entry.matchId, home, away, pens, status: fx.status, matchedBy };
 }

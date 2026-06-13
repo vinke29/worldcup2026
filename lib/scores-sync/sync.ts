@@ -7,7 +7,8 @@ export interface SyncResult {
   provider: string;
   fetched: number;   // fixtures returned by the provider (live + finished)
   written: number;   // rows upserted into match_scores (0 on a dry run)
-  unmatched: string[]; // provider pairings we couldn't map (alias gaps)
+  unmatched: string[]; // provider pairings we couldn't map at all
+  fuzzy: string[];     // pairings resolved by fuzzy fallback (worth an alias)
   includeLive: boolean;
   dryRun: boolean;
   preview: Array<{ matchId: string; home: number; away: number; status: string }>;
@@ -27,7 +28,7 @@ export async function syncScores(opts?: { includeLive?: boolean; dryRun?: boolea
   // No data (e.g. mock provider before an API key is set) → nothing to do, and
   // we avoid requiring the service-role key just to no-op.
   if (fixtures.length === 0) {
-    return { provider: provider.name, fetched: 0, written: 0, unmatched: [], includeLive, dryRun, preview: [] };
+    return { provider: provider.name, fetched: 0, written: 0, unmatched: [], fuzzy: [], includeLive, dryRun, preview: [] };
   }
 
   const supabase = createAdminClient();
@@ -49,6 +50,8 @@ export async function syncScores(opts?: { includeLive?: boolean; dryRun?: boolea
 
   const index = buildMatchIndex(actual);
   const unmatched: string[] = [];
+  const fuzzy: string[] = [];
+  const preview: Array<{ matchId: string; home: number; away: number; status: string }> = [];
   const rows: Array<{
     match_id: string;
     home_score: number;
@@ -65,6 +68,9 @@ export async function syncScores(opts?: { includeLive?: boolean; dryRun?: boolea
       unmatched.push(`${fx.homeTeam} v ${fx.awayTeam}`);
       continue;
     }
+    if (mapped.matchedBy === "fuzzy") {
+      fuzzy.push(`${fx.homeTeam} v ${fx.awayTeam} -> ${mapped.matchId}`);
+    }
     rows.push({
       match_id: mapped.matchId,
       home_score: mapped.home,
@@ -72,6 +78,7 @@ export async function syncScores(opts?: { includeLive?: boolean; dryRun?: boolea
       pens_winner: mapped.pens,
       updated_at: new Date().toISOString(),
     });
+    preview.push({ matchId: mapped.matchId, home: mapped.home, away: mapped.away, status: fx.status });
   }
 
   if (rows.length > 0 && !dryRun) {
@@ -81,20 +88,19 @@ export async function syncScores(opts?: { includeLive?: boolean; dryRun?: boolea
     if (error) throw error;
   }
 
-  if (unmatched.length > 0) {
-    console.warn(`[sync-scores] ${unmatched.length} unmatched fixtures (add aliases):`, unmatched);
+  if (fuzzy.length > 0) {
+    console.warn(`[sync-scores] ${fuzzy.length} fixtures matched by fuzzy fallback (consider adding aliases):`, fuzzy);
   }
-
-  const preview = rows.map((r) => {
-    const fx = fixtures.find((f) => mapFixture(f, index)?.matchId === r.match_id);
-    return { matchId: r.match_id, home: r.home_score, away: r.away_score, status: fx?.status ?? "?" };
-  });
+  if (unmatched.length > 0) {
+    console.warn(`[sync-scores] ${unmatched.length} unmatched fixtures:`, unmatched);
+  }
 
   return {
     provider: provider.name,
     fetched: fixtures.length,
     written: dryRun ? 0 : rows.length,
     unmatched,
+    fuzzy,
     includeLive,
     dryRun,
     preview,

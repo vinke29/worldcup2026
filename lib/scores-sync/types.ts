@@ -22,6 +22,8 @@ export interface MappedScore {
   away: number;
   pens: "home" | "away" | null;
   status: FixtureStatus;
+  /** How the fixture was identified — exact name match or fuzzy fallback. */
+  matchedBy: "exact" | "fuzzy";
 }
 
 export interface ScoresProvider {
