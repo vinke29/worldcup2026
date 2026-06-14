@@ -41,6 +41,7 @@ export interface MemberRecap {
   gapToFirst: number;
   yesterday: YesterdayPick[];
   hadAnyPick: boolean;
+  todayPicks: Record<string, string | null>; // matchId -> this member's pick label
 }
 
 export interface StandingRow {
@@ -222,6 +223,14 @@ export async function getRecapData(leagueCode: string, asOf: Date = new Date()):
       }
       return { home: g.home, away: g.away, scoreLabel: `${g.homeScore}–${g.awayScore}`, pickLabel, correct, exact, played };
     });
+    const todayPicks: Record<string, string | null> = {};
+    for (const g of upcoming) {
+      const sp = m.scorePicks?.[g.matchId];
+      const pr = m.predictions[g.matchId];
+      todayPicks[g.matchId] = sp
+        ? `${sp.home}–${sp.away}`
+        : pr ? (pr === "home" ? g.home : pr === "away" ? g.away : "Draw") : null;
+    }
     return {
       id: m.id, name: m.name,
       pointsNow: m.points,
@@ -231,6 +240,7 @@ export async function getRecapData(leagueCode: string, asOf: Date = new Date()):
       gapToFirst: leaderPts - m.points,
       yesterday,
       hadAnyPick: yesterday.some((y) => y.played),
+      todayPicks,
     };
   });
 

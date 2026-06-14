@@ -25,15 +25,16 @@ function moveBadge(movement: number): string {
   return `<span style="color:${MUTED};font-size:12px">–</span>`;
 }
 
-function gameRow(g: RecapGame): string {
-  const mid = g.homeScore != null && g.awayScore != null
-    ? `<strong style="color:${TEXT}">${g.homeScore}&nbsp;–&nbsp;${g.awayScore}</strong>`
-    : `<span style="color:${MUTED}">${esc(g.time)}</span>`;
+function upcomingRow(g: RecapGame, pickLabel: string | null): string {
+  const pick = pickLabel
+    ? `your pick: <span style="color:${TEXT};font-weight:600">${esc(pickLabel)}</span>`
+    : `<span style="color:${MUTED}">no pick</span>`;
   return `<tr>
-      <td class="recap-team" style="padding:7px 0;text-align:right;color:${TEXT};font-size:14px;width:42%">${esc(g.home)}&nbsp;${esc(g.homeFlag)}</td>
-      <td style="padding:7px 12px;text-align:center;font-size:14px;white-space:nowrap">${mid}</td>
-      <td class="recap-team" style="padding:7px 0;text-align:left;color:${TEXT};font-size:14px;width:42%">${esc(g.awayFlag)}&nbsp;${esc(g.away)}</td>
-    </tr>`;
+      <td class="recap-team" style="padding:8px 0 1px;text-align:right;color:${TEXT};font-size:14px;width:42%">${esc(g.home)}&nbsp;${esc(g.homeFlag)}</td>
+      <td style="padding:8px 12px 1px;text-align:center;font-size:14px;white-space:nowrap;color:${MUTED}">${esc(g.time)}</td>
+      <td class="recap-team" style="padding:8px 0 1px;text-align:left;color:${TEXT};font-size:14px;width:42%">${esc(g.awayFlag)}&nbsp;${esc(g.away)}</td>
+    </tr>
+    <tr><td colspan="3" style="padding:0 0 10px;text-align:center;font-size:12px;color:${MUTED}">${pick}</td></tr>`;
 }
 
 function section(title: string, inner: string): string {
@@ -67,7 +68,7 @@ function yesterdayBlock(m: MemberRecap): string {
       return `<div style="margin:5px 0;color:${MUTED};font-size:14px">·&nbsp; ${esc(y.home)} ${esc(y.scoreLabel)} ${esc(y.away)} — no pick</div>`;
     }
     const icon = y.correct ? `<span style="color:${GREEN}">✓</span>` : `<span style="color:${RED}">✗</span>`;
-    const note = y.exact ? `<span style="color:${ACCENT}">exact!</span>` : y.correct ? "your call" : `you had ${esc(y.pickLabel)}`;
+    const note = y.exact ? `<span style="color:${ACCENT}">exact!</span>` : `you said ${esc(y.pickLabel)}`;
     return `<div style="margin:5px 0;color:${TEXT};font-size:14px">${icon}&nbsp; ${esc(y.home)} ${esc(y.scoreLabel)} ${esc(y.away)} &nbsp;<span style="color:${MUTED}">· ${note}</span></div>`;
   }).join("");
   return head + rows;
@@ -109,7 +110,7 @@ export function renderRecapEmail(data: RecapData, m: MemberRecap, quips: Quips, 
   ].join("");
 
   const upcoming = data.upcoming.length
-    ? `<table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse">${data.upcoming.map(gameRow).join("")}</table>`
+    ? `<table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse">${data.upcoming.map((g) => upcomingRow(g, m.todayPicks[g.matchId] ?? null)).join("")}</table>`
     : `<p style="color:${MUTED};font-size:14px;margin:4px 0">No games today.</p>`;
 
   const html = `<!doctype html>
