@@ -87,6 +87,7 @@ export function apiFootballProvider(apiKey: string): ScoresProvider {
 const WORLD_CUP_LEAGUE = 4429;
 
 interface SportsDbEvent {
+  idEvent: string | null;
   strHomeTeam: string | null;
   strAwayTeam: string | null;
   intHomeScore: string | null;
@@ -132,21 +133,47 @@ function parseSdbEvent(e: SportsDbEvent): ProviderFixture | null {
   };
 }
 
+// Days on either side of "now" (UTC) to poll. The free key's season/league
+// aggregate endpoints lag badly and silently drop recent fixtures, so we query
+// per-day instead. The window always spans live + just-finished + next-day-
+// published games (TheSportsDB sometimes dates a result the day after kickoff),
+// and the sync is idempotent so already-written days never need re-covering.
+const SDB_WINDOW_BACK = 2;
+const SDB_WINDOW_FWD = 2;
+
+function dayWindow(now = new Date()): string[] {
+  const days: string[] = [];
+  for (let offset = -SDB_WINDOW_BACK; offset <= SDB_WINDOW_FWD; offset++) {
+    const d = new Date(Date.UTC(
+      now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + offset,
+    ));
+    days.push(d.toISOString().slice(0, 10)); // YYYY-MM-DD
+  }
+  return days;
+}
+
 export function theSportsDbProvider(apiKey: string): ScoresProvider {
   return {
     name: "thesportsdb",
     async fetchFixtures() {
-      const res = await fetch(
-        `https://www.thesportsdb.com/api/v1/json/${apiKey}/eventsseason.php?id=${WORLD_CUP_LEAGUE}&s=2026`,
-        { cache: "no-store" },
-      );
-      if (!res.ok) {
-        throw new Error(`thesportsdb fetch failed: ${res.status} ${res.statusText}`);
+      const byId = new Map<string, ProviderFixture>();
+
+      for (const day of dayWindow()) {
+        const res = await fetch(
+          `https://www.thesportsdb.com/api/v1/json/${apiKey}/eventsday.php?d=${day}&l=${WORLD_CUP_LEAGUE}`,
+          { cache: "no-store" },
+        );
+        if (!res.ok) {
+          throw new Error(`thesportsdb fetch failed (${day}): ${res.status} ${res.statusText}`);
+        }
+        const json = (await res.json()) as { events?: SportsDbEvent[] };
+        for (const ev of json.events ?? []) {
+          const fixture = parseSdbEvent(ev);
+          if (fixture) byId.set(ev.idEvent ?? `${ev.strHomeTeam}-${ev.strAwayTeam}-${day}`, fixture);
+        }
       }
-      const json = (await res.json()) as { events?: SportsDbEvent[] };
-      return (json.events ?? [])
-        .map(parseSdbEvent)
-        .filter((f): f is ProviderFixture => f !== null);
+
+      return [...byId.values()];
     },
   };
 }
