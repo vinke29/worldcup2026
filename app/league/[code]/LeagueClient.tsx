@@ -108,10 +108,17 @@ export default function LeagueClient({
     [actualScores],
   );
   const tournamentStarted = Object.keys(actualScores).length > 0 || Date.now() >= Date.UTC(2026, 5, 11, 20, 0);
+  // Total Goals is only final once the Final (the last match) has been played.
+  // Until then the running total keeps climbing, so scoring a full-tournament
+  // prediction against a partial total would award meaningless, fluctuating
+  // points. Like Red Cards, it stays unscored (no answer) until it's final.
+  const tournamentComplete = actualScores[FINAL_ID] !== undefined;
   const effectiveBonusAnswers = useMemo(() => {
     if (!tournamentStarted) return {} as Record<string, string>;
-    return actualTotalGoals > 0 ? { ...bonusAnswers, total_goals: String(actualTotalGoals) } : bonusAnswers;
-  }, [bonusAnswers, actualTotalGoals, tournamentStarted]);
+    return tournamentComplete && actualTotalGoals > 0
+      ? { ...bonusAnswers, total_goals: String(actualTotalGoals) }
+      : bonusAnswers;
+  }, [bonusAnswers, actualTotalGoals, tournamentStarted, tournamentComplete]);
 
   const defaultNav = getDefaultNav();
   const [activePhase, setActivePhase] = useState<PhaseId>(
