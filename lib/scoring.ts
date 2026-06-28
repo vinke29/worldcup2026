@@ -5,6 +5,7 @@ import {
   resolveR32Pairs, resolveBracketTeams,
 } from "./bracket";
 import type { ScoreEntry } from "./bracket";
+import { computeGroupTables, rankThirdPlaceTeams } from "./group-standings";
 import type { TeamRow } from "./group-standings";
 
 function actualOutcome(match: Match): Outcome | null {
@@ -31,6 +32,13 @@ const PHASE_POINTS: Record<string, [number, number]> = {
 export function phasePoints(phase: string): [number, number] {
   return PHASE_POINTS[phase] ?? [1, 3];
 }
+
+// Additive exact-score bonus per knockout match, keyed by the match's own round.
+// Awarded on top of the "made the round" base points when both teams are in the
+// correct slots and the exact score (incl. pens) is nailed.
+const KO_EXACT_BONUS: Record<string, number> = {
+  r32: 7, r16: 8, qf: 10, sf: 15, third: 10, final: 20,
+};
 
 // Map knockout match ID → phase name
 const KNOCKOUT_PHASE: Record<string, string> = {
@@ -98,22 +106,20 @@ export function computeStandings(
       groupPts += pts;
     }
 
-    // ── Knockout stage (team-based scoring) ──────────────────────────────────
-    // Points require the actual winning team to appear in the member's predicted
-    // bracket for that round. Exact-score bonus requires BOTH teams to be in the
-    // correct slots (same match ID) in addition to the score matching.
+    // ── Knockout stage ───────────────────────────────────────────────────────
+    // 1. "Made the round" base points — awarded cumulatively per correctly
+    //    predicted team as soon as that round's field is known (R32 = qualified
+    //    from the group, R16 = won R32, … Champion = won the final).
+    // 2. An additive exact-score bonus when a KO match is played and the member
+    //    nailed its exact score with both teams in the correct slots.
     if (Object.keys(actualScores).length > 0) {
-      // Resolve actual R32 teams once per member (actual data is the same for everyone,
-      // but we need predicted per-member, so both are computed here).
+      // Actual bracket (same for everyone) and this member's predicted bracket.
       const { top: actualTop, bot: actualBot } = resolveR32Pairs(matches, {}, true);
       const actualBracket = resolveBracketTeams(actualTop, actualBot, actualScores);
-
-      // Predicted R32 teams for this member
       const { top: predTop, bot: predBot } = resolveR32Pairs(matches, scorePicks, false);
       const predBracket = resolveBracketTeams(predTop, predBot, scorePicks);
 
-      // Build predicted team sets per phase (which teams did this member predict
-      // would be present in each round, regardless of which slot).
+      // Set of distinct team names appearing in a list of bracket pairs.
       function teamSet(...pairs: Array<{ home: TeamRow | null; away: TeamRow | null }>): Set<string> {
         const s = new Set<string>();
         for (const p of pairs) {
@@ -122,16 +128,65 @@ export function computeStandings(
         }
         return s;
       }
-      const predR32Teams  = teamSet(...predTop, ...predBot);
-      const predR16Teams  = teamSet(...predBracket.r16Top, ...predBracket.r16Bot);
-      const predQFTeams   = teamSet(...predBracket.qfTop,  ...predBracket.qfBot);
-      const predSFTeams   = teamSet(predBracket.sfTop, predBracket.sfBot);
-      const predFinTeams  = teamSet(predBracket.final);
 
-      const phaseTeamSets: Record<string, Set<string>> = {
-        r32: predR32Teams, r16: predR16Teams, qf: predQFTeams,
-        sf: predSFTeams, final: predFinTeams, third: predSFTeams,
+      // Predicted R32 qualifiers — only from groups this member FULLY picked.
+      // (With no/partial picks, predicted group tables default to a tie-broken
+      // order, which would otherwise credit a non-predictor for free.)
+      const groupMatchIdsByLetter: Record<string, string[]> = {};
+      for (const m of matches) {
+        if (m.group?.startsWith("Group")) {
+          const g = m.group.replace("Group ", "");
+          (groupMatchIdsByLetter[g] ??= []).push(m.id);
+        }
+      }
+      const fullyPickedGroups = new Set(
+        Object.entries(groupMatchIdsByLetter)
+          .filter(([, ids]) => ids.every(id => scorePicks[id] != null))
+          .map(([g]) => g),
+      );
+      const predTables = computeGroupTables(matches, scorePicks, false);
+      const predThirdGroups = new Set(rankThirdPlaceTeams(predTables).slice(0, 8).map(t => t.group));
+      const predR32Teams = new Set<string>();
+      for (const [groupKey, rows] of Object.entries(predTables)) {
+        const g = groupKey.replace("Group ", "");
+        if (!fullyPickedGroups.has(g)) continue;
+        if (rows[0]?.team) predR32Teams.add(rows[0].team);            // group winner
+        if (rows[1]?.team) predR32Teams.add(rows[1].team);            // runner-up
+        if (predThirdGroups.has(g) && rows[2]?.team) predR32Teams.add(rows[2].team); // qualifying 3rd
+      }
+
+      // Teams that reached each round — actual vs. this member's prediction.
+      // Points are cumulative: a team you tracked to the final scores at every tier.
+      const reached: Array<{ pts: number; actual: Set<string>; pred: Set<string> }> = [
+        { pts: 2,  actual: teamSet(...actualTop, ...actualBot),                       pred: predR32Teams },
+        { pts: 3,  actual: teamSet(...actualBracket.r16Top, ...actualBracket.r16Bot), pred: teamSet(...predBracket.r16Top, ...predBracket.r16Bot) },
+        { pts: 5,  actual: teamSet(...actualBracket.qfTop, ...actualBracket.qfBot),   pred: teamSet(...predBracket.qfTop, ...predBracket.qfBot) },
+        { pts: 7,  actual: teamSet(actualBracket.sfTop, actualBracket.sfBot),         pred: teamSet(predBracket.sfTop, predBracket.sfBot) },
+        { pts: 10, actual: teamSet(actualBracket.final),                              pred: teamSet(predBracket.final) },
+      ];
+      for (const round of reached) {
+        for (const team of round.actual) {
+          if (round.pred.has(team)) { koPts += round.pts; correct++; total++; }
+        }
+      }
+
+      // Champion (won the final) and 3rd place (won the play-off) — single teams.
+      const pairWinner = (
+        pair: { home: TeamRow | null; away: TeamRow | null },
+        score?: ScoreEntry,
+      ): string | null => {
+        if (!pair.home || !pair.away || !score) return null;
+        const side = knockoutWinner(score);
+        return side ? (side === "home" ? pair.home.team : pair.away.team) : null;
       };
+      const actualChampion = pairWinner(actualBracket.final, actualScores[FINAL_ID]);
+      if (actualChampion && actualChampion === pairWinner(predBracket.final, scorePicks[FINAL_ID])) {
+        koPts += 15; correct++; total++;
+      }
+      const actualThird = pairWinner(actualBracket.thirdPlace, actualScores[THIRD_PLACE_ID]);
+      if (actualThird && actualThird === pairWinner(predBracket.thirdPlace, scorePicks[THIRD_PLACE_ID])) {
+        koPts += 5; correct++; total++;
+      }
 
       // Helper: get actual home/away teams for a completed KO match
       function actualTeamsFor(matchId: string): { home: TeamRow | null; away: TeamRow | null } | null {
@@ -175,47 +230,27 @@ export function computeStandings(
         return null;
       }
 
+      // Additive exact-score bonus: both teams in the right slots and the exact
+      // score (incl. pens) nailed, for each knockout match that's been played.
       for (const [matchId, actualScore] of Object.entries(actualScores)) {
         const phase = KNOCKOUT_PHASE[matchId];
         if (!phase) continue;
-
         const userPick = scorePicks[matchId];
         if (!userPick) continue;
 
         const actualTeams = actualTeamsFor(matchId);
-        if (!actualTeams) continue;
-
-        const actualWinnerSide = knockoutWinner(actualScore);
-        const pickedWinnerSide = knockoutWinner(userPick);
-        if (!actualWinnerSide || !pickedWinnerSide) continue;
-
-        // Which team actually won?
-        const actualWinnerTeam = actualWinnerSide === "home" ? actualTeams.home : actualTeams.away;
-        if (!actualWinnerTeam?.team) continue;
-
-        // Condition 1: actual winner must be in member's predicted team set for this phase
-        const phaseTeams = phaseTeamSets[phase];
-        if (!phaseTeams?.has(actualWinnerTeam.team)) continue;
-
-        // Condition 2: member's score pick must also identify the same side as winner
-        if (pickedWinnerSide !== actualWinnerSide) continue;
-
-        total++;
-        correct++;
-        const [outcomePts, exactPts] = phasePoints(phase);
-
-        // Exact score: both teams must be in correct slots AND score must match
         const predTeams = predTeamsFor(matchId);
-        const bothSlotsCorrect = !!predTeams &&
-          predTeams.home?.team === actualTeams.home?.team &&
-          predTeams.away?.team === actualTeams.away?.team;
+        if (!actualTeams?.home?.team || !actualTeams.away?.team || !predTeams) continue;
+
+        const bothSlotsCorrect =
+          predTeams.home?.team === actualTeams.home.team &&
+          predTeams.away?.team === actualTeams.away.team;
         const isExact = bothSlotsCorrect &&
           userPick.home === actualScore.home &&
           userPick.away === actualScore.away &&
           (!actualScore.pens || userPick.pens === actualScore.pens);
 
-        if (isExact) { exact++; koPts += exactPts; }
-        else { koPts += outcomePts; }
+        if (isExact) { koPts += KO_EXACT_BONUS[phase]; exact++; }
       }
     }
 
