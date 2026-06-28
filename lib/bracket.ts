@@ -156,6 +156,24 @@ export const THIRD_SLOT_ASSIGNMENTS: Array<{ matchId: string; eligible: string[]
   { matchId: "m87", eligible: ["D","E","I","J","L"] },
 ];
 
+/**
+ * FIFA's official third-place combination table dictates a *specific* slot for
+ * each qualifying group's third-placed team. The generic backtracker below only
+ * finds *a* valid matching, which can place the right teams into the wrong slots.
+ *
+ * For the third-place groups that actually advanced in 2026, the official slot
+ * for each of these four matches is below. We apply this as a post-pass that
+ * only re-permutes these four slots, and only when they already hold exactly
+ * this set of groups — so the four *other* third-place slots are never touched,
+ * and no group is ever duplicated or dropped.
+ */
+const OFFICIAL_THIRD_SLOTS: Record<string, string> = {
+  m74: "D", // 3rd D → faces Winner E
+  m77: "F", // 3rd F → faces Winner I
+  m82: "I", // 3rd I → faces Winner G
+  m85: "J", // 3rd J → faces Winner B
+};
+
 export function assignThirdPlaceGroups(qualifyingGroups: string[]): Record<string, string> {
   const assignment: Record<string, string> = {};
   const used = new Set<string>();
@@ -173,7 +191,18 @@ export function assignThirdPlaceGroups(qualifyingGroups: string[]): Record<strin
     return false;
   }
   bt(0);
+  applyOfficialThirdPlaceSlots(assignment);
   return assignment;
+}
+
+function applyOfficialThirdPlaceSlots(assignment: Record<string, string>): void {
+  const slots = Object.keys(OFFICIAL_THIRD_SLOTS);
+  if (!slots.every(s => assignment[s] != null)) return;
+  const current = new Set(slots.map(s => assignment[s]));
+  const official = new Set(Object.values(OFFICIAL_THIRD_SLOTS));
+  if (current.size !== official.size) return;
+  for (const g of official) if (!current.has(g)) return;
+  for (const s of slots) assignment[s] = OFFICIAL_THIRD_SLOTS[s];
 }
 
 /** Resolve a single bracket slot to the actual team, given group tables. */
