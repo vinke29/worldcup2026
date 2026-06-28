@@ -25,7 +25,7 @@ const faqs = [
   },
   {
     q: "How is scoring calculated?",
-    a: "Points scale with the stakes of the match. In the group stage, a correct outcome (win/draw/loss) earns 1 point; the exact score earns 3. In the knockout rounds the points increase: Round of 32 (2 / 5), Round of 16 (3 / 7), Quarter-finals (5 / 10), Semi-finals (7 / 12), Third-place play-off (7 / 12), Final (10 / 15).",
+    a: "Group stage: a correct outcome (win/draw/loss) earns 1 point; the exact score earns 3. Knockout rounds work differently — you score for every team you correctly predict to reach each round, the moment that round's field is set. Each team earns: Round of 32 (made it out of the group) 2 points, Round of 16 3, Quarter-finals 5, Semi-finals 7, Final 10, Champion 15, plus 5 for the team that wins the third-place play-off. These stack, so a team you track all the way to the title scores at every stage. On top of that, when you get BOTH teams in a knockout match right, you earn a bonus: +3 for the correct result, or +5 for the exact score.",
   },
   {
     q: "What are the two league formats?",

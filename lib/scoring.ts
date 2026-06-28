@@ -33,12 +33,11 @@ export function phasePoints(phase: string): [number, number] {
   return PHASE_POINTS[phase] ?? [1, 3];
 }
 
-// Additive exact-score bonus per knockout match, keyed by the match's own round.
-// Awarded on top of the "made the round" base points when both teams are in the
-// correct slots and the exact score (incl. pens) is nailed.
-const KO_EXACT_BONUS: Record<string, number> = {
-  r32: 7, r16: 8, qf: 10, sf: 15, third: 10, final: 20,
-};
+// Per-knockout-match bonus, awarded on top of the "made the round" base points
+// ONLY when both teams are in the correct slots. Exact score replaces (does not
+// stack with) the correct-result bonus. Flat across every knockout round.
+const KO_RESULT_BONUS = 3; // correct winner, not exact
+const KO_EXACT_BONUS  = 5; // exact score (incl. pens)
 
 // Map knockout match ID → phase name
 const KNOCKOUT_PHASE: Record<string, string> = {
@@ -230,11 +229,11 @@ export function computeStandings(
         return null;
       }
 
-      // Additive exact-score bonus: both teams in the right slots and the exact
-      // score (incl. pens) nailed, for each knockout match that's been played.
+      // Per-match bonus: requires both teams in the right slots, then +5 for an
+      // exact score (incl. pens) or +3 for the correct result — exact replaces
+      // the result bonus. Applies to each knockout match that's been played.
       for (const [matchId, actualScore] of Object.entries(actualScores)) {
-        const phase = KNOCKOUT_PHASE[matchId];
-        if (!phase) continue;
+        if (!KNOCKOUT_PHASE[matchId]) continue;
         const userPick = scorePicks[matchId];
         if (!userPick) continue;
 
@@ -245,12 +244,17 @@ export function computeStandings(
         const bothSlotsCorrect =
           predTeams.home?.team === actualTeams.home.team &&
           predTeams.away?.team === actualTeams.away.team;
-        const isExact = bothSlotsCorrect &&
+        if (!bothSlotsCorrect) continue;
+
+        const isExact =
           userPick.home === actualScore.home &&
           userPick.away === actualScore.away &&
           (!actualScore.pens || userPick.pens === actualScore.pens);
+        const correctResult = knockoutWinner(userPick) === knockoutWinner(actualScore)
+          && knockoutWinner(actualScore) !== null;
 
-        if (isExact) { koPts += KO_EXACT_BONUS[phase]; exact++; }
+        if (isExact) { koPts += KO_EXACT_BONUS; exact++; }
+        else if (correctResult) { koPts += KO_RESULT_BONUS; }
       }
     }
 
