@@ -16,7 +16,8 @@ import QualifiersView from "@/components/QualifiersView";
 import BonusTab from "@/components/BonusTab";
 import { MATCHES, PHASES, WHOLE_GROUP_PHASES, type Match, type Outcome, type PhaseId, type Member, type LeagueMode } from "@/lib/mock-data";
 import { computeStandings } from "@/lib/scoring";
-import { computePhaseStatuses, predictedChampion, buildKnockoutMatches, R32_IDS, R16_IDS, QF_IDS, SF_IDS, FINAL_ID } from "@/lib/bracket";
+import { computePhaseStatuses, predictedChampion, buildKnockoutMatches, predictedKnockoutMatchups, R32_IDS, R16_IDS, QF_IDS, SF_IDS, FINAL_ID } from "@/lib/bracket";
+import type { KnockoutMatchup } from "@/lib/bracket";
 import type { ScoreEntry } from "@/lib/bracket";
 import { savePrediction, saveScorePick } from "@/app/actions/predictions";
 import { logout } from "@/app/actions/auth";
@@ -176,6 +177,18 @@ export default function LeagueClient({
     () => buildKnockoutMatches(matches, actualScores),
     [matches, actualScores]
   );
+
+  // Each member's OWN predicted knockout matchup per slot (can differ from the
+  // real fixture) — lets the strip show personalised flags for KO matches.
+  const koMatchupsByMember = useMemo(() => {
+    const map: Record<string, Record<string, KnockoutMatchup>> = {};
+    for (const m of members) {
+      const picks = m.id === currentUserId ? scorePredictions : (m.scorePicks ?? {});
+      // Skip non-pickers — an empty bracket would resolve to a default order.
+      map[m.id] = Object.keys(picks).length ? predictedKnockoutMatchups(matches, picks) : {};
+    }
+    return map;
+  }, [members, matches, scorePredictions, currentUserId]);
 
   // Auto-calculate worst group team from user's score picks
   const worstGroupTeam = useMemo(
@@ -689,6 +702,7 @@ export default function LeagueClient({
               onGoToMatches={() => setMobileView("matches")}
               members={members}
               currentUserId={currentUserId}
+              koMatchupsByMember={koMatchupsByMember}
               canSeePicks={mode !== "entire_tournament" || isTournamentLocked}
             />
             <Leaderboard

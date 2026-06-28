@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import type { Match, Outcome, Member } from "@/lib/mock-data";
+import type { KnockoutMatchup } from "@/lib/bracket";
 import FlagImage from "@/lib/flag-image";
 
 interface RecentMatchesStripProps {
@@ -12,6 +13,8 @@ interface RecentMatchesStripProps {
   onGoToMatches: () => void;
   members?: Member[];                                         // all league members (for the per-match breakdown)
   currentUserId?: string;
+  // memberId → matchId → that member's OWN predicted knockout matchup
+  koMatchupsByMember?: Record<string, Record<string, KnockoutMatchup>>;
   canSeePicks?: boolean;                                      // reveal everyone's picks (picks frozen)
 }
 
@@ -81,6 +84,7 @@ export default function RecentMatchesStrip({
   onGoToMatches,
   members = [],
   currentUserId,
+  koMatchupsByMember = {},
   canSeePicks = false,
 }: RecentMatchesStripProps) {
   const now = Date.now();
@@ -187,6 +191,7 @@ export default function RecentMatchesStrip({
               currentUserId={currentUserId}
               currentUserPredictions={predictions}
               currentUserScorePicks={scorePredictions}
+              koMatchupsByMember={koMatchupsByMember}
               canSeePicks={canSeePicks}
               expanded={expandedId === match.id}
               onToggle={() => setExpandedId((prev) => (prev === match.id ? null : match.id))}
@@ -213,6 +218,7 @@ function MatchRow({
   currentUserId,
   currentUserPredictions,
   currentUserScorePicks,
+  koMatchupsByMember,
   canSeePicks,
   expanded,
   onToggle,
@@ -227,10 +233,12 @@ function MatchRow({
   currentUserId?: string;
   currentUserPredictions: Record<string, Outcome>;
   currentUserScorePicks: Record<string, { home: number; away: number }>;
+  koMatchupsByMember: Record<string, Record<string, KnockoutMatchup>>;
   canSeePicks: boolean;
   expanded: boolean;
   onToggle: () => void;
 }) {
+  const isKnockout = KO_PHASES.includes(match.phase);
   const ko = kickoffMs(match.date, match.time);
   const isLive = now >= ko && now < ko + 105 * 60 * 1000;
   const isFinished = match.homeScore !== null && match.awayScore !== null;
@@ -377,23 +385,29 @@ function MatchRow({
       {expanded && (
         <div className="px-3 sm:px-4 pb-3 pt-1 space-y-1.5" style={{ backgroundColor: t.rowHover }}>
           {memberPicks.map((mp) => {
+            // For KO matches, the member's OWN predicted teams for this slot
+            // (may differ from the real fixture). Verdict only counts when both
+            // teams match — mirrors how the per-match bonus is scored.
+            const ko = isKnockout ? koMatchupsByMember[mp.id]?.[match.id] : undefined;
+            const teamsMatch = !!ko && ko.homeTeam === match.homeTeam && ko.awayTeam === match.awayTeam;
+            const verdictApplies = isKnockout ? teamsMatch : true;
+
             const mOutcome: Outcome | undefined = mp.mScore
               ? outcomeOf(mp.mScore.home, mp.mScore.away)
               : mp.mOutcome;
-            const mCorrect = isFinished && mOutcome != null && mOutcome === actualOutcome;
-            const mWrong = isFinished && mOutcome != null && mOutcome !== actualOutcome;
-            const exact = isFinished && mp.mScore != null &&
+            const mCorrect = verdictApplies && isFinished && mOutcome != null && mOutcome === actualOutcome;
+            const mWrong = verdictApplies && isFinished && mOutcome != null && mOutcome !== actualOutcome;
+            const exact = verdictApplies && isFinished && mp.mScore != null &&
               mp.mScore.home === match.homeScore && mp.mScore.away === match.awayScore;
-            const pickLabel = mp.mScore
+            const scoreLabel = mp.mScore
               ? `${mp.mScore.home}–${mp.mScore.away}`
-              : mp.mOutcome
-              ? (mp.mOutcome === "home" ? match.homeTeam.split(" ")[0]
-                : mp.mOutcome === "away" ? match.awayTeam.split(" ")[0]
-                : "Draw")
-              : "—";
-            const pickColor = mp.mScore == null && mp.mOutcome == null
-              ? t.textMuted
-              : mCorrect ? t.correct : mWrong ? t.wrong : t.textPrimary;
+              : (!isKnockout && mp.mOutcome
+                ? (mp.mOutcome === "home" ? match.homeTeam.split(" ")[0]
+                  : mp.mOutcome === "away" ? match.awayTeam.split(" ")[0]
+                  : "Draw")
+                : "—");
+            const hasPick = mp.mScore != null || mp.mOutcome != null;
+            const pickColor = !hasPick ? t.textMuted : mCorrect ? t.correct : mWrong ? t.wrong : t.textPrimary;
             return (
               <div key={mp.id} className="flex items-center gap-2">
                 <span
@@ -408,13 +422,28 @@ function MatchRow({
                 <span className="text-xs font-medium truncate flex-1 min-w-0" style={{ color: t.textBody ?? t.textPrimary }}>
                   {mp.name}{mp.isMe ? " (you)" : ""}
                 </span>
-                <span
-                  className="text-[11px] font-black tabular-nums flex items-center gap-1"
-                  style={{ color: pickColor }}
-                >
-                  {exact && <span title="Exact score">🎯</span>}
-                  {mCorrect ? "✓ " : mWrong ? "✗ " : ""}{pickLabel}
-                </span>
+                {isKnockout && ko ? (
+                  // Personalised matchup: member's own flags around their score.
+                  // Dimmed when their teams don't match the real fixture.
+                  <span
+                    className="text-[11px] font-black tabular-nums flex items-center gap-1.5"
+                    style={{ color: pickColor, opacity: teamsMatch ? 1 : 0.5 }}
+                    title={teamsMatch ? undefined : `${ko.homeTeam} vs ${ko.awayTeam}`}
+                  >
+                    {exact && <span title="Exact score">🎯</span>}
+                    <FlagImage emoji={ko.homeFlag} size={13} team={ko.homeTeam} />
+                    <span>{mCorrect ? "✓ " : mWrong ? "✗ " : ""}{scoreLabel}</span>
+                    <FlagImage emoji={ko.awayFlag} size={13} team={ko.awayTeam} />
+                  </span>
+                ) : (
+                  <span
+                    className="text-[11px] font-black tabular-nums flex items-center gap-1"
+                    style={{ color: pickColor }}
+                  >
+                    {exact && <span title="Exact score">🎯</span>}
+                    {mCorrect ? "✓ " : mWrong ? "✗ " : ""}{scoreLabel}
+                  </span>
+                )}
               </div>
             );
           })}

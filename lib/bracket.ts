@@ -357,14 +357,9 @@ function phaseForKnockoutId(id: string): PhaseId {
  * derived from group results + knockout scores — so we build them on demand.
  * Pass the score-merged group matches (useActual reads match.homeScore).
  */
-export function buildKnockoutMatches(
-  matches: Match[],
-  actualScores: Record<string, ScoreEntry>,
-): Match[] {
-  const { top, bot } = resolveR32Pairs(matches, {}, true);
-  const bracket = resolveBracketTeams(top, bot, actualScores);
-
-  const entries: Array<{ id: string; pair: Pair }> = [
+/** (matchId, resolved team pair) for every knockout fixture, in bracket order. */
+function knockoutPairEntries(top: Pair[], bot: Pair[], bracket: BracketTeams): Array<{ id: string; pair: Pair }> {
+  return [
     ...TOP_R32_IDS.map((id, i) => ({ id, pair: top[i] })),
     ...BOT_R32_IDS.map((id, i) => ({ id, pair: bot[i] })),
     ...R16_IDS.slice(0, 4).map((id, i) => ({ id, pair: bracket.r16Top[i] })),
@@ -376,6 +371,39 @@ export function buildKnockoutMatches(
     { id: THIRD_PLACE_ID, pair: bracket.thirdPlace },
     { id: FINAL_ID, pair: bracket.final },
   ];
+}
+
+export interface KnockoutMatchup { homeTeam: string; homeFlag: string; awayTeam: string; awayFlag: string }
+
+/**
+ * A member's predicted home/away teams for each knockout slot, derived from
+ * their own group + knockout score picks (useActual=false). Used to show each
+ * person's *own* matchup (which can differ from the real fixture). Slots whose
+ * teams the member hasn't determined yet are omitted.
+ */
+export function predictedKnockoutMatchups(
+  matches: Match[],
+  scorePicks: Record<string, ScoreEntry>,
+): Record<string, KnockoutMatchup> {
+  const { top, bot } = resolveR32Pairs(matches, scorePicks, false);
+  const bracket = resolveBracketTeams(top, bot, scorePicks);
+  const out: Record<string, KnockoutMatchup> = {};
+  for (const { id, pair } of knockoutPairEntries(top, bot, bracket)) {
+    if (pair.home?.team && pair.away?.team) {
+      out[id] = { homeTeam: pair.home.team, homeFlag: pair.home.flag, awayTeam: pair.away.team, awayFlag: pair.away.flag };
+    }
+  }
+  return out;
+}
+
+export function buildKnockoutMatches(
+  matches: Match[],
+  actualScores: Record<string, ScoreEntry>,
+): Match[] {
+  const { top, bot } = resolveR32Pairs(matches, {}, true);
+  const bracket = resolveBracketTeams(top, bot, actualScores);
+
+  const entries = knockoutPairEntries(top, bot, bracket);
 
   const out: Match[] = [];
   for (const { id, pair } of entries) {
