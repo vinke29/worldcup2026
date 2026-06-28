@@ -341,6 +341,64 @@ export function predictedChampion(
   return matchWinner(bracket.final, scorePicks[FINAL_ID]);
 }
 
+function phaseForKnockoutId(id: string): PhaseId {
+  if (R16_IDS.includes(id)) return "r16";
+  if (QF_IDS.includes(id)) return "qf";
+  if (SF_IDS.includes(id)) return "sf";
+  if (id === THIRD_PLACE_ID) return "third";
+  if (id === FINAL_ID) return "final";
+  return "r32";
+}
+
+/**
+ * Materialise synthetic Match objects for every knockout fixture whose teams
+ * are already resolved, so list UIs (e.g. the Recent & Upcoming strip) can show
+ * playoff games. Knockout matchups aren't in the static MATCHES array — they're
+ * derived from group results + knockout scores — so we build them on demand.
+ * Pass the score-merged group matches (useActual reads match.homeScore).
+ */
+export function buildKnockoutMatches(
+  matches: Match[],
+  actualScores: Record<string, ScoreEntry>,
+): Match[] {
+  const { top, bot } = resolveR32Pairs(matches, {}, true);
+  const bracket = resolveBracketTeams(top, bot, actualScores);
+
+  const entries: Array<{ id: string; pair: Pair }> = [
+    ...TOP_R32_IDS.map((id, i) => ({ id, pair: top[i] })),
+    ...BOT_R32_IDS.map((id, i) => ({ id, pair: bot[i] })),
+    ...R16_IDS.slice(0, 4).map((id, i) => ({ id, pair: bracket.r16Top[i] })),
+    ...R16_IDS.slice(4).map((id, i) => ({ id, pair: bracket.r16Bot[i] })),
+    ...QF_IDS.slice(0, 2).map((id, i) => ({ id, pair: bracket.qfTop[i] })),
+    ...QF_IDS.slice(2).map((id, i) => ({ id, pair: bracket.qfBot[i] })),
+    { id: SF_IDS[0], pair: bracket.sfTop },
+    { id: SF_IDS[1], pair: bracket.sfBot },
+    { id: THIRD_PLACE_ID, pair: bracket.thirdPlace },
+    { id: FINAL_ID, pair: bracket.final },
+  ];
+
+  const out: Match[] = [];
+  for (const { id, pair } of entries) {
+    if (!pair.home || !pair.away) continue;        // teams not resolved yet
+    const meta = KNOCKOUT_MATCH_META[id];
+    if (!meta) continue;
+    const s = actualScores[id];
+    out.push({
+      id,
+      phase: phaseForKnockoutId(id),
+      group: "",
+      homeTeam: pair.home.team, homeFlag: pair.home.flag,
+      awayTeam: pair.away.team, awayFlag: pair.away.flag,
+      date: meta.date, time: meta.time, venue: meta.venue,
+      communityHome: 0, communityDraw: 0, communityAway: 0,
+      oddsHome: 0, oddsDraw: 0, oddsAway: 0,
+      homeScore: s ? s.home : null,
+      awayScore: s ? s.away : null,
+    });
+  }
+  return out;
+}
+
 // ── Phase status computation ──────────────────────────────────────────────────
 
 import type { PhaseId } from "./mock-data";

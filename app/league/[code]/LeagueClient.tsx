@@ -16,7 +16,7 @@ import QualifiersView from "@/components/QualifiersView";
 import BonusTab from "@/components/BonusTab";
 import { MATCHES, PHASES, WHOLE_GROUP_PHASES, type Match, type Outcome, type PhaseId, type Member, type LeagueMode } from "@/lib/mock-data";
 import { computeStandings } from "@/lib/scoring";
-import { computePhaseStatuses, predictedChampion, R32_IDS, R16_IDS, QF_IDS, SF_IDS, FINAL_ID } from "@/lib/bracket";
+import { computePhaseStatuses, predictedChampion, buildKnockoutMatches, R32_IDS, R16_IDS, QF_IDS, SF_IDS, FINAL_ID } from "@/lib/bracket";
 import type { ScoreEntry } from "@/lib/bracket";
 import { savePrediction, saveScorePick } from "@/app/actions/predictions";
 import { logout } from "@/app/actions/auth";
@@ -169,6 +169,12 @@ export default function LeagueClient({
       return s != null ? { ...m, homeScore: s.home, awayScore: s.away } : m;
     }),
     [actualScores]
+  );
+
+  // Resolved knockout fixtures (not in static MATCHES) for the Recent strip
+  const knockoutMatches = useMemo(
+    () => buildKnockoutMatches(matches, actualScores),
+    [matches, actualScores]
   );
 
   // Auto-calculate worst group team from user's score picks
@@ -676,7 +682,7 @@ export default function LeagueClient({
         {mobileView === "standings" && (
           <div className="space-y-4">
             <RecentMatchesStrip
-              matches={matches}
+              matches={[...matches, ...knockoutMatches]}
               predictions={predictions}
               scorePredictions={scorePredictions}
               mono={mono}

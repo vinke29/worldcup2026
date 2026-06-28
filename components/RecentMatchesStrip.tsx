@@ -28,9 +28,14 @@ function kickoffMs(date: string, time: string): number {
  *  1. Any match kicking off within ±24h of now
  *  2. If that window is empty, fall back to the most recent matchday that has past games
  */
+const KO_PHASES = ["r32", "r16", "qf", "sf", "third", "final"];
+
 function relevantMatches(matches: Match[], now: number): { window: Match[]; label: string } {
   const H24 = 24 * 60 * 60 * 1000;
-  const groupMatches = matches.filter((m) => m.phase.startsWith("group"));
+  // Group stage + any resolved knockout fixtures
+  const groupMatches = matches.filter(
+    (m) => m.phase.startsWith("group") || KO_PHASES.includes(m.phase),
+  );
 
   const windowed = groupMatches.filter((m) => {
     const ko = kickoffMs(m.date, m.time);
@@ -235,8 +240,11 @@ function MatchRow({
     ? outcomeOf(match.homeScore!, match.awayScore!)
     : null;
 
-  const isCorrect = isFinished && prediction !== null && prediction === actualOutcome;
-  const isWrong   = isFinished && prediction !== null && prediction !== actualOutcome && prediction !== undefined;
+  // KO rows only have a score pick (no outcome prediction) — derive the outcome
+  const predictedOutcome: Outcome | undefined =
+    prediction ?? (scorePick ? outcomeOf(scorePick.home, scorePick.away) : undefined);
+  const isCorrect = isFinished && predictedOutcome != null && predictedOutcome === actualOutcome;
+  const isWrong   = isFinished && predictedOutcome != null && predictedOutcome !== actualOutcome;
 
   const localTime = new Date(ko).toLocaleTimeString(undefined, {
     hour: "numeric", minute: "2-digit", hour12: true,
